@@ -28,24 +28,29 @@ The system SHALL provide a downstream payment processor mock for local developme
 The downstream payment processor mock SHALL support deterministic success, rejection, timeout, and internal failure scenarios.
 
 #### Scenario: Success scenario is selected
-- **GIVEN** a test or local debugging request selects the success mock scenario
+- **GIVEN** a test or local debugging request includes local/test-only header `X-Mock-Scenario` with value `success`
 - **WHEN** the downstream payment processor mock handles the request
 - **THEN** the downstream mock SHALL produce an outcome that maps to `COMPLETED`
 
 #### Scenario: Rejection scenario is selected
-- **GIVEN** a test or local debugging request selects the rejection mock scenario
+- **GIVEN** a test or local debugging request includes local/test-only header `X-Mock-Scenario` with value `rejection`
 - **WHEN** the downstream payment processor mock handles the request
 - **THEN** the downstream mock SHALL produce an outcome that maps to `REJECTED`
 
 #### Scenario: Timeout scenario is selected
-- **GIVEN** a test or local debugging request selects the timeout mock scenario
+- **GIVEN** a test or local debugging request includes local/test-only header `X-Mock-Scenario` with value `timeout`
 - **WHEN** the downstream payment processor mock handles the request
 - **THEN** the downstream mock SHALL produce an outcome that maps to `TIMEOUT`
 
 #### Scenario: Internal failure scenario is selected
-- **GIVEN** a test or local debugging request selects the internal failure mock scenario
+- **GIVEN** a test or local debugging request includes local/test-only header `X-Mock-Scenario` with value `internal_failure`
 - **WHEN** the downstream payment processor mock handles the request
 - **THEN** the downstream mock SHALL produce an outcome that maps to `FAILED`
+
+#### Scenario: Mock scenario control is documented as non-production behavior
+- **GIVEN** OpenAPI documentation, Postman artifacts, or mock fixtures describe `X-Mock-Scenario`
+- **WHEN** a developer uses the deterministic downstream mock scenarios
+- **THEN** the artifacts SHALL document `X-Mock-Scenario` as local/test-only behavior that is not part of production payment semantics
 
 ### Requirement: Provide mock payment test data
 The system SHALL provide mock payment request data for success, rejection, timeout, internal failure, invalid request, and idempotency scenarios.
@@ -61,7 +66,7 @@ The system SHALL provide a Postman collection for local API debugging and partne
 #### Scenario: Developer creates payment from Postman
 - **GIVEN** a developer has selected the local Postman environment
 - **WHEN** the developer runs the payment creation request from the Postman collection
-- **THEN** the request SHALL include the expected URL, headers, authentication placeholder, idempotency key, correlation ID, and JSON payload structure
+- **THEN** the request SHALL include the expected URL, headers, authentication placeholder, idempotency key, `X-Correlation-ID`, optional local/test-only `X-Mock-Scenario`, and JSON payload structure
 
 #### Scenario: Developer queries payment status from Postman
 - **GIVEN** a `paymentId` is captured or configured in Postman
@@ -74,7 +79,7 @@ The system SHALL provide a Postman environment for local API variables.
 #### Scenario: Developer configures local environment
 - **GIVEN** the Postman environment file is available
 - **WHEN** a developer selects the local Postman environment
-- **THEN** the environment SHALL provide variables for base URL, JWT token, correlation ID, idempotency key, and payment ID
+- **THEN** the environment SHALL provide variables for base URL, JWT token, correlation ID, idempotency key, payment ID, and local/test-only mock scenario selection
 
 ### Requirement: Support Postman common error scenarios
 The Postman collection SHALL support debugging common validation, authentication, authorization, idempotency conflict, downstream rejection, timeout, and internal failure scenarios.
@@ -90,4 +95,4 @@ OpenAPI documentation, Postman artifacts, downstream mock scenarios, and mock pa
 #### Scenario: Developer artifact describes API behavior
 - **GIVEN** OpenAPI documentation, Postman artifacts, downstream mock scenarios, or mock payment test data are available
 - **WHEN** a developer uses one of those artifacts
-- **THEN** the artifact SHALL reflect the same endpoints, authentication model, idempotency behavior, status lifecycle, and error response behavior defined by the behavior specs
+- **THEN** the artifact SHALL reflect the same endpoints, authentication model, idempotency behavior, correlation header, status lifecycle, response fields, mock scenario controls, and error response behavior defined by the behavior specs

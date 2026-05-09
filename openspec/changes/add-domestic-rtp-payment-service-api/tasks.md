@@ -9,7 +9,7 @@
 
 - [ ] 2.1 Create the OpenAPI 3.0.3 contract for `POST /v1/domestic-payments` and `GET /v1/domestic-payments/{paymentId}`
 - [ ] 2.2 Define request and response schemas for a single domestic real-time payment instruction, accepted payment response, payment status response, and consistent JSON error response
-- [ ] 2.3 Define required headers in the OpenAPI contract, including `Authorization`, `Idempotency-Key` for payment creation, and the supported correlation ID header
+- [ ] 2.3 Define required headers in the OpenAPI contract, including `Authorization`, `Idempotency-Key` for payment creation, optional inbound and returned `X-Correlation-ID`, and local/test-only `X-Mock-Scenario`
 - [ ] 2.4 Define API error responses for validation, authentication, authorization, not found, idempotency conflict, downstream failure, timeout, and unexpected error scenarios
 - [ ] 2.5 Add Swagger UI, Redoc, or equivalent local rendering for the OpenAPI contract
 
@@ -27,13 +27,13 @@
 - [ ] 4.1 Implement the payment creation controller for `POST /v1/domestic-payments`
 - [ ] 4.2 Validate that each request contains exactly one domestic real-time payment instruction using a JSON business payload
 - [ ] 4.3 Reject cross-border, batch, recurring, cancellation, amendment, non-real-time, malformed, or unsupported payment requests with consistent validation errors
-- [ ] 4.4 Generate a unique `paymentId` for accepted payment requests
-- [ ] 4.5 Return `202 Accepted` with `paymentId`, current status, correlation ID, and status query reference for accepted payment requests
+- [ ] 4.4 Generate a unique UUID string `paymentId` for accepted payment requests
+- [ ] 4.5 Return `202 Accepted` with `paymentId`, current status, timestamps, correlation ID, and `links.status` for accepted payment requests
 
 ## 5. Idempotency
 
 - [ ] 5.1 Implement an MVP idempotency record store scoped by authenticated client identity and `Idempotency-Key`
-- [ ] 5.2 Compute a stable request fingerprint from the normalized payment creation request body and relevant client context
+- [ ] 5.2 Compute a stable request fingerprint from the normalized accepted business request body, authenticated client identity, and behaviorally relevant request context
 - [ ] 5.3 Require `Idempotency-Key` for every payment creation request and reject missing keys with a consistent validation error
 - [ ] 5.4 Return the original accepted response when the same client repeats the same request body with the same `Idempotency-Key`
 - [ ] 5.5 Return `409 Conflict` when the same client reuses an `Idempotency-Key` with a different request body
@@ -44,20 +44,20 @@
 - [ ] 6.1 Implement an MVP payment status record store for `paymentId`, status, timestamps, correlation ID, client context, and reason details
 - [ ] 6.2 Implement the payment status lifecycle for `ACCEPTED`, `PROCESSING`, `COMPLETED`, `REJECTED`, `FAILED`, and `TIMEOUT`
 - [ ] 6.3 Implement the status query controller for `GET /v1/domestic-payments/{paymentId}`
-- [ ] 6.4 Return the current known payment status for authorized status query requests
+- [ ] 6.4 Return `paymentId`, current status, timestamps, correlation ID, optional reason details, and `links.self` for authorized status query requests
 - [ ] 6.5 Return a consistent not-found error for unknown or inaccessible payment IDs without exposing unrelated payment data
 
 ## 7. Downstream Payment Processor Mock
 
 - [ ] 7.1 Create a downstream payment processor client interface and local mock implementation
 - [ ] 7.2 Pass payment instruction, authorization context, and correlation ID to the downstream mock
-- [ ] 7.3 Implement deterministic mock scenarios for success, business rejection, timeout, and internal failure
+- [ ] 7.3 Implement deterministic local/test-only `X-Mock-Scenario` scenarios for success, business rejection, timeout, and internal failure
 - [ ] 7.4 Map downstream success to `COMPLETED`, business rejection to `REJECTED`, timeout to `TIMEOUT`, and internal failure to `FAILED`
 - [ ] 7.5 Add mock payment request fixtures for success, rejection, timeout, internal failure, invalid request, and idempotency scenarios
 
 ## 8. Observability and Error Handling
 
-- [ ] 8.1 Accept an inbound correlation ID header when present and generate a correlation ID when absent
+- [ ] 8.1 Accept an inbound `X-Correlation-ID` header when present and generate a correlation ID when absent
 - [ ] 8.2 Include correlation ID in API responses, error responses, payment status records, idempotency records, logs, and downstream mock calls
 - [ ] 8.3 Implement consistent JSON error response mapping for validation, authentication, authorization, not found, idempotency conflict, downstream failure, timeout, and unexpected errors
 - [ ] 8.4 Add structured logging for payment creation, status query, idempotency decisions, downstream mock outcomes, and errors
@@ -74,7 +74,7 @@
 ## 10. Developer Support Artifacts
 
 - [ ] 10.1 Create a Postman collection for payment creation, payment status query, and common error scenarios
-- [ ] 10.2 Create a Postman local environment with variables for base URL, JWT token, correlation ID, idempotency key, and payment ID
+- [ ] 10.2 Create a Postman local environment with variables for base URL, JWT token, correlation ID, idempotency key, payment ID, and local/test-only mock scenario selection
 - [ ] 10.3 Add Postman examples for success, rejection, timeout, internal failure, invalid request, authentication failure, authorization failure, and idempotency conflict
 - [ ] 10.4 Add local developer documentation for running the API, rendering OpenAPI docs, generating or using test JWTs, using mock scenarios, and running the Postman collection
 

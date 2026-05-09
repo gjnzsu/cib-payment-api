@@ -76,22 +76,41 @@ This keeps the MVP simple while allowing the architecture to evolve toward a ded
 
 Alternative considered: build a custom lightweight API Gateway service for the MVP. This would add an extra deployable service and duplicate responsibilities that can be handled inside the Payment Service API for the MVP, while still leaving room for managed API gateway capabilities later.
 
+### API Contract Shape
+
+The MVP public contract will use a practical domestic payment JSON payload rather than an ISO 20022 XML payload or a minimal demo-only shape.
+
+Payment creation requires:
+
+- `debtorAccount` with `bankCode`, `accountNumber`, and `accountName`.
+- `creditorAccount` with `bankCode`, `accountNumber`, and `accountName`.
+- `amount` with configured domestic RTP `currency` and decimal string `value`.
+- `paymentReference` as the required client-visible payment reference.
+
+Payment creation may include `remittanceInformation` and `requestedExecutionDate` when the request remains within domestic real-time payment scope. Unknown top-level request fields are rejected so clients do not depend on unsupported behavior and idempotency fingerprinting remains stable.
+
+The public `paymentId` is represented as a UUID string. Accepted creation responses include `paymentId`, current `status`, `createdAt`, `updatedAt`, `correlationId`, and `links.status`. Status query responses include `paymentId`, current `status`, timestamps, `correlationId`, optional reason details for rejected, failed, or timed-out payments, and `links.self`.
+
+The OpenAPI implementation task will define the exact machine-readable schemas, examples, and field constraints for `CreateDomesticPaymentRequest`, `AccountReference`, `Money`, `PaymentResponse`, `PaymentStatusResponse`, `PaymentReason`, `ErrorResponse`, and `ValidationErrorDetail`.
+
+Alternative considered: defer all payload details to implementation. That would leave OpenAPI, validation, idempotency fingerprinting, Postman examples, mock fixtures, and contract tests without a stable target.
+
 ### Payment Creation Flow
 
 `POST /v1/domestic-payments` will follow this flow:
 
 1. Accept JSON payload and required headers, including `Authorization: Bearer <token>` and `Idempotency-Key`.
-2. Resolve or generate a correlation ID from an inbound correlation header.
+2. Resolve or generate a correlation ID from the inbound `X-Correlation-ID` header.
 3. Validate JWT signature, issuer, audience, expiry, and required claims.
 4. Validate required payment scope for domestic payment creation.
 5. Validate the request payload and reject malformed or unsupported payment instructions before idempotency persistence creates a successful record.
-6. Compute a stable request fingerprint from the normalized request body and relevant request context.
+6. Compute a stable request fingerprint from the normalized accepted business request body, authenticated client identity, and behaviorally relevant request context.
 7. Check idempotency records for the client and `Idempotency-Key`.
 8. If the key is new, create a payment record with a new `paymentId` and initial asynchronous status.
 9. Store the idempotency record with the request fingerprint and the accepted response.
 10. Invoke the downstream payment processor mock using the payment instruction, authorization context, and correlation ID.
 11. Update the payment status according to the downstream mock outcome.
-12. Return `202 Accepted` with `paymentId`, current status, correlation ID, and status query link or equivalent status reference.
+12. Return `202 Accepted` with `paymentId`, current status, timestamps, correlation ID, and status query link.
 
 The API returns acceptance of processing, not final settlement. Final or terminal outcomes are observed through the status query endpoint.
 
@@ -108,7 +127,7 @@ Payment status will be modeled as a lifecycle stored against `paymentId`. The MV
 - `FAILED`: downstream mock or internal processing fails.
 - `TIMEOUT`: downstream mock simulates no timely response.
 
-`GET /v1/domestic-payments/{paymentId}` returns the current known status, timestamps where available, correlation ID, and reason details when a status is rejected, failed, or timed out. Status query requires authentication and read scope validation. A missing or unauthorized payment returns a consistent error response rather than leaking sensitive details.
+`GET /v1/domestic-payments/{paymentId}` returns the current known status, timestamps, correlation ID, a self link, and reason details when a status is rejected, failed, or timed out. Status query requires authentication and read scope validation. A missing or unauthorized payment returns a consistent error response rather than leaking sensitive details.
 
 Alternative considered: only store the accepted response and omit a separate status lifecycle. That would satisfy basic idempotency but would not support asynchronous status tracking, downstream mock scenarios, or realistic payment demonstrations.
 
@@ -128,6 +147,8 @@ Behavior:
 - Same client, same key, same request fingerprint returns the same accepted response without creating a second payment.
 - Same client, same key, different request fingerprint returns `409 Conflict`.
 - Missing or invalid `Idempotency-Key` returns a validation error.
+- `Idempotency-Key` is not required for status query requests.
+- Invalid requests, including requests with unknown top-level fields, are rejected before accepted idempotency records are created.
 - Concurrent duplicate submissions should resolve to one payment record and one idempotency record.
 
 For the MVP, retention can be short-lived and backed by in-memory or lightweight storage. The later implementation should isolate this behind an interface so production storage can be introduced without changing endpoint behavior.
@@ -210,7 +231,7 @@ The mock will support scenarios for:
 - Timeout, mapping to `TIMEOUT`.
 - Internal failure, mapping to `FAILED`.
 
-Scenario selection should be deterministic for automated tests and Postman debugging. This can be driven by explicit mock test data, a request field reserved for sandbox/mock use, or mock configuration. Any mock-only controls must be clearly excluded from production behavior in the OpenAPI and developer documentation.
+Scenario selection should be deterministic for automated tests and Postman debugging. The MVP will use the local/test-only `X-Mock-Scenario` header with allowed values `success`, `rejection`, `timeout`, and `internal_failure`. This header is not part of production payment business semantics and must be documented as non-production behavior in OpenAPI, Postman, and developer documentation.
 
 Alternative considered: skip downstream integration entirely and set statuses internally. A dedicated mock is better because it exercises integration boundaries, authorization-context propagation, correlation IDs, timeout handling, and test fixtures without depending on real payment systems.
 
@@ -242,9 +263,10 @@ Alternative considered: expose downstream raw errors directly. Normalizing error
 
 ### Observability and Correlation ID
 
-The API will accept an inbound correlation ID header when present or generate one when absent. The correlation ID is included in:
+The API will accept an inbound `X-Correlation-ID` header when present or generate one when absent. The correlation ID is included in:
 
 - API responses.
+- `X-Correlation-ID` response headers.
 - Structured application logs.
 - Payment status records.
 - Idempotency records.
@@ -260,7 +282,7 @@ Alternative considered: rely on platform-generated request IDs only. Explicit co
 Postman support is a developer deliverable for the implementation phase. The design expects:
 
 - A collection with payment creation and status query requests.
-- Environment files for local base URL, JWT/token variable, correlation ID, idempotency key, and captured `paymentId`.
+- Environment files for local base URL, JWT/token variable, correlation ID, idempotency key, local/test-only mock scenario, and captured `paymentId`.
 - Pre-request helpers or documented variables to generate unique idempotency keys for normal creation tests.
 - Saved examples for success, rejection, timeout, internal failure, invalid request, authentication failure, authorization failure, and idempotency conflict.
 - Collection flows that create a payment, store `paymentId`, and query status.
@@ -275,7 +297,7 @@ Alternative considered: rely only on Swagger UI or Redoc. Rendered OpenAPI docum
 - Asynchronous mock processing can make tests flaky if timing is uncontrolled -> Provide deterministic mock scenarios and predictable status transitions for automated tests and Postman examples.
 - Idempotency fingerprinting can produce false conflicts if request normalization is inconsistent -> Define canonical JSON normalization and include only behaviorally relevant request content in the fingerprint.
 - Returning `202 Accepted` before downstream completion can confuse clients expecting final payment outcome -> Document the asynchronous model clearly and make status query examples prominent in OpenAPI and Postman.
-- Mock-only controls can leak into the public API if not separated -> Keep mock controls limited to sandbox/test configuration or clearly documented mock fixtures, not production payment semantics.
+- Mock-only controls can leak into the public API if not separated -> Keep `X-Mock-Scenario` limited to local/test use and clearly documented as non-production behavior, not payment business semantics.
 - JWT validation can slow local development if token setup is cumbersome -> Provide local development token guidance and Postman environment variables while preserving authentication behavior.
 - Sensitive account data could appear in logs during debugging -> Apply masking at the logging boundary and avoid logging raw payment payloads.
 - Scope validation rules may change as the bank's authorization model matures -> Keep scope names and authorization checks centralized so they can evolve without changing payment orchestration.
@@ -302,9 +324,5 @@ Rollback for MVP implementation can disable or remove the new endpoints because 
 ## Open Questions
 
 - What exact JWT issuer, audience, signing algorithm, and local development key material should be used for MVP validation?
-- What scope names should be standardized for create and status query access?
-- Which inbound header name should be the canonical correlation ID header?
-- What exact domestic RTP request fields are required in the JSON business payload?
-- How should sandbox/mock scenario selection be represented without polluting production API semantics?
 - What retention duration should idempotency records use in MVP?
 - Should downstream timeout after acceptance map only to `TIMEOUT` status, or should any synchronous timeout path return `504 Gateway Timeout` before acceptance?

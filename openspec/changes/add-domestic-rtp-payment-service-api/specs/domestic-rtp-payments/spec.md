@@ -7,8 +7,8 @@ The system SHALL expose `POST /v1/domestic-payments` to create one domestic real
 - **GIVEN** an authenticated and authorized client
 - **AND** a valid domestic real-time payment request with a valid `Idempotency-Key`
 - **WHEN** the client submits `POST /v1/domestic-payments`
-- **THEN** the system SHALL create a unique `paymentId`
-- **AND** the system SHALL return `202 Accepted` with the current payment status
+- **THEN** the system SHALL create a unique UUID string `paymentId`
+- **AND** the system SHALL return `202 Accepted` with `paymentId`, current `status`, `createdAt`, `updatedAt`, `correlationId`, and `links.status`
 
 #### Scenario: Request contains more than one payment instruction
 - **GIVEN** a payment creation request containing multiple payment instructions
@@ -24,14 +24,36 @@ The system SHALL expose `POST /v1/domestic-payments` to create one domestic real
 The system SHALL validate required JSON payment request fields before accepting a payment for processing.
 
 #### Scenario: Required payment fields are present
-- **GIVEN** a payment creation request contains all required fields for a single domestic real-time payment instruction
+- **GIVEN** a payment creation request contains `debtorAccount`, `creditorAccount`, `amount`, and `paymentReference`
+- **AND** each account contains `bankCode`, `accountNumber`, and `accountName`
+- **AND** `amount` contains `currency` and decimal string `value`
 - **WHEN** the system validates the JSON payload
 - **THEN** the system SHALL continue payment creation processing
+
+#### Scenario: Optional payment fields are present
+- **GIVEN** a payment creation request contains optional `remittanceInformation` or `requestedExecutionDate`
+- **WHEN** the system validates the JSON payload
+- **THEN** the system SHALL accept those fields only when the request remains within domestic real-time payment scope
 
 #### Scenario: Required payment fields are missing or invalid
 - **GIVEN** a payment creation request is missing required fields or contains invalid field values
 - **WHEN** the system validates the JSON payload
 - **THEN** the system SHALL reject the request with a consistent validation error that includes the correlation ID
+
+#### Scenario: Amount format is invalid
+- **GIVEN** a payment creation request contains an amount value that is not a valid decimal string
+- **WHEN** the system validates the JSON payload
+- **THEN** the system SHALL reject the request with a consistent field-level validation error
+
+#### Scenario: Currency is unsupported
+- **GIVEN** a payment creation request contains a currency that does not match the configured domestic RTP currency
+- **WHEN** the system validates the JSON payload
+- **THEN** the system SHALL reject the request with a consistent validation error
+
+#### Scenario: Request contains unknown top-level fields
+- **GIVEN** a payment creation request contains top-level fields outside the supported payment contract
+- **WHEN** the system validates the JSON payload
+- **THEN** the system SHALL reject the request with a consistent field-level validation error
 
 ### Requirement: Track asynchronous payment status
 The system SHALL track payment status asynchronously after a payment creation request is accepted.
@@ -53,8 +75,8 @@ The system SHALL expose `GET /v1/domestic-payments/{paymentId}` to return the cu
 - **GIVEN** an authenticated and authorized client
 - **AND** a known `paymentId`
 - **WHEN** the client submits `GET /v1/domestic-payments/{paymentId}`
-- **THEN** the system SHALL return the current payment status
-- **AND** the system SHALL return correlation information
+- **THEN** the system SHALL return `paymentId`, current `status`, `createdAt`, `updatedAt`, `correlationId`, and `links.self`
+- **AND** the system SHALL include `reason` details when the current status is `REJECTED`, `FAILED`, or `TIMEOUT`
 
 #### Scenario: Unknown payment status is queried
 - **GIVEN** an authenticated and authorized client

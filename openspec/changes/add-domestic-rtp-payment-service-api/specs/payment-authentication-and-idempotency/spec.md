@@ -80,6 +80,11 @@ The system SHALL require a valid `Idempotency-Key` header for every payment crea
 - **WHEN** a client submits `POST /v1/domestic-payments`
 - **THEN** the system SHALL reject the request with a consistent validation error
 
+#### Scenario: Payment status query omits idempotency key
+- **GIVEN** an authenticated and authorized client submits a payment status query
+- **WHEN** the client submits `GET /v1/domestic-payments/{paymentId}` without an `Idempotency-Key`
+- **THEN** the system SHALL continue status query processing without requiring idempotency validation
+
 ### Requirement: Replay duplicate idempotent requests
 The system SHALL return the same accepted response when the same authenticated client repeats the same payment creation request with the same `Idempotency-Key`.
 
@@ -112,6 +117,19 @@ The system SHALL scope idempotency records by authenticated client identity and 
 - **WHEN** both clients submit payment creation requests
 - **THEN** the system SHALL evaluate each client's idempotency record independently
 
+### Requirement: Fingerprint accepted payment requests
+The system SHALL compute idempotency fingerprints from the normalized accepted business request body, authenticated client identity, and behaviorally relevant request context.
+
+#### Scenario: Valid request is fingerprinted
+- **GIVEN** an authenticated client submits a syntactically and semantically valid payment creation request
+- **WHEN** the system evaluates idempotency
+- **THEN** the system SHALL compute a stable fingerprint before creating or replaying an accepted payment response
+
+#### Scenario: Invalid request is rejected before accepted idempotency storage
+- **GIVEN** a payment creation request contains missing, invalid, unsupported, or unknown fields
+- **WHEN** the system validates the request
+- **THEN** the system SHALL reject the request before creating an accepted idempotency record
+
 ### Requirement: Propagate authorization context
 The system SHALL pass authorization context to payment processing and the downstream payment processor mock.
 
@@ -121,19 +139,19 @@ The system SHALL pass authorization context to payment processing and the downst
 - **THEN** the system SHALL include relevant authorization context for future micro-authorization extension and test visibility
 
 ### Requirement: Include correlation ID in request handling
-The system SHALL include or generate a correlation ID for request tracing across API responses, errors, payment records, idempotency records, and downstream mock calls.
+The system SHALL include or generate a correlation ID using the `X-Correlation-ID` header for request tracing across API responses, errors, payment records, idempotency records, and downstream mock calls.
 
 #### Scenario: Client provides correlation ID
-- **GIVEN** a client includes a supported correlation ID header
+- **GIVEN** a client includes an `X-Correlation-ID` header
 - **WHEN** the client submits a request
-- **THEN** the system SHALL use that correlation ID in the response
+- **THEN** the system SHALL use that correlation ID in the `X-Correlation-ID` response header and response body where applicable
 - **AND** the system SHALL use that correlation ID in the internal tracing context
 
 #### Scenario: Client omits correlation ID
-- **GIVEN** a client omits a supported correlation ID header
+- **GIVEN** a client omits the `X-Correlation-ID` header
 - **WHEN** the client submits a request
 - **THEN** the system SHALL generate a correlation ID
-- **AND** the system SHALL include the generated correlation ID in the response and internal tracing context
+- **AND** the system SHALL include the generated correlation ID in the `X-Correlation-ID` response header, response body where applicable, and internal tracing context
 
 ### Requirement: Return consistent JSON errors
 The system SHALL return consistent JSON error responses for validation, authentication, authorization, idempotency conflict, not-found, and downstream failure scenarios.
