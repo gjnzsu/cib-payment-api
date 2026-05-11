@@ -1,0 +1,12 @@
+{
+  "creditorAccount": {
+    "bankCode": "PAYBMYKL",
+    "accountNumber": "9876543210",
+    "accountName": "Supplier Sdn Bhd"
+  },
+  "amount": {
+    "currency": "MYR",
+    "value": "0.00"
+  },
+  "paymentReference": "INV-2026-INVALID"
+}

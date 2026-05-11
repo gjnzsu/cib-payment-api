@@ -1,0 +1,18 @@
+{
+  "debtorAccount": {
+    "bankCode": "CIBBMYKL",
+    "accountNumber": "1234567891",
+    "accountName": "Acme Treasury"
+  },
+  "creditorAccount": {
+    "bankCode": "PAYBMYKL",
+    "accountNumber": "9876543211",
+    "accountName": "Supplier Sdn Bhd"
+  },
+  "amount": {
+    "currency": "MYR",
+    "value": "250.00"
+  },
+  "paymentReference": "INV-2026-REJECTION",
+  "remittanceInformation": "Business rejection mock payment"
+}
