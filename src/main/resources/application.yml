@@ -1,0 +1,29 @@
+server:
+  port: 8080
+
+payment-api:
+  domestic-currency: MYR
+  jwt:
+    issuer: bank-auth-server
+    audience: domestic-payment-api
+  idempotency:
+    retention-hours: 24
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  swagger-ui:
+    url: /openapi/domestic-payment-api.yaml
+
+spring:
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true

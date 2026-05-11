@@ -1,0 +1,18 @@
+{
+  "debtorAccount": {
+    "bankCode": "CIBBMYKL",
+    "accountNumber": "1234567892",
+    "accountName": "Acme Treasury"
+  },
+  "creditorAccount": {
+    "bankCode": "PAYBMYKL",
+    "accountNumber": "9876543212",
+    "accountName": "Supplier Sdn Bhd"
+  },
+  "amount": {
+    "currency": "MYR",
+    "value": "500.00"
+  },
+  "paymentReference": "INV-2026-TIMEOUT",
+  "remittanceInformation": "Timeout mock payment"
+}

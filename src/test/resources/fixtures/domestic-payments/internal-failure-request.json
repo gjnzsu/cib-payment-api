@@ -1,0 +1,18 @@
+{
+  "debtorAccount": {
+    "bankCode": "CIBBMYKL",
+    "accountNumber": "1234567893",
+    "accountName": "Acme Treasury"
+  },
+  "creditorAccount": {
+    "bankCode": "PAYBMYKL",
+    "accountNumber": "9876543213",
+    "accountName": "Supplier Sdn Bhd"
+  },
+  "amount": {
+    "currency": "MYR",
+    "value": "750.00"
+  },
+  "paymentReference": "INV-2026-INTERNAL-FAILURE",
+  "remittanceInformation": "Internal failure mock payment"
+}

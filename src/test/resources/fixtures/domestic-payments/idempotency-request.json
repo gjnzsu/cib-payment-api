@@ -1,0 +1,18 @@
+{
+  "debtorAccount": {
+    "bankCode": "CIBBMYKL",
+    "accountNumber": "1234567894",
+    "accountName": "Acme Treasury"
+  },
+  "creditorAccount": {
+    "bankCode": "PAYBMYKL",
+    "accountNumber": "9876543214",
+    "accountName": "Supplier Sdn Bhd"
+  },
+  "amount": {
+    "currency": "MYR",
+    "value": "1000.00"
+  },
+  "paymentReference": "INV-2026-IDEMPOTENCY",
+  "remittanceInformation": "Idempotent mock payment"
+}

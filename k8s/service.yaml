@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: domestic-rtp-payment-api
+  labels:
+    app: domestic-rtp-payment-api
+spec:
+  type: ClusterIP
+  selector:
+    app: domestic-rtp-payment-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

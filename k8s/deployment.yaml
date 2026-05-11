@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: domestic-rtp-payment-api
+  labels:
+    app: domestic-rtp-payment-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: domestic-rtp-payment-api
+  template:
+    metadata:
+      labels:
+        app: domestic-rtp-payment-api
+    spec:
+      containers:
+        - name: domestic-rtp-payment-api
+          image: domestic-rtp-payment-api:0.1.0-SNAPSHOT
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: SERVER_PORT
+              value: "8080"
+            - name: PAYMENT_API_DOMESTIC_CURRENCY
+              value: "MYR"
+            - name: PAYMENT_API_JWT_ISSUER
+              value: "bank-auth-server"
+            - name: PAYMENT_API_JWT_AUDIENCE
+              value: "domestic-payment-api"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
