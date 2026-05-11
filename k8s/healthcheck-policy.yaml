@@ -1,0 +1,21 @@
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: domestic-rtp-payment-api
+  labels:
+    app: domestic-rtp-payment-api
+spec:
+  default:
+    checkIntervalSec: 15
+    timeoutSec: 5
+    healthyThreshold: 1
+    unhealthyThreshold: 2
+    config:
+      type: HTTP
+      httpHealthCheck:
+        portSpecification: USE_SERVING_PORT
+        requestPath: /actuator/health
+  targetRef:
+    group: ""
+    kind: Service
+    name: domestic-rtp-payment-api

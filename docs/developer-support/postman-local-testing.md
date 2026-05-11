@@ -85,6 +85,14 @@ Allowed values:
 
 The payment creation endpoint returns `202 Accepted` after request acceptance. Run `Get Payment Status` after creation to inspect the final mock outcome.
 
+When testing the GKE MVP deployment, run a single API replica while the service uses in-memory payment status storage. With multiple replicas, a create request can be handled by one pod and a status request by another pod, causing `PAYMENT_NOT_FOUND` for a valid payment ID. If the live deployment image was set separately from the placeholder manifest image, scale the existing deployment instead of reapplying the manifest:
+
+```powershell
+kubectl scale deployment domestic-rtp-payment-api --replicas=1
+```
+
+Durable shared persistence is the future production path for multi-replica deployments.
+
 The dedicated mock scenario requests also run a Postman test script that calls the returned status link automatically. In the response body for the create call, `status` should still be `ACCEPTED`; the terminal mock result appears in the Postman **Test Results** panel as `REJECTED`, `TIMEOUT`, or `FAILED`.
 
 ## Suggested Manual Flow
@@ -102,3 +110,45 @@ The authentication failure request sends an intentionally invalid bearer token. 
 The collection intentionally does not use collection-level Authorization. Each request defines its own `Authorization` header so failure scenarios cannot accidentally inherit the normal `jwtToken`.
 
 After re-importing the collection, close any older open request tabs and reopen the requests from the collection tree. Postman keeps already-open tabs in memory, so old tabs can continue using stale inherited authorization settings.
+
+## Test Remote GKE Endpoint
+
+Use the same Postman collection for the remote GKE deployment by changing only the environment values.
+
+1. Confirm the GKE deployment, service, health check policy, Gateway, and HTTPRoute are applied:
+
+```powershell
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+kubectl apply -f k8s/healthcheck-policy.yaml
+kubectl apply -f k8s/gateway.yaml
+```
+
+2. Confirm the Gateway has an address and the route is attached:
+
+```powershell
+kubectl get gateway domestic-rtp-payment-api
+kubectl get httproute domestic-rtp-payment-api
+```
+
+3. Set Postman `baseUrl` to the Gateway HTTP address, for example:
+
+```text
+http://<gateway-address>
+```
+
+4. Generate a token with both create and read scopes and paste it into Postman `jwtToken`:
+
+```powershell
+mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructure.security.LocalJwtTokenGenerator" "-Dexec.args=client-a payments:create,payments:read 3600"
+```
+
+5. Keep the GKE MVP deployment at one replica while payment status and idempotency storage are in memory:
+
+```powershell
+kubectl scale deployment domestic-rtp-payment-api --replicas=1
+```
+
+6. Run `Create Payment - Success`, then run `Get Payment Status` with the newly captured `paymentId`.
+
+If `GET /v1/domestic-payments/{paymentId}` returns `PAYMENT_NOT_FOUND` after a successful create, first verify that Postman is using the new captured `paymentId` and that the remote deployment is still running one API replica.

@@ -24,6 +24,44 @@ Use these artifacts as the requirements source:
 
 Do not add cross-border, batch, recurring, cancellation, amendment, webhook, callback, real core banking, real payment scheme connectivity, balance checks, fraud screening, sanctions screening, FX conversion, durable database storage, or a custom lightweight API Gateway service.
 
+## OpenSpec Traceability And Drift Control
+
+OpenSpec remains the source of truth for scope. This Superpowers plan translates the OpenSpec tasks into implementation slices and must not introduce product behavior that is not captured in OpenSpec.
+
+### Traceability Matrix
+
+| Superpowers Plan Task | OpenSpec Task Coverage | Alignment Notes |
+| --- | --- | --- |
+| Task 1: Spring Boot Project Scaffold | 1.1, 1.2, 1.3, 1.4 | Direct match for project foundation, dependencies, local config, and health checks. |
+| Task 2: OpenAPI Contract | 2.1, 2.2, 2.3, 2.4, 2.5 | Direct match for OpenAPI, headers, schemas, errors, and rendering. |
+| Task 3: Domain Model | 2.2, 4.4, 6.1, 6.2 | Supports schema/model behavior required by OpenSpec; no independent product scope. |
+| Task 4: API DTOs And Validation | 4.1, 4.2, 4.3, 11.1 | Implements request contract and validation behavior from specs. |
+| Task 5: Repositories And Fingerprinting | 5.1, 5.2, 5.4, 5.5, 5.6, 6.1 | Direct match for idempotency and status storage behavior. |
+| Task 6: Correlation ID And Error Mapping | 8.1, 8.2, 8.3 | Direct match for correlation propagation and consistent errors. |
+| Task 7: JWT Security And Authorization Context | 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 11.2 | Direct match for JWT, scopes, authorization context, and security tests. |
+| Task 8: Downstream Mock | 7.1, 7.2, 7.3, 7.4, 7.5, 11.5 | Direct match for deterministic mock scenarios and fixtures. |
+| Task 9: Payment Creation Use Case | 4.1, 4.2, 4.3, 4.4, 4.5, 5.3, 5.4, 5.5 | Direct match for payment creation, acceptance response, and idempotency behavior. |
+| Task 10: Payment Status Query Use Case | 6.3, 6.4, 6.5, 11.4 | Direct match for status query, lifecycle visibility, and client isolation. |
+| Task 11: Observability And Sensitive Data Protection | 8.2, 8.4, 8.5, 8.6, 11.6 | Plan started smaller than final OpenSpec observability slice; implementation stayed aligned by expanding tests/logging/metrics under OpenSpec task 8. |
+| Task 12: Postman And Fixtures | 10.1, 10.2, 10.3, 10.4, 11.7 | Direct match for developer support artifacts. File names were adjusted to the final repo convention. |
+| Task 13: Kubernetes And GKE Exposure | 9.1, 9.2, 9.3, 9.4 | Direct match for MVP GKE exposure without a custom gateway service. |
+| Task 14: End-To-End Verification And OpenSpec Closure | 11.8, 11.9 | Direct match for final verification and OpenSpec validation. |
+| Implementation hardening after manual Postman testing | 12.1, 12.2 | Added during execution because manual testing found local JWT/Postman usability gaps; captured back into OpenSpec tasks before completion. |
+
+### Drift Control Rules For Future Runs
+
+- Every Superpowers plan task must map to one or more OpenSpec tasks before implementation begins.
+- If implementation discovers missing behavior, update OpenSpec `proposal.md`, `design.md`, `spec.md`, or `tasks.md` first, then revise this plan.
+- If the Superpowers plan contains behavior that cannot be traced to OpenSpec, treat it as scope drift and pause before coding.
+- If OpenSpec tasks are too vague for safe coding, refine OpenSpec before generating or continuing the Superpowers plan.
+- Manual testing discoveries may add tasks, but they must be captured in OpenSpec before being marked complete.
+
+### Current Journey Drift Assessment
+
+- No product scope drift was identified: implemented endpoints, auth, idempotency, lifecycle, mock scenarios, observability, Postman, and GKE artifacts all trace back to OpenSpec.
+- Two execution refinements occurred and were properly captured: local JWT/Postman usability hardening and Postman collection auth inheritance fixes.
+- A small artifact naming difference occurred between this initial plan and final files: final Postman files use `domestic-rtp-payment-api.*` instead of `domestic-rtp-payment-service-api.*`. This is a naming convention adjustment, not behavior drift.
+
 ## File Map
 
 Create these top-level files and directories:
