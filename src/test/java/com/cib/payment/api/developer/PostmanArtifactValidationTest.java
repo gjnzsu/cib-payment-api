@@ -24,6 +24,7 @@ class PostmanArtifactValidationTest {
         var collection = objectMapper.readTree(Files.readString(COLLECTION, StandardCharsets.UTF_8));
         var serialized = collection.toString();
 
+        assertThat(collection.has("auth")).isFalse();
         assertThat(serialized).contains("POST", "/v1/domestic-payments");
         assertThat(serialized).contains("GET", "/v1/domestic-payments", "{{paymentId}}");
         assertThat(serialized).contains("Authorization", "Bearer {{jwtToken}}");
@@ -42,6 +43,7 @@ class PostmanArtifactValidationTest {
                 "Create Payment - Invalid Request",
                 "Create Payment - Authentication Failure",
                 "Create Payment - Authorization Failure",
+                "Create Payment - Idempotency Conflict Setup",
                 "Create Payment - Idempotency Conflict");
         assertThat(savedExampleNames(collection)).contains(
                 "202 Accepted - Success",
@@ -53,6 +55,23 @@ class PostmanArtifactValidationTest {
                 "202 Accepted - Rejection Scenario",
                 "202 Accepted - Timeout Scenario",
                 "202 Accepted - Internal Failure Scenario");
+
+        assertThat(serialized).contains(
+                "mock scenario terminal status is REJECTED",
+                "mock scenario terminal status is TIMEOUT",
+                "mock scenario terminal status is FAILED",
+                "pm.sendRequest");
+        assertThat(serialized).contains(
+                "invalid request returns validation error",
+                "Bearer invalid-local-test-token",
+                "\"Authorization\",\"value\":\"Bearer {{readOnlyJwtToken}}",
+                "Set readOnlyJwtToken to a JWT generated with only payments:read",
+                "readOnlyJwtToken must not include payments:create",
+                "pm.request.headers.upsert",
+                "Run this request first to create the original payment for idempotency conflict testing",
+                "authentication failure returns unauthorized",
+                "authorization failure returns forbidden",
+                "idempotency conflict returns conflict");
     }
 
     @Test

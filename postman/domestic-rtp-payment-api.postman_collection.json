@@ -2,18 +2,8 @@
   "info": {
     "_postman_id": "5c58fd8a-0d39-40d3-b9e8-6e07df0d3e2f",
     "name": "Domestic RTP Payment Service API",
-    "description": "Postman collection for the CreateDomesticPayment and GetDomesticPaymentStatus API flows. The collection aligns with the OpenAPI PaymentResponse, PaymentStatusResponse, ErrorResponse, and local/test-only X-Mock-Scenario behavior.",
+    "description": "Postman collection for the CreateDomesticPayment and GetDomesticPaymentStatus API flows. The collection aligns with the OpenAPI PaymentResponse, PaymentStatusResponse, ErrorResponse, and local/test-only X-Mock-Scenario behavior. Allowed mock values: success, rejection, timeout, internal_failure.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "auth": {
-    "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{jwtToken}}",
-        "type": "string"
-      }
-    ]
   },
   "event": [
     {
@@ -229,6 +219,44 @@
               "_postman_previewlanguage": "json",
               "body": "{\n  \"paymentId\": \"7e9d1180-14c9-4498-85ec-4f4c1238d533\",\n  \"status\": \"ACCEPTED\",\n  \"createdAt\": \"2026-05-09T08:00:00Z\",\n  \"updatedAt\": \"2026-05-09T08:00:00Z\",\n  \"correlationId\": \"postman-local-correlation-001\",\n  \"links\": {\"status\": \"/v1/domestic-payments/7e9d1180-14c9-4498-85ec-4f4c1238d533\"}\n}"
             }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('payment creation is accepted', function () {",
+                  "  pm.response.to.have.status(202);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.environment.set('paymentId', body.paymentId);",
+                  "pm.test('creation response remains ACCEPTED before status lookup', function () {",
+                  "  pm.expect(body.status).to.eql('ACCEPTED');",
+                  "});",
+                  "pm.sendRequest({",
+                  "  url: pm.environment.get('baseUrl') + body.links.status,",
+                  "  method: 'GET',",
+                  "  header: {",
+                  "    'Authorization': 'Bearer ' + pm.environment.get('jwtToken'),",
+                  "    'X-Correlation-ID': pm.environment.get('correlationId')",
+                  "  }",
+                  "}, function (err, res) {",
+                  "  pm.test('mock scenario status lookup succeeds', function () {",
+                  "    pm.expect(err).to.equal(null);",
+                  "    pm.expect(res.code).to.eql(200);",
+                  "  });",
+                  "  const statusBody = res.json();",
+                  "  pm.test('mock scenario terminal status is REJECTED', function () {",
+                  "    pm.expect(statusBody.status).to.eql('REJECTED');",
+                  "  });",
+                  "  pm.test('mock scenario reason code is MOCK_REJECTION', function () {",
+                  "    pm.expect(statusBody.reason.code).to.eql('MOCK_REJECTION');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
           ]
         },
         {
@@ -280,6 +308,44 @@
               "_postman_previewlanguage": "json",
               "body": "{\n  \"paymentId\": \"7e9d1180-14c9-4498-85ec-4f4c1238d534\",\n  \"status\": \"ACCEPTED\",\n  \"createdAt\": \"2026-05-09T08:00:00Z\",\n  \"updatedAt\": \"2026-05-09T08:00:00Z\",\n  \"correlationId\": \"postman-local-correlation-001\",\n  \"links\": {\"status\": \"/v1/domestic-payments/7e9d1180-14c9-4498-85ec-4f4c1238d534\"}\n}"
             }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('payment creation is accepted', function () {",
+                  "  pm.response.to.have.status(202);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.environment.set('paymentId', body.paymentId);",
+                  "pm.test('creation response remains ACCEPTED before status lookup', function () {",
+                  "  pm.expect(body.status).to.eql('ACCEPTED');",
+                  "});",
+                  "pm.sendRequest({",
+                  "  url: pm.environment.get('baseUrl') + body.links.status,",
+                  "  method: 'GET',",
+                  "  header: {",
+                  "    'Authorization': 'Bearer ' + pm.environment.get('jwtToken'),",
+                  "    'X-Correlation-ID': pm.environment.get('correlationId')",
+                  "  }",
+                  "}, function (err, res) {",
+                  "  pm.test('mock scenario status lookup succeeds', function () {",
+                  "    pm.expect(err).to.equal(null);",
+                  "    pm.expect(res.code).to.eql(200);",
+                  "  });",
+                  "  const statusBody = res.json();",
+                  "  pm.test('mock scenario terminal status is TIMEOUT', function () {",
+                  "    pm.expect(statusBody.status).to.eql('TIMEOUT');",
+                  "  });",
+                  "  pm.test('mock scenario reason code is MOCK_TIMEOUT', function () {",
+                  "    pm.expect(statusBody.reason.code).to.eql('MOCK_TIMEOUT');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
           ]
         },
         {
@@ -330,6 +396,44 @@
               "code": 202,
               "_postman_previewlanguage": "json",
               "body": "{\n  \"paymentId\": \"7e9d1180-14c9-4498-85ec-4f4c1238d535\",\n  \"status\": \"ACCEPTED\",\n  \"createdAt\": \"2026-05-09T08:00:00Z\",\n  \"updatedAt\": \"2026-05-09T08:00:00Z\",\n  \"correlationId\": \"postman-local-correlation-001\",\n  \"links\": {\"status\": \"/v1/domestic-payments/7e9d1180-14c9-4498-85ec-4f4c1238d535\"}\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('payment creation is accepted', function () {",
+                  "  pm.response.to.have.status(202);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.environment.set('paymentId', body.paymentId);",
+                  "pm.test('creation response remains ACCEPTED before status lookup', function () {",
+                  "  pm.expect(body.status).to.eql('ACCEPTED');",
+                  "});",
+                  "pm.sendRequest({",
+                  "  url: pm.environment.get('baseUrl') + body.links.status,",
+                  "  method: 'GET',",
+                  "  header: {",
+                  "    'Authorization': 'Bearer ' + pm.environment.get('jwtToken'),",
+                  "    'X-Correlation-ID': pm.environment.get('correlationId')",
+                  "  }",
+                  "}, function (err, res) {",
+                  "  pm.test('mock scenario status lookup succeeds', function () {",
+                  "    pm.expect(err).to.equal(null);",
+                  "    pm.expect(res.code).to.eql(200);",
+                  "  });",
+                  "  const statusBody = res.json();",
+                  "  pm.test('mock scenario terminal status is FAILED', function () {",
+                  "    pm.expect(statusBody.status).to.eql('FAILED');",
+                  "  });",
+                  "  pm.test('mock scenario reason code is MOCK_INTERNAL_FAILURE', function () {",
+                  "    pm.expect(statusBody.reason.code).to.eql('MOCK_INTERNAL_FAILURE');",
+                  "  });",
+                  "});"
+                ]
+              }
             }
           ]
         }
@@ -383,16 +487,45 @@
               "_postman_previewlanguage": "json",
               "body": "{\n  \"code\": \"VALIDATION_ERROR\",\n  \"message\": \"Request validation failed\",\n  \"status\": 400,\n  \"correlationId\": \"postman-local-correlation-001\",\n  \"details\": [\n    {\"field\": \"creditorAccount\", \"message\": \"must not be null\"}\n  ]\n}"
             }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('invalid request returns validation error', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.code).to.eql('VALIDATION_ERROR');",
+                  "  pm.expect(body.status).to.eql(400);",
+                  "  pm.expect(body.correlationId).to.eql(pm.environment.get('correlationId'));",
+                  "  pm.expect(body.details).to.be.an('array').that.is.not.empty;",
+                  "});"
+                ]
+              }
+            }
           ]
         },
         {
           "name": "Create Payment - Authentication Failure",
           "auth": {
-            "type": "noauth"
+            "type": "bearer",
+            "bearer": [
+              {
+                "key": "token",
+                "value": "invalid-local-test-token",
+                "type": "string"
+              }
+            ]
           },
           "request": {
             "method": "POST",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid-local-test-token"
+              },
               {
                 "key": "Idempotency-Key",
                 "value": "postman-authentication-failure-{{$guid}}"
@@ -429,6 +562,32 @@
               "_postman_previewlanguage": "json",
               "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"Authentication is required or invalid\",\n  \"status\": 401,\n  \"correlationId\": \"postman-local-correlation-001\"\n}"
             }
+          ],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.request.headers.upsert({key: 'Authorization', value: 'Bearer invalid-local-test-token'});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('authentication failure returns unauthorized', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.code).to.eql('UNAUTHORIZED');",
+                  "  pm.expect(body.status).to.eql(401);",
+                  "  pm.expect(body.correlationId).to.eql(pm.environment.get('correlationId'));",
+                  "});"
+                ]
+              }
+            }
           ]
         },
         {
@@ -446,6 +605,10 @@
           "request": {
             "method": "POST",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{readOnlyJwtToken}}"
+              },
               {
                 "key": "Idempotency-Key",
                 "value": "postman-authorization-failure-{{$guid}}"
@@ -482,12 +645,139 @@
               "_postman_previewlanguage": "json",
               "body": "{\n  \"code\": \"FORBIDDEN\",\n  \"message\": \"Authenticated client lacks the required scope\",\n  \"status\": 403,\n  \"correlationId\": \"postman-local-correlation-001\"\n}"
             }
+          ],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const readOnlyJwtToken = pm.environment.get('readOnlyJwtToken');",
+                  "if (!readOnlyJwtToken || readOnlyJwtToken.includes('replace-with-local-jwt')) {",
+                  "  throw new Error('Set readOnlyJwtToken to a JWT generated with only payments:read before running this request.');",
+                  "}",
+                  "const payload = JSON.parse(atob(readOnlyJwtToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));",
+                  "const scope = payload.scope || '';",
+                  "if (scope.includes('payments:create')) {",
+                  "  throw new Error('readOnlyJwtToken must not include payments:create. Regenerate it with only payments:read.');",
+                  "}",
+                  "if (!scope.includes('payments:read')) {",
+                  "  throw new Error('readOnlyJwtToken must include payments:read.');",
+                  "}",
+                  "pm.request.headers.upsert({key: 'Authorization', value: 'Bearer ' + readOnlyJwtToken});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('authorization failure returns forbidden', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.code).to.eql('FORBIDDEN');",
+                  "  pm.expect(body.status).to.eql(403);",
+                  "  pm.expect(body.correlationId).to.eql(pm.environment.get('correlationId'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Payment - Idempotency Conflict Setup",
+          "request": {
+            "description": "Run this request first to create the original payment for idempotency conflict testing. Then run Create Payment - Idempotency Conflict.",
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{conflictIdempotencyKey}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"debtorAccount\": {\"bankCode\": \"CIBBMYKL\", \"accountNumber\": \"1234567890\", \"accountName\": \"Acme Treasury\"},\n  \"creditorAccount\": {\"bankCode\": \"PAYBMYKL\", \"accountNumber\": \"9876543210\", \"accountName\": \"Supplier Sdn Bhd\"},\n  \"amount\": {\"currency\": \"MYR\", \"value\": \"1250.50\"},\n  \"paymentReference\": \"INV-2026-CONFLICT-SETUP\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/domestic-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "domestic-payments"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('conflictIdempotencyKey', 'postman-conflict-' + pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('idempotency conflict setup creates original payment', function () {",
+                  "  pm.response.to.have.status(202);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('ACCEPTED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "202 Accepted - Idempotency Conflict Setup",
+              "status": "Accepted",
+              "code": 202,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"paymentId\": \"7e9d1180-14c9-4498-85ec-4f4c1238d536\",\n  \"status\": \"ACCEPTED\",\n  \"createdAt\": \"2026-05-09T08:00:00Z\",\n  \"updatedAt\": \"2026-05-09T08:00:00Z\",\n  \"correlationId\": \"postman-local-correlation-001\",\n  \"links\": {\"status\": \"/v1/domestic-payments/7e9d1180-14c9-4498-85ec-4f4c1238d536\"}\n}"
+            }
           ]
         },
         {
           "name": "Create Payment - Idempotency Conflict",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('idempotency conflict returns conflict', function () {",
+                  "  pm.response.to.have.status(409);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.code).to.eql('IDEMPOTENCY_CONFLICT');",
+                  "  pm.expect(body.status).to.eql(409);",
+                  "  pm.expect(body.correlationId).to.eql(pm.environment.get('correlationId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
-            "description": "Run the success request first with conflictIdempotencyKey as the Idempotency-Key, then run this request with the same key and a different body.",
+            "description": "Run Create Payment - Idempotency Conflict Setup first. This request then reuses the same conflictIdempotencyKey with a different body to assert 409 Conflict.",
             "method": "POST",
             "header": [
               {

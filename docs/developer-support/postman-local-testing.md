@@ -85,6 +85,8 @@ Allowed values:
 
 The payment creation endpoint returns `202 Accepted` after request acceptance. Run `Get Payment Status` after creation to inspect the final mock outcome.
 
+The dedicated mock scenario requests also run a Postman test script that calls the returned status link automatically. In the response body for the create call, `status` should still be `ACCEPTED`; the terminal mock result appears in the Postman **Test Results** panel as `REJECTED`, `TIMEOUT`, or `FAILED`.
+
 ## Suggested Manual Flow
 
 1. Run `Create Payment - Success`.
@@ -93,4 +95,10 @@ The payment creation endpoint returns `202 Accepted` after request acceptance. R
 4. Set `mockScenario` to `rejection`, `timeout`, or `internal_failure`, or run the dedicated mock scenario requests.
 5. Run the error scenario requests for invalid request, authentication failure, authorization failure, and idempotency conflict.
 
-For idempotency conflict, first create a payment using `conflictIdempotencyKey`, then run `Create Payment - Idempotency Conflict` with the same key and a different body.
+For idempotency conflict, run `Create Payment - Idempotency Conflict Setup` first, then run `Create Payment - Idempotency Conflict`. The setup request generates `conflictIdempotencyKey` and creates the original payment; the conflict request reuses the same key with a different body.
+
+The authentication failure request sends an intentionally invalid bearer token. The authorization failure request sends `readOnlyJwtToken` explicitly, so make sure that variable contains a token generated with only `payments:read`.
+
+The collection intentionally does not use collection-level Authorization. Each request defines its own `Authorization` header so failure scenarios cannot accidentally inherit the normal `jwtToken`.
+
+After re-importing the collection, close any older open request tabs and reopen the requests from the collection tree. Postman keeps already-open tabs in memory, so old tabs can continue using stale inherited authorization settings.
