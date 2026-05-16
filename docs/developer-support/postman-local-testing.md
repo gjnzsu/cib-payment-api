@@ -2,7 +2,7 @@
 
 This guide helps a developer run the Domestic RTP Payment Service API locally and exercise the main API flows from Postman.
 
-## Run The API
+## Run the API
 
 Start the Spring Boot service:
 
