@@ -7,7 +7,7 @@ The service will expose:
 - `POST /v1/domestic-payments`
 - `GET /v1/domestic-payments/{paymentId}`
 
-The implementation follows the OpenSpec change in `openspec/changes/add-domestic-rtp-payment-service-api`.
+The implementation follows the OpenSpec change in `openspec/changes/archive/2026-05-11-add-domestic-rtp-payment-service-api`.
 
 ## Local Development
 

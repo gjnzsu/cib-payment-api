@@ -103,6 +103,30 @@ class DownstreamMockScenarioIntegrationTest {
                 .andExpect(jsonPath("$.code", equalTo("IDEMPOTENCY_CONFLICT")));
     }
 
+
+    @Test
+    void idempotencyReplayIgnoresMockScenarioHeaderChanges() throws Exception {
+        var first = mockMvc.perform(post("/v1/domestic-payments")
+                        .header("Authorization", bearer("payments:create"))
+                        .header("Idempotency-Key", "scenario-header-key")
+                        .header("X-Mock-Scenario", "success")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(fixture("idempotency-request.json")))
+                .andExpect(status().isAccepted())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        mockMvc.perform(post("/v1/domestic-payments")
+                        .header("Authorization", bearer("payments:create"))
+                        .header("Idempotency-Key", "scenario-header-key")
+                        .header("X-Mock-Scenario", "timeout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(fixture("idempotency-request.json")))
+                .andExpect(status().isAccepted())
+                .andExpect(result -> assertThat(result.getResponse().getContentAsString()).isEqualTo(first));
+    }
+
     private String createPayment(String idempotencyKey, String scenario, String requestBody) throws Exception {
         var response = mockMvc.perform(post("/v1/domestic-payments")
                         .header("Authorization", bearer("payments:create"))

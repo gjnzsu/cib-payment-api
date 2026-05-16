@@ -83,7 +83,7 @@ public class CreateDomesticPaymentService {
         var fingerprint = fingerprintService.fingerprint(
                 authorizationContext.clientId(),
                 request,
-                Map.of("mockScenario", normalizedScenario));
+                Map.of());
 
         var existing = idempotencyRepository.find(authorizationContext.clientId(), idempotencyKey);
         if (existing.isPresent()) {
