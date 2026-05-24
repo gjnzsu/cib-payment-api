@@ -47,16 +47,12 @@ public class IsoPaymentAdmissionService {
     }
 
     private BeneficiaryIdentifier beneficiaryIdentifier(Pain001PaymentInitiationParser.ParsedInitiation parsed) {
-        if (hasText(parsed.creditorAccount())) {
-            return BeneficiaryIdentifier.account(
-                    parsed.creditorAccount(),
-                    parsed.creditorName(),
-                    parsed.creditorParticipantIdentifier());
-        }
-        return BeneficiaryIdentifier.fpsProxy(
+        return BeneficiaryIdentifier.of(
+                parsed.creditorAccount(),
+                parsed.creditorName(),
+                parsed.creditorParticipantIdentifier(),
                 parsed.creditorProxyType(),
-                parsed.creditorProxyId(),
-                parsed.creditorName());
+                parsed.creditorProxyId());
     }
 
     private boolean isSupportedXmlContentType(String contentType) {

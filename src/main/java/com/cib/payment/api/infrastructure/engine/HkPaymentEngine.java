@@ -1,11 +1,14 @@
 package com.cib.payment.api.infrastructure.engine;
 
+import com.cib.payment.api.application.port.HkClearingSettlementOutcome;
+import com.cib.payment.api.application.port.HkClearingSettlementSimulator;
 import com.cib.payment.api.application.port.PaymentEngineInitiationPort;
 import com.cib.payment.api.application.port.PaymentEngineRecordRepository;
 import com.cib.payment.api.application.port.PaymentEngineStatusQueryPort;
 import com.cib.payment.api.domain.model.AuthorizationContext;
 import com.cib.payment.api.domain.model.CorrelationId;
 import com.cib.payment.api.domain.model.EnginePaymentRecord;
+import com.cib.payment.api.domain.model.InternalInterbankTransfer;
 import com.cib.payment.api.domain.model.IsoPaymentCandidate;
 import com.cib.payment.api.domain.model.PaymentId;
 import com.cib.payment.api.domain.model.PaymentStatus;
@@ -17,15 +20,24 @@ import java.util.UUID;
 
 public class HkPaymentEngine implements PaymentEngineInitiationPort, PaymentEngineStatusQueryPort {
     private final PaymentEngineRecordRepository recordRepository;
+    private final HkClearingSettlementSimulator clearingSettlementSimulator;
     private final Clock clock;
     private final Supplier<UUID> paymentIdSupplier;
 
-    public HkPaymentEngine(PaymentEngineRecordRepository recordRepository) {
-        this(recordRepository, Clock.systemUTC(), UUID::randomUUID);
+    public HkPaymentEngine(
+            PaymentEngineRecordRepository recordRepository,
+            HkClearingSettlementSimulator clearingSettlementSimulator) {
+        this(recordRepository, clearingSettlementSimulator, Clock.systemUTC(), UUID::randomUUID);
     }
 
-    HkPaymentEngine(PaymentEngineRecordRepository recordRepository, Clock clock, Supplier<UUID> paymentIdSupplier) {
+    HkPaymentEngine(
+            PaymentEngineRecordRepository recordRepository,
+            HkClearingSettlementSimulator clearingSettlementSimulator,
+            Clock clock,
+            Supplier<UUID> paymentIdSupplier) {
         this.recordRepository = Objects.requireNonNull(recordRepository, "recordRepository must not be null");
+        this.clearingSettlementSimulator = Objects.requireNonNull(
+                clearingSettlementSimulator, "clearingSettlementSimulator must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
         this.paymentIdSupplier = Objects.requireNonNull(paymentIdSupplier, "paymentIdSupplier must not be null");
     }
@@ -42,18 +54,22 @@ public class HkPaymentEngine implements PaymentEngineInitiationPort, PaymentEngi
         Objects.requireNonNull(correlationId, "correlationId must not be null");
 
         var now = clock.instant();
+        var paymentId = new PaymentId(paymentIdSupplier.get());
+        var transfer = internalTransfer(paymentId, candidate, correlationId);
+        var outcome = clearingSettlementSimulator.process(transfer, authorizationContext, scenarioContext);
+        var status = toPaymentStatus(outcome.status());
         var record = new EnginePaymentRecord(
-                new PaymentId(paymentIdSupplier.get()),
+                paymentId,
                 authorizationContext.clientId(),
                 candidate,
-                PaymentStatus.PROCESSING,
+                status,
                 now,
                 now,
                 correlationId,
+                Optional.of(transfer),
                 Optional.empty(),
-                Optional.empty(),
-                idempotencyReference,
-                scenarioContext);
+                outcome.reason(),
+                idempotencyReference);
         return recordRepository.save(record);
     }
 
@@ -63,5 +79,33 @@ public class HkPaymentEngine implements PaymentEngineInitiationPort, PaymentEngi
         Objects.requireNonNull(authorizationContext, "authorizationContext must not be null");
 
         return recordRepository.findByPaymentIdAndClientId(paymentId, authorizationContext.clientId());
+    }
+
+    private InternalInterbankTransfer internalTransfer(
+            PaymentId paymentId,
+            IsoPaymentCandidate candidate,
+            CorrelationId correlationId) {
+        return new InternalInterbankTransfer(
+                "pacs008-" + paymentId.value(),
+                paymentId,
+                candidate.debtor(),
+                candidate.beneficiary(),
+                candidate.amount(),
+                candidate.endToEndId(),
+                candidate.instructionId(),
+                candidate.paymentReference(),
+                candidate.debtor().bankCode(),
+                candidate.beneficiary().participantIdentifier(),
+                correlationId);
+    }
+
+    private PaymentStatus toPaymentStatus(HkClearingSettlementOutcome.Status status) {
+        return switch (status) {
+            case SETTLED -> PaymentStatus.COMPLETED;
+            case REJECTED -> PaymentStatus.REJECTED;
+            case PENDING -> PaymentStatus.PROCESSING;
+            case TIMEOUT -> PaymentStatus.TIMEOUT;
+            case INTERNAL_FAILURE -> PaymentStatus.FAILED;
+        };
     }
 }

@@ -170,7 +170,7 @@ Create or modify these areas:
 - Test: `src/test/java/com/cib/payment/api/infrastructure/simulator/DeterministicHkClearingSettlementSimulatorTest.java`
 - Test: `src/test/java/com/cib/payment/api/infrastructure/engine/HkPaymentEngineMappingTest.java`
 
-- [ ] **Step 1: Write failing simulator tests**
+- [x] **Step 1: Write failing simulator tests**
 
   Cover `success`, `rejection`, `suspicious_proxy_or_account`, `pending`, `timeout`, `internal_failure`, unknown participant, and non-HKD rejection.
 
@@ -178,25 +178,25 @@ Create or modify these areas:
 
   Expected: FAIL.
 
-- [ ] **Step 2: Implement deterministic simulator**
+- [x] **Step 2: Implement deterministic simulator**
 
   Return structured outcomes that the engine can map to internal status and ISO report status. Keep scenario controls local/test-only.
 
-- [ ] **Step 3: Write failing mapping tests**
+- [x] **Step 3: Write failing mapping tests**
 
   Verify admitted `pain.001` candidate maps to an internal `pacs.008` representation and preserves `EndToEndId`, debtor, creditor, amount, participant routing, and correlation.
 
-- [ ] **Step 4: Implement internal mapping in engine**
+- [x] **Step 4: Implement internal mapping in engine**
 
   Keep `pacs.008` internal. Do not expose it in controller responses or OpenAPI as external input.
 
-- [ ] **Step 5: Run focused tests**
+- [x] **Step 5: Run focused tests**
 
   Run: `mvn test -Dtest=DeterministicHkClearingSettlementSimulatorTest,HkPaymentEngineMappingTest`
 
   Expected: PASS.
 
-- [ ] **Step 6: Commit simulator and mapping**
+- [x] **Step 6: Commit simulator and mapping**
 
   Commit message: `feat: simulate hk clearing settlement`
 

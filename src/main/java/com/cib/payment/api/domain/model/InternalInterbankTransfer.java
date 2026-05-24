@@ -8,5 +8,8 @@ public record InternalInterbankTransfer(
         Money amount,
         String endToEndId,
         String instructionId,
-        String paymentReference) {
+        String paymentReference,
+        String payerParticipantIdentifier,
+        String payeeParticipantIdentifier,
+        CorrelationId correlationId) {
 }

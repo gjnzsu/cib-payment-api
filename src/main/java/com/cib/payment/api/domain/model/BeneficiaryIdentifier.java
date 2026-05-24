@@ -9,12 +9,39 @@ public record BeneficiaryIdentifier(
         String fpsProxyType,
         Optional<String> fpsProxyValue) {
 
+    public BeneficiaryIdentifier {
+        accountNumber = accountNumber == null ? Optional.empty() : accountNumber;
+        fpsProxyValue = fpsProxyValue == null ? Optional.empty() : fpsProxyValue;
+    }
+
+    public static BeneficiaryIdentifier of(
+            String accountNumber,
+            String accountName,
+            String participantIdentifier,
+            String fpsProxyType,
+            String fpsProxyValue) {
+        return new BeneficiaryIdentifier(
+                Optional.ofNullable(accountNumber),
+                accountName,
+                participantIdentifier,
+                fpsProxyType,
+                Optional.ofNullable(fpsProxyValue));
+    }
+
     public static BeneficiaryIdentifier account(String accountNumber, String accountName, String participantIdentifier) {
-        return new BeneficiaryIdentifier(Optional.ofNullable(accountNumber), accountName, participantIdentifier, null, Optional.empty());
+        return of(accountNumber, accountName, participantIdentifier, null, null);
     }
 
     public static BeneficiaryIdentifier fpsProxy(String fpsProxyType, String fpsProxyValue, String accountName) {
-        return new BeneficiaryIdentifier(Optional.empty(), accountName, null, fpsProxyType, Optional.ofNullable(fpsProxyValue));
+        return fpsProxy(fpsProxyType, fpsProxyValue, accountName, null);
+    }
+
+    public static BeneficiaryIdentifier fpsProxy(
+            String fpsProxyType,
+            String fpsProxyValue,
+            String accountName,
+            String participantIdentifier) {
+        return of(null, accountName, participantIdentifier, fpsProxyType, fpsProxyValue);
     }
 
     public boolean hasAccountOrProxy() {

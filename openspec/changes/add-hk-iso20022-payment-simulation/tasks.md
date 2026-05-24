@@ -20,19 +20,19 @@
 - [ ] 3.1 Introduce `PaymentEngineInitiationPort` for admitted ISO payment candidates and `PaymentEngineStatusQueryPort` for latest status reports.
 - [ ] 3.2 Implement an in-process Payment Engine component that receives admitted initiation, authorization context, correlation ID, idempotency context, and scenario context.
 - [ ] 3.3 Move ISO-created payment record ownership behind the Payment Engine boundary, including lifecycle status and latest `pain.002` report storage.
-- [ ] 3.4 Map admitted `pain.001.001.09` initiation to an internal `pacs.008` interbank transfer representation without exposing `pacs.008` externally.
+- [x] 3.4 Map admitted `pain.001.001.09` initiation to an internal `pacs.008` interbank transfer representation without exposing `pacs.008` externally.
 - [ ] 3.5 Preserve traceability between engine payment ID, supported ISO identifiers, internal message reference, idempotency link record, correlation ID, and latest `pain.002`.
-- [ ] 3.6 Map simulator outcomes to internal `COMPLETED`, `REJECTED`, `PROCESSING`, `TIMEOUT`, and `FAILED` statuses with reason details.
+- [x] 3.6 Map simulator outcomes to internal `COMPLETED`, `REJECTED`, `PROCESSING`, `TIMEOUT`, and `FAILED` statuses with reason details.
 - [ ] 3.7 Add architecture tests preventing controllers and Edge services from directly accessing engine payment repositories.
 - [ ] 3.8 Add unit tests for engine record ownership, mapping, traceability preservation, status query port behavior, and outcome-to-status mapping.
 
 ## 4. HK Clearing and Settlement Simulator
 
-- [ ] 4.1 Implement an HKD-only clearing and settlement simulator behind an application port.
-- [ ] 4.2 Add configured test participants for payer and payee routing validation.
-- [ ] 4.3 Implement deterministic simulator scenarios for success, rejection, suspicious proxy or account, pending processing, timeout, and internal failure.
-- [ ] 4.4 Ensure simulator scenario controls remain local/test-only and are not represented as production payment semantics.
-- [ ] 4.5 Add simulator unit tests for known participants, unknown participants, non-HKD rejection, pending processing, timeout, and all deterministic scenarios.
+- [x] 4.1 Implement an HKD-only clearing and settlement simulator behind an application port.
+- [x] 4.2 Add configured test participants for payer and payee routing validation.
+- [x] 4.3 Implement deterministic simulator scenarios for success, rejection, suspicious proxy or account, pending processing, timeout, and internal failure.
+- [x] 4.4 Ensure simulator scenario controls remain local/test-only and are not represented as production payment semantics.
+- [x] 4.5 Add simulator unit tests for known participants, unknown participants, non-HKD rejection, pending processing, timeout, and all deterministic scenarios.
 
 ## 5. ISO Status Reporting
 

@@ -47,6 +47,16 @@ class Pain001ParserTest {
     }
 
     @Test
+    void parsesCreditorAccountProxyAndParticipantWhenAllArePresent() throws Exception {
+        var parsed = parser.parse(readFixture("pain001-suspicious.xml"));
+
+        assertThat(parsed.creditorAccount()).isEqualTo("000987654323");
+        assertThat(parsed.creditorProxyId()).isEqualTo("supplier.proxy@example.invalid");
+        assertThat(parsed.creditorProxyType()).isEqualTo("EMAL");
+        assertThat(parsed.creditorParticipantIdentifier()).isEqualTo("SUPPHKHH");
+    }
+
+    @Test
     void parsesMinimalCreditorProxyWithoutType() throws Exception {
         var parsed = parser.parse(minimalProxyOnlyWithStructuredReference());
 

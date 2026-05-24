@@ -40,7 +40,18 @@ class IsoPaymentAdmissionServiceTest {
         assertThat(candidate.beneficiary().accountNumber()).isEmpty();
         assertThat(candidate.beneficiary().fpsProxyType()).isEqualTo("EMAL");
         assertThat(candidate.beneficiary().fpsProxyValue()).contains("supplier-proxy@example.test");
+        assertThat(candidate.beneficiary().participantIdentifier()).isEqualTo("SUPPHKHH");
         assertThat(candidate.paymentReference()).isEqualTo("SCREF-2026-0001");
+    }
+
+    @Test
+    void admitsBeneficiaryWithAccountProxyAndParticipantWhenAllArePresent() throws Exception {
+        var candidate = admissionService.admit(readFixture("pain001-suspicious.xml"), "application/xml");
+
+        assertThat(candidate.beneficiary().accountNumber()).contains("000987654323");
+        assertThat(candidate.beneficiary().fpsProxyType()).isEqualTo("EMAL");
+        assertThat(candidate.beneficiary().fpsProxyValue()).contains("supplier.proxy@example.invalid");
+        assertThat(candidate.beneficiary().participantIdentifier()).isEqualTo("SUPPHKHH");
     }
 
     @Test
@@ -50,6 +61,7 @@ class IsoPaymentAdmissionServiceTest {
         assertThat(candidate.beneficiary().accountNumber()).isEmpty();
         assertThat(candidate.beneficiary().fpsProxyType()).isNull();
         assertThat(candidate.beneficiary().fpsProxyValue()).contains("proxy@example.test");
+        assertThat(candidate.beneficiary().participantIdentifier()).isEqualTo("SUPPHKHH");
         assertThat(candidate.paymentReference()).isEqualTo("SCREF-2026-0001");
     }
 
