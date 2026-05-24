@@ -126,7 +126,7 @@ Create or modify these areas:
 - Create: `src/main/java/com/cib/payment/api/infrastructure/engine/HkPaymentEngine.java`
 - Test: `src/test/java/com/cib/payment/api/infrastructure/engine/HkPaymentEngineTest.java`
 
-- [ ] **Step 1: Write failing engine ownership tests**
+- [x] **Step 1: Write failing engine ownership tests**
 
   Cover:
   - engine creates payment record after receiving admitted candidate
@@ -138,25 +138,25 @@ Create or modify these areas:
 
   Expected: FAIL because engine ports do not exist.
 
-- [ ] **Step 2: Add engine ports and domain types**
+- [x] **Step 2: Add engine ports and domain types**
 
   Define initiation input around `IsoPaymentCandidate`, `AuthorizationContext`, `CorrelationId`, idempotency context, and scenario. Define query by engine payment ID and client ownership.
 
-- [ ] **Step 3: Implement in-memory engine repository**
+- [x] **Step 3: Implement in-memory engine repository**
 
   Keep this repository under engine implementation. Do not reuse Edge `PaymentStatusRepository` for ISO-created payment truth.
 
-- [ ] **Step 4: Implement minimal engine record creation**
+- [x] **Step 4: Implement minimal engine record creation**
 
   Create record with internal status `PROCESSING` initially, store original ISO identifiers, and make it queryable.
 
-- [ ] **Step 5: Run focused tests**
+- [x] **Step 5: Run focused tests**
 
   Run: `mvn test -Dtest=HkPaymentEngineTest`
 
   Expected: PASS.
 
-- [ ] **Step 6: Commit engine boundary**
+- [x] **Step 6: Commit engine boundary**
 
   Commit message: `feat: add payment engine boundary`
 
