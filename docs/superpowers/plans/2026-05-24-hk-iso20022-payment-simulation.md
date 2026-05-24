@@ -72,7 +72,7 @@ Create or modify these areas:
 - Test: `src/test/java/com/cib/payment/api/infrastructure/iso/Pain001ParserTest.java`
 - Test: `src/test/java/com/cib/payment/api/application/service/IsoPaymentAdmissionServiceTest.java`
 
-- [ ] **Step 1: Write failing parser tests**
+- [x] **Step 1: Write failing parser tests**
 
   Cover:
   - valid `pain001-success.xml` parses into debtor, creditor, HKD amount, `EndToEndId`, remittance, and optional purpose fields
@@ -84,11 +84,11 @@ Create or modify these areas:
 
   Expected: FAIL because parser does not exist.
 
-- [ ] **Step 2: Implement secure parser**
+- [x] **Step 2: Implement secure parser**
 
   Use JDK XML parser settings that disallow DOCTYPE and external entities. Return a small parsed structure or throw existing validation/semantic exceptions; do not log raw XML.
 
-- [ ] **Step 3: Write failing admission tests**
+- [x] **Step 3: Write failing admission tests**
 
   Cover:
   - missing creditor account/proxy returns validation/semantic failure
@@ -100,17 +100,17 @@ Create or modify these areas:
 
   Expected: FAIL until admission service exists.
 
-- [ ] **Step 4: Implement admission service**
+- [x] **Step 4: Implement admission service**
 
   Keep this service before the Payment Engine boundary. It returns `IsoPaymentCandidate` only after all request admissibility checks pass.
 
-- [ ] **Step 5: Run focused tests**
+- [x] **Step 5: Run focused tests**
 
   Run: `mvn test -Dtest=Pain001ParserTest,IsoPaymentAdmissionServiceTest`
 
   Expected: PASS.
 
-- [ ] **Step 6: Commit admission foundation**
+- [x] **Step 6: Commit admission foundation**
 
   Commit message: `feat: add iso pain001 admission validation`
 
