@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.002.001.10">
+  <CstmrPmtStsRpt>
+    <GrpHdr>
+      <MsgId>MSG-20260524-RJCT</MsgId>
+      <CreDtTm>2026-05-24T10:05:05+08:00</CreDtTm>
+      <InitgPty>
+        <Nm>Acme Treasury HK</Nm>
+      </InitgPty>
+    </GrpHdr>
+    <OrgnlGrpInfAndSts>
+      <OrgnlMsgId>MSG-20260524-0002</OrgnlMsgId>
+      <OrgnlMsgNmId>pain.001.001.09</OrgnlMsgNmId>
+    </OrgnlGrpInfAndSts>
+    <OrgnlPmtInfAndSts>
+      <OrgnlPmtInfId>PMT-20260524-REJECTION</OrgnlPmtInfId>
+      <TxInfAndSts>
+        <OrgnlInstrId>INSTR-20260524-0002</OrgnlInstrId>
+        <OrgnlEndToEndId>INV-2026-0002</OrgnlEndToEndId>
+        <TxSts>RJCT</TxSts>
+        <StsRsnInf>
+          <Rsn>
+            <Cd>AC01</Cd>
+          </Rsn>
+          <AddtlInf>Synthetic account rejection scenario</AddtlInf>
+        </StsRsnInf>
+        <OrgnlTxRef>
+          <Amt>
+            <InstdAmt Ccy="HKD">880.00</InstdAmt>
+          </Amt>
+          <Dbtr>
+            <Pty>
+              <Nm>Acme Treasury HK</Nm>
+            </Pty>
+          </Dbtr>
+          <Cdtr>
+            <Pty>
+              <Nm>Supplier HK Limited</Nm>
+            </Pty>
+          </Cdtr>
+        </OrgnlTxRef>
+      </TxInfAndSts>
+    </OrgnlPmtInfAndSts>
+  </CstmrPmtStsRpt>
+</Document>

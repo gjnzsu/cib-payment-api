@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.002.001.10">
+  <CstmrPmtStsRpt>
+    <GrpHdr>
+      <MsgId>MSG-20260524-PDNG</MsgId>
+      <CreDtTm>2026-05-24T10:15:05+08:00</CreDtTm>
+      <InitgPty>
+        <Nm>Acme Treasury HK</Nm>
+      </InitgPty>
+    </GrpHdr>
+    <OrgnlGrpInfAndSts>
+      <OrgnlMsgId>MSG-20260524-0004</OrgnlMsgId>
+      <OrgnlMsgNmId>pain.001.001.09</OrgnlMsgNmId>
+    </OrgnlGrpInfAndSts>
+    <OrgnlPmtInfAndSts>
+      <OrgnlPmtInfId>PMT-20260524-PENDING</OrgnlPmtInfId>
+      <TxInfAndSts>
+        <OrgnlInstrId>INSTR-20260524-0004</OrgnlInstrId>
+        <OrgnlEndToEndId>INV-2026-0004</OrgnlEndToEndId>
+        <TxSts>PDNG</TxSts>
+        <StsRsnInf>
+          <Rsn>
+            <Cd>SL01</Cd>
+          </Rsn>
+          <AddtlInf>Synthetic pending processing scenario</AddtlInf>
+        </StsRsnInf>
+        <OrgnlTxRef>
+          <Amt>
+            <InstdAmt Ccy="HKD">3200.00</InstdAmt>
+          </Amt>
+          <Dbtr>
+            <Pty>
+              <Nm>Acme Treasury HK</Nm>
+            </Pty>
+          </Dbtr>
+          <Cdtr>
+            <Pty>
+              <Nm>Supplier HK Limited</Nm>
+            </Pty>
+          </Cdtr>
+        </OrgnlTxRef>
+      </TxInfAndSts>
+    </OrgnlPmtInfAndSts>
+  </CstmrPmtStsRpt>
+</Document>
