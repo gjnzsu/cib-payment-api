@@ -209,7 +209,7 @@ Create or modify these areas:
 - Test: `src/test/java/com/cib/payment/api/infrastructure/iso/Pain002RendererTest.java`
 - Test: `src/test/java/com/cib/payment/api/infrastructure/engine/HkPaymentEngineStatusReportTest.java`
 
-- [ ] **Step 1: Write failing pain.002 renderer tests**
+- [x] **Step 1: Write failing pain.002 renderer tests**
 
   Cover:
   - `COMPLETED` -> `ACSC`
@@ -222,21 +222,21 @@ Create or modify these areas:
 
   Expected: FAIL.
 
-- [ ] **Step 2: Implement pain.002 renderer**
+- [x] **Step 2: Implement pain.002 renderer**
 
   Generate `pain.002.001.10` XML from an `IsoPaymentStatusReport`. Keep XML generation deterministic for tests.
 
-- [ ] **Step 3: Connect engine outcome to latest report**
+- [x] **Step 3: Connect engine outcome to latest report**
 
   After simulator processing, update engine record with internal status and latest `IsoPaymentStatusReport`.
 
-- [ ] **Step 4: Run focused tests**
+- [x] **Step 4: Run focused tests**
 
   Run: `mvn test -Dtest=Pain002RendererTest,HkPaymentEngineStatusReportTest`
 
   Expected: PASS.
 
-- [ ] **Step 5: Commit status reporting**
+- [x] **Step 5: Commit status reporting**
 
   Commit message: `feat: generate pain002 status reports`
 

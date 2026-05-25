@@ -63,7 +63,7 @@ class HkPaymentEngineTest {
     }
 
     @Test
-    void keepsLatestStatusReportEmptyUntilPain002GenerationExists() throws Exception {
+    void storesLatestStatusReportXmlAfterPain002Generation() throws Exception {
         var record = engine.initiate(
                 admissionService.admit(readFixture("pain001-success.xml"), "application/xml"),
                 authorizationContext("client-a"),
@@ -72,7 +72,8 @@ class HkPaymentEngineTest {
                 "success");
 
         assertThat(record.status()).isEqualTo(PaymentStatus.COMPLETED);
-        assertThat(record.latestStatusReportXml()).isEmpty();
+        assertThat(record.latestStatusReportXml()).hasValueSatisfying(xml ->
+                assertThat(xml).contains("<TxSts>ACSC</TxSts>"));
         assertThat(record.internalInterbankTransfer()).isPresent();
     }
 

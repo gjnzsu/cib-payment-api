@@ -21,7 +21,7 @@
 - [ ] 3.2 Implement an in-process Payment Engine component that receives admitted initiation, authorization context, correlation ID, idempotency context, and scenario context.
 - [ ] 3.3 Move ISO-created payment record ownership behind the Payment Engine boundary, including lifecycle status and latest `pain.002` report storage.
 - [x] 3.4 Map admitted `pain.001.001.09` initiation to an internal `pacs.008` interbank transfer representation without exposing `pacs.008` externally.
-- [ ] 3.5 Preserve traceability between engine payment ID, supported ISO identifiers, internal message reference, idempotency link record, correlation ID, and latest `pain.002`.
+- [x] 3.5 Preserve traceability between engine payment ID, supported ISO identifiers, internal message reference, idempotency link record, correlation ID, and latest `pain.002`.
 - [x] 3.6 Map simulator outcomes to internal `COMPLETED`, `REJECTED`, `PROCESSING`, `TIMEOUT`, and `FAILED` statuses with reason details.
 - [ ] 3.7 Add architecture tests preventing controllers and Edge services from directly accessing engine payment repositories.
 - [ ] 3.8 Add unit tests for engine record ownership, mapping, traceability preservation, status query port behavior, and outcome-to-status mapping.
@@ -36,11 +36,11 @@
 
 ## 5. ISO Status Reporting
 
-- [ ] 5.1 Implement `pain.002.001.10` generation for settled `ACSC`, rejected `RJCT`, and pending `PDNG` outcomes.
-- [ ] 5.2 Include supported original `pain.001` identifiers and engine payment ID linkage in generated status reports.
-- [ ] 5.3 Include reason details for `RJCT` and `PDNG`, including distinct reasons for normal processing and timeout/operational intervention.
-- [ ] 5.4 Ensure admission failures do not generate `pain.002`.
-- [ ] 5.5 Add unit tests for `pain.002` XML generation, status mapping, original identifier traceability, and reason details.
+- [x] 5.1 Implement `pain.002.001.10` generation for settled `ACSC`, rejected `RJCT`, and pending `PDNG` outcomes.
+- [x] 5.2 Include supported original `pain.001` identifiers and engine payment ID linkage in generated status reports.
+- [x] 5.3 Include reason details for `RJCT` and `PDNG`, including distinct reasons for normal processing and timeout/operational intervention.
+- [x] 5.4 Ensure admission failures do not generate `pain.002`.
+- [x] 5.5 Add unit tests for `pain.002` XML generation, status mapping, original identifier traceability, and reason details.
 
 ## 6. API Integration and Idempotency
 

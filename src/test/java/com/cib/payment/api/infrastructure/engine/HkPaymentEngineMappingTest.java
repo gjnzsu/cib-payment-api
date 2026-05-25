@@ -64,7 +64,8 @@ class HkPaymentEngineMappingTest {
             assertThat(transfer.payeeParticipantIdentifier()).isEqualTo("SUPPHKHH");
             assertThat(transfer.correlationId()).isEqualTo(correlationId);
         });
-        assertThat(record.latestStatusReportXml()).isEmpty();
+        assertThat(record.latestStatusReportXml()).hasValueSatisfying(xml ->
+                assertThat(xml).contains("<AcctSvcrRef>11111111-1111-1111-1111-111111111111</AcctSvcrRef>"));
     }
 
     @Test
