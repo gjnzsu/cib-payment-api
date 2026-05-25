@@ -52,6 +52,7 @@ public class CreateIsoDomesticPaymentService {
         }
 
         var candidate = admissionService.admit(rawXml, contentType);
+        observability.isoPaymentInitiationAdmitted(candidate, authorizationContext);
         var normalizedScenario = normalizeScenario(mockScenario);
         var fingerprint = fingerprintService.fingerprint(
                 authorizationContext.clientId(),

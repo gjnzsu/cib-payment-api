@@ -5,6 +5,7 @@ import com.cib.payment.api.application.port.HkClearingSettlementSimulator;
 import com.cib.payment.api.application.port.PaymentEngineInitiationPort;
 import com.cib.payment.api.application.port.PaymentEngineRecordRepository;
 import com.cib.payment.api.application.port.PaymentEngineStatusQueryPort;
+import com.cib.payment.api.application.port.PaymentObservability;
 import com.cib.payment.api.domain.model.AuthorizationContext;
 import com.cib.payment.api.domain.model.CorrelationId;
 import com.cib.payment.api.domain.model.EnginePaymentRecord;
@@ -27,14 +28,16 @@ public class HkPaymentEngine implements PaymentEngineInitiationPort, PaymentEngi
     private final PaymentEngineRecordRepository recordRepository;
     private final HkClearingSettlementSimulator clearingSettlementSimulator;
     private final Pain002Renderer pain002Renderer;
+    private final PaymentObservability observability;
     private final Clock clock;
     private final Supplier<UUID> paymentIdSupplier;
 
     @Autowired
     public HkPaymentEngine(
             PaymentEngineRecordRepository recordRepository,
-            HkClearingSettlementSimulator clearingSettlementSimulator) {
-        this(recordRepository, clearingSettlementSimulator, new Pain002Renderer(), Clock.systemUTC(), UUID::randomUUID);
+            HkClearingSettlementSimulator clearingSettlementSimulator,
+            PaymentObservability observability) {
+        this(recordRepository, clearingSettlementSimulator, new Pain002Renderer(), observability, Clock.systemUTC(), UUID::randomUUID);
     }
 
     HkPaymentEngine(
@@ -42,7 +45,23 @@ public class HkPaymentEngine implements PaymentEngineInitiationPort, PaymentEngi
             HkClearingSettlementSimulator clearingSettlementSimulator,
             Clock clock,
             Supplier<UUID> paymentIdSupplier) {
-        this(recordRepository, clearingSettlementSimulator, new Pain002Renderer(), clock, paymentIdSupplier);
+        this(recordRepository, clearingSettlementSimulator, new Pain002Renderer(), PaymentObservability.noop(), clock, paymentIdSupplier);
+    }
+
+    HkPaymentEngine(
+            PaymentEngineRecordRepository recordRepository,
+            HkClearingSettlementSimulator clearingSettlementSimulator,
+            Pain002Renderer pain002Renderer,
+            PaymentObservability observability,
+            Clock clock,
+            Supplier<UUID> paymentIdSupplier) {
+        this.recordRepository = Objects.requireNonNull(recordRepository, "recordRepository must not be null");
+        this.clearingSettlementSimulator = Objects.requireNonNull(
+                clearingSettlementSimulator, "clearingSettlementSimulator must not be null");
+        this.pain002Renderer = Objects.requireNonNull(pain002Renderer, "pain002Renderer must not be null");
+        this.observability = Objects.requireNonNull(observability, "observability must not be null");
+        this.clock = Objects.requireNonNull(clock, "clock must not be null");
+        this.paymentIdSupplier = Objects.requireNonNull(paymentIdSupplier, "paymentIdSupplier must not be null");
     }
 
     HkPaymentEngine(
@@ -51,12 +70,7 @@ public class HkPaymentEngine implements PaymentEngineInitiationPort, PaymentEngi
             Pain002Renderer pain002Renderer,
             Clock clock,
             Supplier<UUID> paymentIdSupplier) {
-        this.recordRepository = Objects.requireNonNull(recordRepository, "recordRepository must not be null");
-        this.clearingSettlementSimulator = Objects.requireNonNull(
-                clearingSettlementSimulator, "clearingSettlementSimulator must not be null");
-        this.pain002Renderer = Objects.requireNonNull(pain002Renderer, "pain002Renderer must not be null");
-        this.clock = Objects.requireNonNull(clock, "clock must not be null");
-        this.paymentIdSupplier = Objects.requireNonNull(paymentIdSupplier, "paymentIdSupplier must not be null");
+        this(recordRepository, clearingSettlementSimulator, pain002Renderer, PaymentObservability.noop(), clock, paymentIdSupplier);
     }
 
     @Override
@@ -73,8 +87,10 @@ public class HkPaymentEngine implements PaymentEngineInitiationPort, PaymentEngi
         var now = clock.instant();
         var paymentId = new PaymentId(paymentIdSupplier.get());
         var transfer = internalTransfer(paymentId, candidate, correlationId);
+        observability.enginePaymentMapped(transfer, authorizationContext);
         var outcome = clearingSettlementSimulator.process(transfer, authorizationContext, scenarioContext);
         var status = toPaymentStatus(outcome.status());
+        observability.hkSimulatorOutcome(normalizeScenario(scenarioContext), status, outcome.reason(), correlationId);
         var statusReportXml = pain002Renderer.render(new IsoPaymentStatusReport(
                 paymentId,
                 candidate,
@@ -82,6 +98,7 @@ public class HkPaymentEngine implements PaymentEngineInitiationPort, PaymentEngi
                 now,
                 correlationId,
                 outcome.reason()));
+        observability.pain002Generated(paymentId.value().toString(), status, correlationId);
         var record = new EnginePaymentRecord(
                 paymentId,
                 authorizationContext.clientId(),
@@ -131,5 +148,9 @@ public class HkPaymentEngine implements PaymentEngineInitiationPort, PaymentEngi
             case TIMEOUT -> PaymentStatus.TIMEOUT;
             case INTERNAL_FAILURE -> PaymentStatus.FAILED;
         };
+    }
+
+    private String normalizeScenario(String scenarioContext) {
+        return scenarioContext == null || scenarioContext.isBlank() ? "success" : scenarioContext;
     }
 }

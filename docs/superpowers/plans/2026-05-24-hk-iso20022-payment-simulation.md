@@ -294,11 +294,11 @@ Create or modify these areas:
 - Create: `src/test/java/com/cib/payment/api/architecture/EdgeEngineBoundaryTest.java`
 - Test: `src/test/java/com/cib/payment/api/api/IsoSensitiveLoggingIntegrationTest.java`
 
-- [ ] **Step 1: Decide architecture test mechanism**
+- [x] **Step 1: Decide architecture test mechanism**
 
   Prefer adding ArchUnit test dependency if acceptable. Otherwise implement focused package dependency tests using classpath scanning.
 
-- [ ] **Step 2: Write failing architecture tests**
+- [x] **Step 2: Write failing architecture tests**
 
   Enforce:
   - controllers do not access repositories
@@ -306,17 +306,17 @@ Create or modify these areas:
   - Engine implementation does not depend on API DTO/controller classes
   - `pacs.008` internal representation is not returned by API controllers
 
-- [ ] **Step 3: Extend masking**
+- [x] **Step 3: Extend masking**
 
   Mask account numbers, FPS proxy values, email/mobile proxy identifiers, HKID-like identifiers, and XML-derived identifiers at log/error boundaries.
 
-- [ ] **Step 4: Run focused tests**
+- [x] **Step 4: Run focused tests**
 
   Run: `mvn test -Dtest=EdgeEngineBoundaryTest,IsoSensitiveLoggingIntegrationTest`
 
   Expected: PASS.
 
-- [ ] **Step 5: Commit boundary and masking tests**
+- [x] **Step 5: Commit boundary and masking tests**
 
   Commit message: `test: enforce edge engine boundary`
 

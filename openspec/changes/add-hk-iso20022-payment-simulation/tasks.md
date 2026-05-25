@@ -23,7 +23,7 @@
 - [x] 3.4 Map admitted `pain.001.001.09` initiation to an internal `pacs.008` interbank transfer representation without exposing `pacs.008` externally.
 - [x] 3.5 Preserve traceability between engine payment ID, supported ISO identifiers, internal message reference, idempotency link record, correlation ID, and latest `pain.002`.
 - [x] 3.6 Map simulator outcomes to internal `COMPLETED`, `REJECTED`, `PROCESSING`, `TIMEOUT`, and `FAILED` statuses with reason details.
-- [ ] 3.7 Add architecture tests preventing controllers and Edge services from directly accessing engine payment repositories.
+- [x] 3.7 Add architecture tests preventing controllers and Edge services from directly accessing engine payment repositories.
 - [ ] 3.8 Add unit tests for engine record ownership, mapping, traceability preservation, status query port behavior, and outcome-to-status mapping.
 
 ## 4. HK Clearing and Settlement Simulator
@@ -54,9 +54,9 @@
 
 ## 7. Observability and Sensitive Data Handling
 
-- [ ] 7.1 Extend masking utilities to cover FPS proxy values, mobile/email proxy identifiers, HKID-like identifiers, and XML-derived account identifiers.
-- [ ] 7.2 Ensure logs and error diagnostics do not include raw sensitive XML payloads, bearer tokens, full account numbers, full proxy values, or HKID-like identifiers.
-- [ ] 7.3 Add observability tests for XML initiation, engine mapping, simulator outcomes, generated `pain.002`, and masked sensitive data.
+- [x] 7.1 Extend masking utilities to cover FPS proxy values, mobile/email proxy identifiers, HKID-like identifiers, and XML-derived account identifiers.
+- [x] 7.2 Ensure logs and error diagnostics do not include raw sensitive XML payloads, bearer tokens, full account numbers, full proxy values, or HKID-like identifiers.
+- [x] 7.3 Add observability tests for XML initiation, engine mapping, simulator outcomes, generated `pain.002`, and masked sensitive data.
 
 ## 8. Developer Support
 
