@@ -3,7 +3,7 @@ package com.cib.payment.api.infrastructure.engine;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.cib.payment.api.application.exception.ValidationFailureException;
+import com.cib.payment.api.application.exception.SemanticPaymentException;
 import com.cib.payment.api.application.service.IsoPaymentAdmissionService;
 import com.cib.payment.api.domain.model.AuthorizationContext;
 import com.cib.payment.api.domain.model.CorrelationId;
@@ -84,7 +84,7 @@ class HkPaymentEngineStatusReportTest {
         assertThatThrownBy(() -> admissionService.admit(
                 readFixture("pain001-invalid-missing-creditor.xml"),
                 "application/xml"))
-                .isInstanceOf(ValidationFailureException.class);
+                .isInstanceOf(SemanticPaymentException.class);
 
         assertThat(repository.findByPaymentIdAndClientId(paymentId, authorizationContext.clientId()))
                 .isEmpty();

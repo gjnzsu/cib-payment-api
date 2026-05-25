@@ -5,7 +5,7 @@
     <mxCell id="title" value="Domestic RTP Payment API - End-to-End Sequence" style="text;html=1;strokeColor=none;fillColor=none;fontSize=24;fontStyle=1;align=left;verticalAlign=middle;" vertex="1" parent="1">
       <mxGeometry x="40" y="20" width="900" height="40" as="geometry"/>
     </mxCell>
-    <mxCell id="subtitle" value="Authentication, authorization, correlation, idempotency, downstream processing, and JSON responses" style="text;html=1;strokeColor=none;fillColor=none;fontSize=14;fontColor=#4B5563;align=left;verticalAlign=middle;" vertex="1" parent="1">
+    <mxCell id="subtitle" value="Authentication, authorization, correlation, idempotency, payment engine processing, and ISO pain.002 responses" style="text;html=1;strokeColor=none;fillColor=none;fontSize=14;fontColor=#4B5563;align=left;verticalAlign=middle;" vertex="1" parent="1">
       <mxGeometry x="40" y="58" width="980" height="30" as="geometry"/>
     </mxCell>
     <mxCell id="p1" value="Client" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0F2FE;strokeColor=#0369A1;fontStyle=1;" vertex="1" parent="1">
@@ -71,7 +71,7 @@
     <mxCell id="create-band" value="Create payment: POST /v1/domestic-payments" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F3F4F6;strokeColor=#D1D5DB;fontStyle=1;align=left;spacingLeft=12;" vertex="1" parent="1">
       <mxGeometry x="35" y="180" width="2420" height="34" as="geometry"/>
     </mxCell>
-    <mxCell id="m1t" value="Bearer JWT + Idempotency-Key + optional X-Correlation-ID + JSON payment instruction" style="text;html=1;strokeColor=none;fillColor=none;fontSize=12;align=center;" vertex="1" parent="1">
+    <mxCell id="m1t" value="Bearer JWT + Idempotency-Key + optional X-Correlation-ID + pain.001 XML payment instruction" style="text;html=1;strokeColor=none;fillColor=none;fontSize=12;align=center;" vertex="1" parent="1">
       <mxGeometry x="80" y="225" width="300" height="22" as="geometry"/>
     </mxCell>
     <mxCell id="m1" style="endArrow=block;html=1;rounded=0;strokeColor=#111827;" edge="1" parent="1">
@@ -155,7 +155,7 @@
         <mxPoint x="1795" y="715" as="targetPoint"/>
       </mxGeometry>
     </mxCell>
-    <mxCell id="alt-idem" value="alt idempotency: same fingerprint returns original 202 response; different fingerprint returns 409 IDEMPOTENCY_CONFLICT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#EA580C;dashed=1;align=left;spacingLeft=10;" vertex="1" parent="1">
+    <mxCell id="alt-idem" value="alt idempotency: same normalized XML semantics returns original pain.002 response; different semantics returns 409 IDEMPOTENCY_CONFLICT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#EA580C;dashed=1;align=left;spacingLeft=10;" vertex="1" parent="1">
       <mxGeometry x="1480" y="735" width="600" height="46" as="geometry"/>
     </mxCell>
     <mxCell id="m10t" value="Save ACCEPTED payment record with client ID and correlation ID" style="text;html=1;strokeColor=none;fillColor=none;fontSize=12;align=center;" vertex="1" parent="1">
@@ -194,7 +194,7 @@
         <mxPoint x="2060" y="975" as="targetPoint"/>
       </mxGeometry>
     </mxCell>
-    <mxCell id="m14t" value="202 Accepted JSON: paymentId, status ACCEPTED, timestamps, correlationId, links.status" style="text;html=1;strokeColor=none;fillColor=none;fontSize=12;align=center;" vertex="1" parent="1">
+    <mxCell id="m14t" value="200 OK pain.002 XML: TxSts ACSC, RJCT, or PDNG plus original ISO identifiers" style="text;html=1;strokeColor=none;fillColor=none;fontSize=12;align=center;" vertex="1" parent="1">
       <mxGeometry x="470" y="1000" width="620" height="22" as="geometry"/>
     </mxCell>
     <mxCell id="m14" style="endArrow=block;html=1;rounded=0;strokeColor=#111827;dashed=1;" edge="1" parent="1">

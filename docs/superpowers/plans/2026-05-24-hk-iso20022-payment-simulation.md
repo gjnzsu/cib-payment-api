@@ -366,33 +366,33 @@ Create or modify these areas:
 **Files:**
 - Verify all changed source, test, OpenAPI, Postman, docs, and OpenSpec artifacts.
 
-- [ ] **Step 1: Run focused ISO suite**
+- [x] **Step 1: Run focused ISO suite**
 
   Run: `mvn test -Dtest=*Iso*,*HkPaymentEngine*,*HkClearing*,*Pain*`
 
   Expected: PASS.
 
-- [ ] **Step 2: Run full test suite**
+- [x] **Step 2: Run full test suite**
 
   Run: `mvn test`
 
   Expected: PASS.
 
-- [ ] **Step 3: Run OpenSpec validation**
+- [x] **Step 3: Run OpenSpec validation**
 
   Run: `npx.cmd openspec validate add-hk-iso20022-payment-simulation`
 
   Expected: `Change 'add-hk-iso20022-payment-simulation' is valid`
 
-- [ ] **Step 4: Review sensitive data leakage**
+- [x] **Step 4: Review sensitive data leakage**
 
   Search logs, tests, fixtures, Postman, and docs for raw real-looking account/proxy/HKID values. Replace with synthetic examples if needed.
 
-- [ ] **Step 5: Review accidental external pacs.008 exposure**
+- [x] **Step 5: Review accidental external pacs.008 exposure**
 
   Search OpenAPI, controllers, DTOs, and Postman for externally exposed `pacs.008` input. It must remain internal-only.
 
-- [ ] **Step 6: Final git review**
+- [x] **Step 6: Final git review**
 
   Run: `git status --short` and `git diff --stat`
 

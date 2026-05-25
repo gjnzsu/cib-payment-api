@@ -68,8 +68,8 @@
 
 ## 9. Verification
 
-- [ ] 9.1 Run focused unit and integration tests for ISO parsing, HK profile validation, payment engine mapping, `pain.002` generation, simulator behavior, idempotency, and API flows.
-- [ ] 9.2 Run architecture tests for Edge/Engine boundary enforcement.
-- [ ] 9.3 Run the full Maven test suite.
-- [ ] 9.4 Run `npx.cmd openspec validate add-hk-iso20022-payment-simulation`.
-- [ ] 9.5 Review the change for architecture constraints, sensitive data leakage, accidental JSON initiation support, and accidental exposure of internal `pacs.008`.
+- [x] 9.1 Run focused unit and integration tests for ISO parsing, HK profile validation, payment engine mapping, `pain.002` generation, simulator behavior, idempotency, and API flows.
+- [x] 9.2 Run architecture tests for Edge/Engine boundary enforcement.
+- [x] 9.3 Run the full Maven test suite.
+- [x] 9.4 Run `npx.cmd openspec validate add-hk-iso20022-payment-simulation`.
+- [x] 9.5 Review the change for architecture constraints, sensitive data leakage, accidental JSON initiation support, and accidental exposure of internal `pacs.008`.
