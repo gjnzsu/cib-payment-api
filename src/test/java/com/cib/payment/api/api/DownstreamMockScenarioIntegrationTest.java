@@ -106,8 +106,48 @@ class DownstreamMockScenarioIntegrationTest {
                 .andExpect(jsonPath("$.code", equalTo("IDEMPOTENCY_CONFLICT")));
     }
 
-    private String fixture(String path) throws Exception {
-        return new ClassPathResource(path).getContentAsString(StandardCharsets.UTF_8);
+
+    @Test
+    void idempotencyReplayIgnoresMockScenarioHeaderChanges() throws Exception {
+        var first = mockMvc.perform(post("/v1/domestic-payments")
+                        .header("Authorization", bearer("payments:create"))
+                        .header("Idempotency-Key", "scenario-header-key")
+                        .header("X-Mock-Scenario", "success")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(fixture("idempotency-request.json")))
+                .andExpect(status().isAccepted())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        mockMvc.perform(post("/v1/domestic-payments")
+                        .header("Authorization", bearer("payments:create"))
+                        .header("Idempotency-Key", "scenario-header-key")
+                        .header("X-Mock-Scenario", "timeout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(fixture("idempotency-request.json")))
+                .andExpect(status().isAccepted())
+                .andExpect(result -> assertThat(result.getResponse().getContentAsString()).isEqualTo(first));
+    }
+
+    private String createPayment(String idempotencyKey, String scenario, String requestBody) throws Exception {
+        var response = mockMvc.perform(post("/v1/domestic-payments")
+                        .header("Authorization", bearer("payments:create"))
+                        .header("Idempotency-Key", idempotencyKey)
+                        .header("X-Mock-Scenario", scenario)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.status", equalTo("ACCEPTED")))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return objectMapper.readTree(response).get("paymentId").asText();
+    }
+
+    private String fixture(String fixtureName) throws Exception {
+        return new ClassPathResource("fixtures/domestic-payments/" + fixtureName)
+                .getContentAsString(StandardCharsets.UTF_8);
     }
 
     private String bearer(String... scopes) {

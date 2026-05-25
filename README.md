@@ -7,16 +7,7 @@ The service will expose:
 - `POST /v1/domestic-payments`
 - `GET /v1/domestic-payments/{paymentId}`
 
-The HK ISO 20022 experiment follows the OpenSpec change in
-`openspec/changes/add-hk-iso20022-payment-simulation`.
-
-For this experiment, payment initiation is ISO-native:
-
-- `POST /v1/domestic-payments` accepts supported `pain.001.001.09` XML.
-- Create and status responses return `pain.002.001.10` XML with `ACSC`, `RJCT`, or `PDNG`.
-- Admission and authentication failures still return JSON error responses.
-- The profile is HKD-only and simulator-only, with no real HKICL/FPS connectivity.
-- `pacs.008` is internal-only inside the Payment Engine mapping and is not an external API payload.
+The implementation follows the OpenSpec change in `openspec/changes/archive/2026-05-11-add-domestic-rtp-payment-service-api`.
 
 ## Local Development
 
