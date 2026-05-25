@@ -19,7 +19,9 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
+import org.springframework.stereotype.Component;
 
+@Component
 public class Pain001Parser implements Pain001PaymentInitiationParser {
     private static final String SUPPORTED_NAMESPACE = "urn:iso:std:iso:20022:tech:xsd:pain.001.001.09";
     private static final String SOURCE_MESSAGE_TYPE = "pain.001.001.09";
@@ -34,6 +36,9 @@ public class Pain001Parser implements Pain001PaymentInitiationParser {
         }
         if (node("/iso:Document/iso:CstmrCdtTrfInitn", document) == null) {
             throw new ValidationFailureException("Unsupported pain.001 message structure");
+        }
+        if (count("//iso:PmtInf", document) != 1 || count("//iso:CdtTrfTxInf", document) != 1) {
+            throw new ValidationFailureException("Only one payment instruction per request is supported");
         }
 
         var instructedAmount = (Element) node("//iso:CdtTrfTxInf/iso:Amt/iso:InstdAmt", document);
@@ -96,6 +101,16 @@ public class Pain001Parser implements Pain001PaymentInitiationParser {
             var xpath = XPathFactory.newInstance().newXPath();
             xpath.setNamespaceContext(new SingleNamespaceContext("iso", SUPPORTED_NAMESPACE));
             return (Node) xpath.evaluate(expression, document, XPathConstants.NODE);
+        } catch (XPathExpressionException exception) {
+            throw new ValidationFailureException("Unsupported pain.001 message structure");
+        }
+    }
+
+    private int count(String expression, Document document) {
+        try {
+            var xpath = XPathFactory.newInstance().newXPath();
+            xpath.setNamespaceContext(new SingleNamespaceContext("iso", SUPPORTED_NAMESPACE));
+            return ((Number) xpath.evaluate("count(" + expression + ")", document, XPathConstants.NUMBER)).intValue();
         } catch (XPathExpressionException exception) {
             throw new ValidationFailureException("Unsupported pain.001 message structure");
         }

@@ -75,7 +75,7 @@ class IsoPaymentAdmissionServiceTest {
     @Test
     void rejectsMissingBeneficiaryAccountOrProxy() throws Exception {
         assertThatThrownBy(() -> admissionService.admit(readFixture("pain001-invalid-missing-creditor.xml"), "application/xml"))
-                .isInstanceOf(ValidationFailureException.class)
+                .isInstanceOf(SemanticPaymentException.class)
                 .hasMessageContaining("Beneficiary account or FPS proxy is required");
     }
 
@@ -85,7 +85,7 @@ class IsoPaymentAdmissionServiceTest {
                 .replace("<EndToEndId>INV-2026-0001</EndToEndId>", "");
 
         assertThatThrownBy(() -> admissionService.admit(missingReference, "application/xml"))
-                .isInstanceOf(ValidationFailureException.class)
+                .isInstanceOf(SemanticPaymentException.class)
                 .hasMessageContaining("EndToEndId or payment reference is required");
     }
 

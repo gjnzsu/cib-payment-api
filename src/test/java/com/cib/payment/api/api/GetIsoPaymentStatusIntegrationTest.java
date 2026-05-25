@@ -4,12 +4,12 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.xpath;
 
 import com.cib.payment.api.testsupport.JwtTestSupport;
-import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -29,68 +29,53 @@ import org.xml.sax.InputSource;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(GetDomesticPaymentStatusIntegrationTest.JwtTestConfiguration.class)
-class GetDomesticPaymentStatusIntegrationTest {
+@Import(GetIsoPaymentStatusIntegrationTest.JwtTestConfiguration.class)
+class GetIsoPaymentStatusIntegrationTest {
     private static final String PAIN_002_NAMESPACE = "urn:iso:std:iso:20022:tech:xsd:pain.002.001.10";
     private static final Map<String, String> NS = Map.of("iso", PAIN_002_NAMESPACE);
 
     private final MockMvc mockMvc;
 
     @Autowired
-    GetDomesticPaymentStatusIntegrationTest(MockMvc mockMvc) {
+    GetIsoPaymentStatusIntegrationTest(MockMvc mockMvc) {
         this.mockMvc = mockMvc;
     }
 
     @Test
-    void createThenGetReturnsLatestEnginePain002Status() throws Exception {
-        var paymentId = createIsoPayment("client-a", "status-key-1", "rejection");
+    void getReturnsLatestPain002FromPaymentEngineForIsoPayment() throws Exception {
+        var paymentId = createIsoPayment("client-a", "iso-status-key-1", "rejection");
 
         mockMvc.perform(get("/v1/domestic-payments/{paymentId}", paymentId)
                         .header("Authorization", bearer("client-a", "payments:read"))
+                        .header("X-Correlation-ID", "corr-status-1")
                         .accept("application/pain.002+xml"))
                 .andExpect(status().isOk())
+                .andExpect(header().string("X-Correlation-ID", "corr-status-1"))
                 .andExpect(content().contentTypeCompatibleWith("application/pain.002+xml"))
                 .andExpect(xpath("//iso:AcctSvcrRef", NS).string(paymentId))
                 .andExpect(xpath("//iso:TxSts", NS).string("RJCT"));
     }
 
     @Test
-    void unknownUuidReturnsNotFoundJsonError() throws Exception {
+    void unknownPaymentReturnsJsonNotFound() throws Exception {
         mockMvc.perform(get("/v1/domestic-payments/550e8400-e29b-41d4-a716-446655440000")
-                        .header("Authorization", bearer("client-a", "payments:read")))
-                .andExpect(status().isNotFound())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.code", equalTo("PAYMENT_NOT_FOUND")));
-    }
-
-    @Test
-    void malformedUuidReturnsBadRequestJsonError() throws Exception {
-        mockMvc.perform(get("/v1/domestic-payments/not-a-uuid")
-                        .header("Authorization", bearer("client-a", "payments:read")))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.code", equalTo("VALIDATION_ERROR")));
-    }
-
-    @Test
-    void crossClientLookupReturnsNotFoundJsonError() throws Exception {
-        var paymentId = createIsoPayment("client-a", "status-key-2", "success");
-
-        mockMvc.perform(get("/v1/domestic-payments/{paymentId}", paymentId)
-                        .header("Authorization", bearer("client-b", "payments:read")))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code", equalTo("PAYMENT_NOT_FOUND")));
-    }
-
-    @Test
-    void getDoesNotRequireIdempotencyKey() throws Exception {
-        var paymentId = createIsoPayment("client-a", "status-key-3", "success");
-
-        mockMvc.perform(get("/v1/domestic-payments/{paymentId}", paymentId)
                         .header("Authorization", bearer("client-a", "payments:read"))
                         .accept("application/pain.002+xml"))
-                .andExpect(status().isOk())
-                .andExpect(xpath("//iso:TxSts", NS).string("ACSC"));
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.code", equalTo("PAYMENT_NOT_FOUND")));
+    }
+
+    @Test
+    void foreignClientCannotSeeIsoPayment() throws Exception {
+        var paymentId = createIsoPayment("client-a", "iso-status-key-2", "success");
+
+        mockMvc.perform(get("/v1/domestic-payments/{paymentId}", paymentId)
+                        .header("Authorization", bearer("client-b", "payments:read"))
+                        .accept("application/pain.002+xml"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.code", equalTo("PAYMENT_NOT_FOUND")));
     }
 
     private String createIsoPayment(String clientId, String idempotencyKey, String scenario) throws Exception {
@@ -115,7 +100,7 @@ class GetDomesticPaymentStatusIntegrationTest {
     private String text(String xml, String expression) throws Exception {
         var factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
-        var document = factory.newDocumentBuilder().parse(new InputSource(new StringReader(xml)));
+        var document = factory.newDocumentBuilder().parse(new InputSource(new java.io.StringReader(xml)));
         var xpath = XPathFactory.newInstance().newXPath();
         return (String) xpath.evaluate(expression, document, XPathConstants.STRING);
     }

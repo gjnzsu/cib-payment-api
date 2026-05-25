@@ -6,7 +6,9 @@ import com.cib.payment.api.domain.model.PaymentId;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public class InMemoryPaymentEngineRecordRepository implements PaymentEngineRecordRepository {
     private final ConcurrentMap<PaymentId, EnginePaymentRecord> records = new ConcurrentHashMap<>();
 

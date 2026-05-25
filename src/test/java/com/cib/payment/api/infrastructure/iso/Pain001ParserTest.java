@@ -85,6 +85,52 @@ class Pain001ParserTest {
     }
 
     @Test
+    void rejectsMultiplePaymentInformationBlocks() throws Exception {
+        var xml = readFixture("pain001-success.xml")
+                .replace("</PmtInf>", "</PmtInf><PmtInf><PmtInfId>PMT-SECOND</PmtInfId></PmtInf>");
+
+        assertThatThrownBy(() -> parser.parse(xml))
+                .isInstanceOf(ValidationFailureException.class)
+                .hasMessageContaining("one payment instruction");
+    }
+
+    @Test
+    void rejectsMultipleCreditTransferTransactions() throws Exception {
+        var transaction = """
+                <CdtTrfTxInf>
+                        <PmtId>
+                          <InstrId>INSTR-SECOND</InstrId>
+                          <EndToEndId>INV-SECOND</EndToEndId>
+                        </PmtId>
+                        <Amt>
+                          <InstdAmt Ccy="HKD">1.00</InstdAmt>
+                        </Amt>
+                        <CdtrAgt>
+                          <FinInstnId>
+                            <BICFI>SUPPHKHH</BICFI>
+                          </FinInstnId>
+                        </CdtrAgt>
+                        <Cdtr>
+                          <Nm>Second Supplier</Nm>
+                        </Cdtr>
+                        <CdtrAcct>
+                          <Id>
+                            <Othr>
+                              <Id>000000000002</Id>
+                            </Othr>
+                          </Id>
+                        </CdtrAcct>
+                      </CdtTrfTxInf>
+                """;
+        var xml = readFixture("pain001-success.xml")
+                .replace("</CdtTrfTxInf>", "</CdtTrfTxInf>" + transaction);
+
+        assertThatThrownBy(() -> parser.parse(xml))
+                .isInstanceOf(ValidationFailureException.class)
+                .hasMessageContaining("one payment instruction");
+    }
+
+    @Test
     void rejectsDoctypeAndExternalEntityXml() {
         var unsafeXml = """
                 <?xml version="1.0" encoding="UTF-8"?>

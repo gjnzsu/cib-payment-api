@@ -249,7 +249,7 @@ Create or modify these areas:
 - Test: `src/test/java/com/cib/payment/api/api/CreateIsoDomesticPaymentIntegrationTest.java`
 - Test: `src/test/java/com/cib/payment/api/api/GetIsoPaymentStatusIntegrationTest.java`
 
-- [ ] **Step 1: Write failing create integration tests**
+- [x] **Step 1: Write failing create integration tests**
 
   Cover:
   - `POST` `pain001-success.xml` returns `200` and `pain.002` containing `ACSC`
@@ -263,25 +263,25 @@ Create or modify these areas:
 
   Expected: FAIL.
 
-- [ ] **Step 2: Implement XML controller path**
+- [x] **Step 2: Implement XML controller path**
 
   Keep controller limited to headers, content negotiation, request body forwarding, and response mapping. Delegate admission/idempotency/engine orchestration to application service.
 
-- [ ] **Step 3: Implement Edge idempotency link**
+- [x] **Step 3: Implement Edge idempotency link**
 
   Store client ID, idempotency key, normalized fingerprint, original `pain.002` response, engine payment ID, correlation ID, and timestamps. Replay same semantics with original response; reject changed semantics with `409`.
 
-- [ ] **Step 4: Write and implement status query tests**
+- [x] **Step 4: Write and implement status query tests**
 
   Verify `GET /v1/domestic-payments/{paymentId}` calls engine status query port and returns latest `pain.002`.
 
-- [ ] **Step 5: Run focused tests**
+- [x] **Step 5: Run focused tests**
 
   Run: `mvn test -Dtest=CreateIsoDomesticPaymentIntegrationTest,GetIsoPaymentStatusIntegrationTest`
 
   Expected: PASS.
 
-- [ ] **Step 6: Commit API integration**
+- [x] **Step 6: Commit API integration**
 
   Commit message: `feat: expose iso native payment api`
 

@@ -6,7 +6,9 @@ import com.cib.payment.api.application.port.Pain001PaymentInitiationParser;
 import com.cib.payment.api.domain.model.BeneficiaryIdentifier;
 import com.cib.payment.api.domain.model.IsoPaymentCandidate;
 import java.util.Locale;
+import org.springframework.stereotype.Service;
 
+@Service
 public class IsoPaymentAdmissionService {
     private final Pain001PaymentInitiationParser pain001Parser;
 
@@ -25,10 +27,10 @@ public class IsoPaymentAdmissionService {
         }
         var beneficiary = beneficiaryIdentifier(parsed);
         if (!beneficiary.hasAccountOrProxy()) {
-            throw new ValidationFailureException("Beneficiary account or FPS proxy is required");
+            throw new SemanticPaymentException("Beneficiary account or FPS proxy is required");
         }
         if (!hasText(parsed.endToEndId()) && !hasText(parsed.structuredCreditorReference())) {
-            throw new ValidationFailureException("EndToEndId or payment reference is required");
+            throw new SemanticPaymentException("EndToEndId or payment reference is required");
         }
 
         return new IsoPaymentCandidate(

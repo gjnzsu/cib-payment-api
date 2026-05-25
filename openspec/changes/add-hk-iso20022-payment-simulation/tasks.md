@@ -44,13 +44,13 @@
 
 ## 6. API Integration and Idempotency
 
-- [ ] 6.1 Update `POST /v1/domestic-payments` to require supported `pain.001.001.09` XML and return `pain.002.001.10` XML for processed outcomes.
-- [ ] 6.2 Update `GET /v1/domestic-payments/{paymentId}` to query the Payment Engine status port and return latest `pain.002.001.10` XML for ISO-created payments.
-- [ ] 6.3 Reuse existing authentication, scope validation, idempotency key requirement, correlation ID handling, and JSON error response shape for request admission failures.
-- [ ] 6.4 Compute Edge idempotency fingerprints from normalized XML payment semantics and behaviorally relevant scenario context.
-- [ ] 6.5 Store Edge idempotency link records with client ID, idempotency key, fingerprint, original `pain.002` response, engine payment ID, correlation ID, and timestamps.
-- [ ] 6.6 Treat semantically equivalent XML formatting differences as idempotent replay and changed payment semantics as idempotency conflict.
-- [ ] 6.7 Add integration tests for `ACSC`, `RJCT`, `PDNG`, replay, conflict, validation errors, authentication, authorization, correlation propagation, and status query.
+- [x] 6.1 Update `POST /v1/domestic-payments` to require supported `pain.001.001.09` XML and return `pain.002.001.10` XML for processed outcomes.
+- [x] 6.2 Update `GET /v1/domestic-payments/{paymentId}` to query the Payment Engine status port and return latest `pain.002.001.10` XML for ISO-created payments.
+- [x] 6.3 Reuse existing authentication, scope validation, idempotency key requirement, correlation ID handling, and JSON error response shape for request admission failures.
+- [x] 6.4 Compute Edge idempotency fingerprints from normalized XML payment semantics and behaviorally relevant scenario context.
+- [x] 6.5 Store Edge idempotency link records with client ID, idempotency key, fingerprint, original `pain.002` response, engine payment ID, correlation ID, and timestamps.
+- [x] 6.6 Treat semantically equivalent XML formatting differences as idempotent replay and changed payment semantics as idempotency conflict.
+- [x] 6.7 Add integration tests for `ACSC`, `RJCT`, `PDNG`, replay, conflict, validation errors, authentication, authorization, correlation propagation, and status query.
 
 ## 7. Observability and Sensitive Data Handling
 

@@ -19,7 +19,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public class HkPaymentEngine implements PaymentEngineInitiationPort, PaymentEngineStatusQueryPort {
     private final PaymentEngineRecordRepository recordRepository;
     private final HkClearingSettlementSimulator clearingSettlementSimulator;
@@ -27,6 +30,7 @@ public class HkPaymentEngine implements PaymentEngineInitiationPort, PaymentEngi
     private final Clock clock;
     private final Supplier<UUID> paymentIdSupplier;
 
+    @Autowired
     public HkPaymentEngine(
             PaymentEngineRecordRepository recordRepository,
             HkClearingSettlementSimulator clearingSettlementSimulator) {
