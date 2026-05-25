@@ -37,7 +37,7 @@
               {"key": "Content-Type", "value": "application/pain.001+xml"},
               {"key": "Accept", "value": "application/pain.002+xml"}
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\">\n  <CstmrCdtTrfInitn>\n    <GrpHdr><MsgId>MSG-20260524-0001</MsgId><CreDtTm>2026-05-24T10:00:00+08:00</CreDtTm><NbOfTxs>1</NbOfTxs></GrpHdr>\n    <PmtInf>\n      <PmtInfId>PMT-20260524-SUCCESS</PmtInfId><PmtMtd>TRF</PmtMtd>\n      <Dbtr><Nm>Acme Treasury HK</Nm></Dbtr>\n      <DbtrAcct><Id><Othr><Id>000111222333</Id></Othr></Id></DbtrAcct>\n      <CdtTrfTxInf>\n        <PmtId><InstrId>INSTR-20260524-0001</InstrId><EndToEndId>INV-2026-0001</EndToEndId></PmtId>\n        <Amt><InstdAmt Ccy=\"HKD\">1250.50</InstdAmt></Amt>\n        <Cdtr><Nm>Supplier HK Limited</Nm></Cdtr>\n        <CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct>\n        <RmtInf><Ustrd>Invoice INV-2026-0001 supplier settlement</Ustrd><Strd><CdtrRefInf><Ref>SCREF-2026-0001</Ref></CdtrRefInf></Strd></RmtInf>\n      </CdtTrfTxInf>\n    </PmtInf>\n  </CstmrCdtTrfInitn>\n</Document>"},
+            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\">\n  <CstmrCdtTrfInitn>\n    <GrpHdr><MsgId>MSG-20260524-0001</MsgId><CreDtTm>2026-05-24T10:00:00+08:00</CreDtTm><NbOfTxs>1</NbOfTxs></GrpHdr>\n    <PmtInf>\n      <PmtInfId>PMT-20260524-SUCCESS</PmtInfId><PmtMtd>TRF</PmtMtd>\n      <Dbtr><Nm>Acme Treasury HK</Nm></Dbtr>\n      <DbtrAcct><Id><Othr><Id>000111222333</Id></Othr></Id></DbtrAcct>\n      <DbtrAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></DbtrAgt>\n      <CdtTrfTxInf>\n        <PmtId><InstrId>INSTR-20260524-0001</InstrId><EndToEndId>INV-2026-0001</EndToEndId></PmtId>\n        <Amt><InstdAmt Ccy=\"HKD\">1250.50</InstdAmt></Amt>\n        <CdtrAgt><FinInstnId><BICFI>SUPPHKHH</BICFI></FinInstnId></CdtrAgt>\n        <Cdtr><Nm>Supplier HK Limited</Nm></Cdtr>\n        <CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct>\n        <RmtInf><Ustrd>Invoice INV-2026-0001 supplier settlement</Ustrd><Strd><CdtrRefInf><Ref>SCREF-2026-0001</Ref></CdtrRefInf></Strd></RmtInf>\n      </CdtTrfTxInf>\n    </PmtInf>\n  </CstmrCdtTrfInitn>\n</Document>"},
             "url": {"raw": "{{baseUrl}}/v1/domestic-payments", "host": ["{{baseUrl}}"], "path": ["v1", "domestic-payments"]}
           },
           "response": [
@@ -61,8 +61,8 @@
                   "  pm.expect(pm.response.text()).to.include('pain.002.001.10');",
                   "  pm.expect(pm.response.text()).to.include('<TxSts>ACSC</TxSts>');",
                   "});",
-                  "const paymentId = pm.response.text().match(/[0-9a-fA-F-]{36}/);",
-                  "if (paymentId) { pm.environment.set('paymentId', paymentId[0]); }"
+                  "const acctSvcrRef = pm.response.text().match(/<AcctSvcrRef>([^<]+)<\\/AcctSvcrRef>/);",
+                  "if (acctSvcrRef) { pm.environment.set('paymentId', acctSvcrRef[1]); }"
                 ]
               }
             }
@@ -223,7 +223,7 @@
               {"key": "X-Mock-Scenario", "value": "{{mockScenario}}"},
               {"key": "Content-Type", "value": "application/pain.001+xml"}
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-0001</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-SUCCESS</PmtInfId><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-0001</InstrId><EndToEndId>INV-2026-0001</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"HKD\">1250.50</InstdAmt></Amt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct><RmtInf><Ustrd>Invoice INV-2026-0001 supplier settlement</Ustrd><Strd><CdtrRefInf><Ref>SCREF-2026-0001</Ref></CdtrRefInf></Strd></RmtInf></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"},
+            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-0001</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-SUCCESS</PmtInfId><Dbtr><Nm>Acme Treasury HK</Nm></Dbtr><DbtrAcct><Id><Othr><Id>000111222333</Id></Othr></Id></DbtrAcct><DbtrAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></DbtrAgt><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-0001</InstrId><EndToEndId>INV-2026-0001</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"HKD\">1250.50</InstdAmt></Amt><CdtrAgt><FinInstnId><BICFI>SUPPHKHH</BICFI></FinInstnId></CdtrAgt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct><RmtInf><Ustrd>Invoice INV-2026-0001 supplier settlement</Ustrd><Strd><CdtrRefInf><Ref>SCREF-2026-0001</Ref></CdtrRefInf></Strd></RmtInf></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"},
             "url": {"raw": "{{baseUrl}}/v1/domestic-payments", "host": ["{{baseUrl}}"], "path": ["v1", "domestic-payments"]}
           },
           "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('idempotent replay returns the original pain.002', function () {", "  pm.response.to.have.status(200);", "  pm.expect(pm.response.text()).to.include('pain.002.001.10');", "});"]}}]

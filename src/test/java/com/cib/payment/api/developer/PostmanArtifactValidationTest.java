@@ -33,6 +33,7 @@ class PostmanArtifactValidationTest {
         assertThat(serialized).contains("X-Mock-Scenario", "{{mockScenario}}");
         assertThat(serialized).contains("application/pain.001+xml", "application/pain.002+xml");
         assertThat(serialized).contains("pain.001.001.09", "pain.002.001.10");
+        assertThat(serialized).contains("CIBBHKHH", "SUPPHKHH", "AcctSvcrRef");
         assertThat(serialized).contains("success", "rejection", "suspicious_proxy_or_account", "pending", "timeout", "internal_failure");
         assertThat(serialized).contains("ACSC", "RJCT", "PDNG");
         assertThat(serialized).doesNotContain("CreateDomesticPaymentRequest");
