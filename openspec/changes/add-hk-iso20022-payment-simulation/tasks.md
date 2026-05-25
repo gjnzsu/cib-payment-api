@@ -1,30 +1,30 @@
 ## 1. Contracts and Fixtures
 
-- [ ] 1.1 Define ISO-only media type handling for `pain.001.001.09` payment creation requests and `pain.002.001.10` responses/status queries.
-- [ ] 1.2 Add synthetic HKD `pain.001.001.09` fixtures for success, rejection, suspicious proxy or account, pending, timeout, internal failure, and validation failure.
-- [ ] 1.3 Add synthetic `pain.002.001.10` fixtures for `ACSC`, `RJCT`, and `PDNG` outcomes.
-- [ ] 1.4 Define internal domain records for admitted ISO payment candidates, beneficiary account or FPS proxy, supported purpose fields, internal interbank transfer representation, engine payment record, and latest `pain.002` report.
-- [ ] 1.5 Define payment reason codes for ISO validation, HK profile rejection, suspicious proxy or account, pending processing, simulator timeout, and simulator internal failure.
+- [x] 1.1 Define ISO-only media type handling for `pain.001.001.09` payment creation requests and `pain.002.001.10` responses/status queries.
+- [x] 1.2 Add synthetic HKD `pain.001.001.09` fixtures for success, rejection, suspicious proxy or account, pending, timeout, internal failure, and validation failure.
+- [x] 1.3 Add synthetic `pain.002.001.10` fixtures for `ACSC`, `RJCT`, and `PDNG` outcomes.
+- [x] 1.4 Define internal domain records for admitted ISO payment candidates, beneficiary account or FPS proxy, supported purpose fields, internal interbank transfer representation, engine payment record, and latest `pain.002` report.
+- [x] 1.5 Define payment reason codes for ISO validation, HK profile rejection, suspicious proxy or account, pending processing, simulator timeout, and simulator internal failure.
 
 ## 2. XML Parsing and HK Profile Validation
 
-- [ ] 2.1 Implement secure XML parser configuration for ISO 20022 request bodies with external entity resolution disabled.
-- [ ] 2.2 Implement supported `pain.001.001.09` detection and reject non-`pain.001.001.09` XML with consistent validation errors.
-- [ ] 2.3 Extract debtor, creditor, amount, currency, client-supplied reference/end-to-end identifier, remittance, and optional purpose/category purpose fields from supported `pain.001.001.09`.
-- [ ] 2.4 Enforce HKD-only domestic realtime profile validation, including beneficiary account or FPS proxy and payment reference or end-to-end identifier.
-- [ ] 2.5 Reject custom JSON payment initiation as unsupported for this experiment.
-- [ ] 2.6 Add unit tests for valid extraction, malformed XML, unsupported XML/message version, custom JSON initiation, missing beneficiary identifier, missing traceability identifier, unsupported currency/country profile, and unsafe XML content.
+- [x] 2.1 Implement secure XML parser configuration for ISO 20022 request bodies with external entity resolution disabled.
+- [x] 2.2 Implement supported `pain.001.001.09` detection and reject non-`pain.001.001.09` XML with consistent validation errors.
+- [x] 2.3 Extract debtor, creditor, amount, currency, client-supplied reference/end-to-end identifier, remittance, and optional purpose/category purpose fields from supported `pain.001.001.09`.
+- [x] 2.4 Enforce HKD-only domestic realtime profile validation, including beneficiary account or FPS proxy and payment reference or end-to-end identifier.
+- [x] 2.5 Reject custom JSON payment initiation as unsupported for this experiment.
+- [x] 2.6 Add unit tests for valid extraction, malformed XML, unsupported XML/message version, custom JSON initiation, missing beneficiary identifier, missing traceability identifier, unsupported currency/country profile, and unsafe XML content.
 
 ## 3. Payment Engine and Internal Mapping
 
-- [ ] 3.1 Introduce `PaymentEngineInitiationPort` for admitted ISO payment candidates and `PaymentEngineStatusQueryPort` for latest status reports.
-- [ ] 3.2 Implement an in-process Payment Engine component that receives admitted initiation, authorization context, correlation ID, idempotency context, and scenario context.
-- [ ] 3.3 Move ISO-created payment record ownership behind the Payment Engine boundary, including lifecycle status and latest `pain.002` report storage.
+- [x] 3.1 Introduce `PaymentEngineInitiationPort` for admitted ISO payment candidates and `PaymentEngineStatusQueryPort` for latest status reports.
+- [x] 3.2 Implement an in-process Payment Engine component that receives admitted initiation, authorization context, correlation ID, idempotency context, and scenario context.
+- [x] 3.3 Move ISO-created payment record ownership behind the Payment Engine boundary, including lifecycle status and latest `pain.002` report storage.
 - [x] 3.4 Map admitted `pain.001.001.09` initiation to an internal `pacs.008` interbank transfer representation without exposing `pacs.008` externally.
 - [x] 3.5 Preserve traceability between engine payment ID, supported ISO identifiers, internal message reference, idempotency link record, correlation ID, and latest `pain.002`.
 - [x] 3.6 Map simulator outcomes to internal `COMPLETED`, `REJECTED`, `PROCESSING`, `TIMEOUT`, and `FAILED` statuses with reason details.
 - [x] 3.7 Add architecture tests preventing controllers and Edge services from directly accessing engine payment repositories.
-- [ ] 3.8 Add unit tests for engine record ownership, mapping, traceability preservation, status query port behavior, and outcome-to-status mapping.
+- [x] 3.8 Add unit tests for engine record ownership, mapping, traceability preservation, status query port behavior, and outcome-to-status mapping.
 
 ## 4. HK Clearing and Settlement Simulator
 
