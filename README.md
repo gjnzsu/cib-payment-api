@@ -7,7 +7,16 @@ The service will expose:
 - `POST /v1/domestic-payments`
 - `GET /v1/domestic-payments/{paymentId}`
 
-The implementation follows the OpenSpec change in `openspec/changes/add-domestic-rtp-payment-service-api`.
+The HK ISO 20022 experiment follows the OpenSpec change in
+`openspec/changes/add-hk-iso20022-payment-simulation`.
+
+For this experiment, payment initiation is ISO-native:
+
+- `POST /v1/domestic-payments` accepts supported `pain.001.001.09` XML.
+- Create and status responses return `pain.002.001.10` XML with `ACSC`, `RJCT`, or `PDNG`.
+- Admission and authentication failures still return JSON error responses.
+- The profile is HKD-only and simulator-only, with no real HKICL/FPS connectivity.
+- `pacs.008` is internal-only inside the Payment Engine mapping and is not an external API payload.
 
 ## Local Development
 
@@ -48,7 +57,7 @@ postman/domestic-rtp-payment-api.postman_collection.json
 postman/domestic-rtp-payment-api.local.postman_environment.json
 ```
 
-Import both files into Postman, select the local environment, then set `jwtToken` to a locally valid JWT before calling secured payment endpoints. Detailed local testing guidance is in `docs/developer-support/postman-local-testing.md`.
+Import both files into Postman, select the local environment, then set `jwtToken` to a locally valid JWT before calling secured payment endpoints. The collection contains ISO XML `pain.001.001.09` requests, `pain.002.001.10` examples, deterministic simulator scenarios, replay/conflict checks, and status query. Detailed local testing guidance is in `docs/developer-support/postman-local-testing.md`.
 
 Generate a local Postman token:
 

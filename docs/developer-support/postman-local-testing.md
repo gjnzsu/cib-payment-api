@@ -1,6 +1,6 @@
 # Postman Local Testing
 
-This guide helps a developer run the Domestic RTP Payment Service API locally and exercise the main API flows from Postman.
+This guide helps a developer run the Domestic RTP Payment Service API locally and exercise the ISO-native HK payment simulation flows from Postman.
 
 ## Run The API
 
@@ -72,18 +72,32 @@ Generated local tokens use:
 
 The helper and default runtime decoder share local MVP key material. This is local development behavior for Postman and contract testing, not production key management.
 
+## ISO-Native Payment Flow
+
+`POST /v1/domestic-payments` accepts supported `pain.001.001.09` XML. A successfully admitted request returns HTTP `200` with a `pain.002.001.10` XML status report:
+
+- `ACSC`: settled in the simulator.
+- `RJCT`: rejected by the simulator or business/scheme behavior.
+- `PDNG`: still processing, timed out, or operationally pending.
+
+Malformed XML, unsupported message versions, missing mandatory fields, unsupported content type, or missing `Idempotency-Key` return JSON `400` errors and do not create a payment record. HKD-only profile failures, such as non-HKD currency, return JSON `422` errors and do not generate `pain.002`.
+
+This is simulator-only behavior with no real HKICL/FPS connectivity. The Payment Engine maps admitted `pain.001` candidates to an internal interbank transfer representation; pacs.008 is internal-only and is not accepted or returned by the external API.
+
 ## Mock Scenarios
 
 `X-Mock-Scenario` is local/test-only behavior. It is not part of production payment business semantics.
 
 Allowed values:
 
-- `success`: downstream mock maps the payment to `COMPLETED`.
-- `rejection`: downstream mock maps the payment to `REJECTED`.
-- `timeout`: downstream mock maps the payment to `TIMEOUT`.
-- `internal_failure`: downstream mock maps the payment to `FAILED`.
+- `success`: simulator returns `ACSC`.
+- `rejection`: simulator returns `RJCT`.
+- `suspicious_proxy_or_account`: simulator returns `RJCT` for a suspicious beneficiary account or FPS proxy scenario.
+- `pending`: simulator returns `PDNG` for normal processing.
+- `timeout`: simulator returns `PDNG` with timeout/operational intervention reason details.
+- `internal_failure`: simulator returns `PDNG` with internal failure reason details.
 
-The payment creation endpoint returns `202 Accepted` after request acceptance. Run `Get Payment Status` after creation to inspect the final mock outcome.
+The payment creation endpoint returns `200 OK` with `pain.002.001.10` after request processing. Run `Get Payment Status` after creation to retrieve the latest engine-owned `pain.002` report.
 
 When testing the GKE MVP deployment, run a single API replica while the service uses in-memory payment status storage. With multiple replicas, a create request can be handled by one pod and a status request by another pod, causing `PAYMENT_NOT_FOUND` for a valid payment ID. If the live deployment image was set separately from the placeholder manifest image, scale the existing deployment instead of reapplying the manifest:
 
@@ -93,15 +107,15 @@ kubectl scale deployment domestic-rtp-payment-api --replicas=1
 
 Durable shared persistence is the future production path for multi-replica deployments.
 
-The dedicated mock scenario requests also run a Postman test script that calls the returned status link automatically. In the response body for the create call, `status` should still be `ACCEPTED`; the terminal mock result appears in the Postman **Test Results** panel as `REJECTED`, `TIMEOUT`, or `FAILED`.
+The dedicated mock scenario requests assert ISO status values in the returned XML. Some requests also use `pm.sendRequest` for lightweight local helper checks.
 
 ## Suggested Manual Flow
 
 1. Run `Create Payment - Success`.
-2. Confirm the response is `202 Accepted` and Postman captures `paymentId`.
+2. Confirm the response is `200 OK` and the XML contains `pain.002.001.10` plus `ACSC`.
 3. Run `Get Payment Status`.
-4. Set `mockScenario` to `rejection`, `timeout`, or `internal_failure`, or run the dedicated mock scenario requests.
-5. Run the error scenario requests for invalid request, authentication failure, authorization failure, and idempotency conflict.
+4. Set `mockScenario` to `rejection`, `suspicious_proxy_or_account`, `pending`, `timeout`, or `internal_failure`, or run the dedicated simulator scenario requests.
+5. Run the error scenario requests for malformed XML, non-HKD profile failure, authentication failure, authorization failure, replay, and idempotency conflict.
 
 For idempotency conflict, run `Create Payment - Idempotency Conflict Setup` first, then run `Create Payment - Idempotency Conflict`. The setup request generates `conflictIdempotencyKey` and creates the original payment; the conflict request reuses the same key with a different body.
 

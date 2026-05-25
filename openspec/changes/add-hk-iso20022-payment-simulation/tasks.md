@@ -60,11 +60,11 @@
 
 ## 8. Developer Support
 
-- [ ] 8.1 Update OpenAPI 3.0.3 documentation with `pain.001.001.09` request body, `pain.002.001.10` responses/status reports, HKD-only profile constraints, simulator scenarios, and error responses.
-- [ ] 8.2 Update Postman collection and local environment with XML `pain.001` requests, `pain.002` response examples, status query, and deterministic HK simulator scenarios.
-- [ ] 8.3 Remove or replace JSON payment initiation examples from OpenAPI, Postman, fixtures, and developer documentation.
-- [ ] 8.4 Update developer documentation to describe ISO-native initiation, simulator-only scope, no real HKICL/FPS connectivity, and `pacs.008` as internal-only mapping.
-- [ ] 8.5 Add contract tests to verify OpenAPI examples and Postman artifacts align with behavior specs.
+- [x] 8.1 Update OpenAPI 3.0.3 documentation with `pain.001.001.09` request body, `pain.002.001.10` responses/status reports, HKD-only profile constraints, simulator scenarios, and error responses.
+- [x] 8.2 Update Postman collection and local environment with XML `pain.001` requests, `pain.002` response examples, status query, and deterministic HK simulator scenarios.
+- [x] 8.3 Remove or replace JSON payment initiation examples from OpenAPI, Postman, fixtures, and developer documentation.
+- [x] 8.4 Update developer documentation to describe ISO-native initiation, simulator-only scope, no real HKICL/FPS connectivity, and `pacs.008` as internal-only mapping.
+- [x] 8.5 Add contract tests to verify OpenAPI examples and Postman artifacts align with behavior specs.
 
 ## 9. Verification
 

@@ -331,7 +331,7 @@ Create or modify these areas:
 - Test: `src/test/java/com/cib/payment/api/api/OpenApiContractTest.java`
 - Test: `src/test/java/com/cib/payment/api/developer/PostmanArtifactValidationTest.java`
 
-- [ ] **Step 1: Update OpenAPI tests first**
+- [x] **Step 1: Update OpenAPI tests first**
 
   Expect OpenAPI to document:
   - `pain.001.001.09` request XML
@@ -339,25 +339,25 @@ Create or modify these areas:
   - no custom JSON payment initiation request schema
   - `ACSC`, `RJCT`, `PDNG` examples
 
-- [ ] **Step 2: Update OpenAPI YAML**
+- [x] **Step 2: Update OpenAPI YAML**
 
   Replace JSON payment creation examples with XML examples and retain JSON error response schema for admission failures.
 
-- [ ] **Step 3: Update Postman artifacts**
+- [x] **Step 3: Update Postman artifacts**
 
   Add saved requests for success, rejection, suspicious proxy/account, pending, timeout, malformed XML, non-HKD/profile failure, replay, conflict, and status query.
 
-- [ ] **Step 4: Update README and local testing docs**
+- [x] **Step 4: Update README and local testing docs**
 
   Explain ISO-native request/response, simulator-only scope, no real HKICL/FPS connectivity, and internal-only `pacs.008`.
 
-- [ ] **Step 5: Run artifact tests**
+- [x] **Step 5: Run artifact tests**
 
   Run: `mvn test -Dtest=OpenApiContractTest,PostmanArtifactValidationTest`
 
   Expected: PASS.
 
-- [ ] **Step 6: Commit developer support**
+- [x] **Step 6: Commit developer support**
 
   Commit message: `docs: update iso20022 developer artifacts`
 
