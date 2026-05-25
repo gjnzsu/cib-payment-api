@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.09">
+  <CstmrCdtTrfInitn>
+    <GrpHdr>
+      <MsgId>MSG-20260524-0004</MsgId>
+      <CreDtTm>2026-05-24T10:15:00+08:00</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <CtrlSum>3200.00</CtrlSum>
+      <InitgPty>
+        <Nm>Acme Treasury HK</Nm>
+      </InitgPty>
+    </GrpHdr>
+    <PmtInf>
+      <PmtInfId>PMT-20260524-PENDING</PmtInfId>
+      <PmtMtd>TRF</PmtMtd>
+      <NbOfTxs>1</NbOfTxs>
+      <CtrlSum>3200.00</CtrlSum>
+      <PmtTpInf>
+        <CtgyPurp>
+          <Cd>SUPP</Cd>
+        </CtgyPurp>
+      </PmtTpInf>
+      <ReqdExctnDt>
+        <Dt>2026-05-24</Dt>
+      </ReqdExctnDt>
+      <Dbtr>
+        <Nm>Acme Treasury HK</Nm>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <Othr>
+            <Id>000123456789</Id>
+          </Othr>
+        </Id>
+        <Ccy>HKD</Ccy>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId>
+          <BICFI>CIBBHKHH</BICFI>
+        </FinInstnId>
+      </DbtrAgt>
+      <CdtTrfTxInf>
+        <PmtId>
+          <InstrId>INSTR-20260524-0004</InstrId>
+          <EndToEndId>INV-2026-0004</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="HKD">3200.00</InstdAmt>
+        </Amt>
+        <CdtrAgt>
+          <FinInstnId>
+            <BICFI>SUPPHKHH</BICFI>
+          </FinInstnId>
+        </CdtrAgt>
+        <Cdtr>
+          <Nm>Supplier HK Limited</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <Othr>
+              <Id>000987654324</Id>
+            </Othr>
+          </Id>
+          <Ccy>HKD</Ccy>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>Invoice INV-2026-0004 pending processing scenario</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+    </PmtInf>
+  </CstmrCdtTrfInitn>
+</Document>

@@ -87,7 +87,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request,
             List<ValidationErrorDetailResponse> details) {
         var body = new ErrorResponse(code, message, status.value(), correlationId(request), details);
-        return ResponseEntity.status(status).body(body);
+        return ResponseEntity.status(status).contentType(org.springframework.http.MediaType.APPLICATION_JSON).body(body);
     }
 
     private String correlationId(HttpServletRequest request) {

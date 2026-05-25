@@ -31,38 +31,51 @@ class PostmanArtifactValidationTest {
         assertThat(serialized).contains("Idempotency-Key", "{{idempotencyKey}}");
         assertThat(serialized).contains("X-Correlation-ID", "{{correlationId}}");
         assertThat(serialized).contains("X-Mock-Scenario", "{{mockScenario}}");
-        assertThat(serialized).contains("success", "rejection", "timeout", "internal_failure");
+        assertThat(serialized).contains("application/pain.001+xml", "application/pain.002+xml");
+        assertThat(serialized).contains("pain.001.001.09", "pain.002.001.10");
+        assertThat(serialized).contains("CIBBHKHH", "SUPPHKHH", "AcctSvcrRef");
+        assertThat(serialized).contains("success", "rejection", "suspicious_proxy_or_account", "pending", "timeout", "internal_failure");
+        assertThat(serialized).contains("ACSC", "RJCT", "PDNG");
+        assertThat(serialized).doesNotContain("CreateDomesticPaymentRequest");
+        assertThat(serialized).doesNotContain("\"currency\": \"MYR\"");
+        assertThat(serialized).doesNotContain("\"debtorAccount\"");
         assertThat(serialized).contains("VALIDATION_ERROR", "IDEMPOTENCY_CONFLICT", "UNAUTHORIZED", "FORBIDDEN");
 
         assertThat(requestNames(collection)).contains(
                 "Create Payment - Success",
                 "Get Payment Status",
                 "Create Payment - Rejection",
+                "Create Payment - Suspicious Proxy Or Account",
+                "Create Payment - Pending",
                 "Create Payment - Timeout",
                 "Create Payment - Internal Failure",
-                "Create Payment - Invalid Request",
+                "Create Payment - Malformed XML",
+                "Create Payment - Non-HKD Profile Failure",
+                "Create Payment - Replay",
                 "Create Payment - Authentication Failure",
                 "Create Payment - Authorization Failure",
                 "Create Payment - Idempotency Conflict Setup",
                 "Create Payment - Idempotency Conflict");
         assertThat(savedExampleNames(collection)).contains(
-                "202 Accepted - Success",
-                "200 OK - Status Query",
+                "200 OK - ACSC",
+                "200 OK - Status Query ACSC",
                 "400 Bad Request - Validation",
+                "422 Unprocessable Entity - HK Profile",
                 "401 Unauthorized - Authentication",
                 "403 Forbidden - Authorization",
                 "409 Conflict - Idempotency",
-                "202 Accepted - Rejection Scenario",
-                "202 Accepted - Timeout Scenario",
-                "202 Accepted - Internal Failure Scenario");
+                "200 OK - RJCT Scenario",
+                "200 OK - PDNG Timeout Scenario",
+                "200 OK - PDNG Internal Failure Scenario");
 
         assertThat(serialized).contains(
-                "mock scenario terminal status is REJECTED",
-                "mock scenario terminal status is TIMEOUT",
-                "mock scenario terminal status is FAILED",
+                "ISO status is RJCT",
+                "ISO status is PDNG",
                 "pm.sendRequest");
         assertThat(serialized).contains(
-                "invalid request returns validation error",
+                "malformed XML returns validation error",
+                "non-HKD profile failure returns semantic error",
+                "idempotent replay returns the original pain.002",
                 "Bearer invalid-local-test-token",
                 "\"Authorization\",\"value\":\"Bearer {{readOnlyJwtToken}}",
                 "Set readOnlyJwtToken to a JWT generated with only payments:read",
@@ -94,16 +107,17 @@ class PostmanArtifactValidationTest {
         var collection = Files.readString(COLLECTION, StandardCharsets.UTF_8);
         var openApi = new ClassPathResource("openapi/domestic-payment-api.yaml")
                 .getContentAsString(StandardCharsets.UTF_8);
-        var successFixture = new ClassPathResource("fixtures/domestic-payments/success-request.json")
+        var successFixture = new ClassPathResource("iso/pain001-success.xml")
                 .getContentAsString(StandardCharsets.UTF_8);
 
         assertThat(collection).contains("/v1/domestic-payments");
         assertThat(collection).contains("CreateDomesticPayment");
-        assertThat(collection).contains("PaymentStatusResponse");
-        assertThat(collection).contains("CIBBMYKL");
-        assertThat(collection).contains("INV-2026-SUCCESS");
+        assertThat(collection).contains("pain.001.001.09", "pain.002.001.10");
+        assertThat(collection).contains("MSG-20260524-0001");
+        assertThat(collection).contains("INV-2026-0001");
         assertThat(openApi).contains("X-Mock-Scenario");
-        assertThat(successFixture).contains("\"paymentReference\": \"INV-2026-SUCCESS\"");
+        assertThat(openApi).contains("application/pain.001+xml", "application/pain.002+xml");
+        assertThat(successFixture).contains("<EndToEndId>INV-2026-0001</EndToEndId>");
     }
 
     @Test
@@ -117,7 +131,10 @@ class PostmanArtifactValidationTest {
         assertThat(docs).contains("LocalJwtTokenGenerator");
         assertThat(docs).contains("readOnlyJwtToken");
         assertThat(docs).contains("X-Mock-Scenario");
-        assertThat(docs).contains("success", "rejection", "timeout", "internal_failure");
+        assertThat(docs).contains("pain.001.001.09", "pain.002.001.10");
+        assertThat(docs).contains("ACSC", "RJCT", "PDNG");
+        assertThat(docs).contains("success", "rejection", "suspicious_proxy_or_account", "pending", "timeout", "internal_failure");
+        assertThat(docs).contains("simulator-only", "no real HKICL/FPS connectivity", "pacs.008 is internal-only");
         assertThat(docs).contains("Postman");
     }
 

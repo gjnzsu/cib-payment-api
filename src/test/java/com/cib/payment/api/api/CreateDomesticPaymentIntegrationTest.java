@@ -1,20 +1,21 @@
 package com.cib.payment.api.api;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.matchesPattern;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.cib.payment.api.testsupport.JwtTestSupport;
-import com.jayway.jsonpath.JsonPath;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -23,8 +24,6 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc
 @Import(CreateDomesticPaymentIntegrationTest.JwtTestConfiguration.class)
 class CreateDomesticPaymentIntegrationTest {
-    private static final String UUID_PATTERN = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
-
     private final MockMvc mockMvc;
 
     @Autowired
@@ -33,137 +32,59 @@ class CreateDomesticPaymentIntegrationTest {
     }
 
     @Test
-    void validRequestReturnsAcceptedPaymentResponse() throws Exception {
+    void customJsonPaymentInitiationIsUnsupportedUnderIsoOnlyContract() throws Exception {
         mockMvc.perform(post("/v1/domestic-payments")
                         .header("Authorization", bearer("payments:create"))
-                        .header("Idempotency-Key", "create-key-1")
-                        .header("X-Correlation-ID", "corr-create-1")
+                        .header("Idempotency-Key", "json-unsupported-key")
+                        .header("X-Correlation-ID", "corr-json-unsupported")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(validRequest("1250.50", "MYR")))
-                .andExpect(status().isAccepted())
-                .andExpect(header().string("X-Correlation-ID", "corr-create-1"))
-                .andExpect(jsonPath("$.paymentId", matchesPattern(UUID_PATTERN)))
-                .andExpect(jsonPath("$.status", equalTo("ACCEPTED")))
-                .andExpect(jsonPath("$.correlationId", equalTo("corr-create-1")))
-                .andExpect(jsonPath("$.links.status", matchesPattern("^/v1/domestic-payments/" + UUID_PATTERN.substring(1))));
-    }
-
-    @Test
-    void sameIdempotencyKeyAndSameBodyReplaysOriginalResponse() throws Exception {
-        var first = mockMvc.perform(post("/v1/domestic-payments")
-                        .header("Authorization", bearer("payments:create"))
-                        .header("Idempotency-Key", "create-key-2")
-                        .header("X-Correlation-ID", "corr-create-2")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(validRequest("1250.50", "MYR")))
-                .andExpect(status().isAccepted())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        mockMvc.perform(post("/v1/domestic-payments")
-                        .header("Authorization", bearer("payments:create"))
-                        .header("Idempotency-Key", "create-key-2")
-                        .header("X-Correlation-ID", "corr-create-2")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(validRequest("1250.50", "MYR")))
-                .andExpect(status().isAccepted())
-                .andExpect(result -> org.assertj.core.api.Assertions.assertThat(result.getResponse().getContentAsString()).isEqualTo(first));
-    }
-
-    @Test
-    void sameIdempotencyKeyAndDifferentBodyReturnsConflict() throws Exception {
-        mockMvc.perform(post("/v1/domestic-payments")
-                        .header("Authorization", bearer("payments:create"))
-                        .header("Idempotency-Key", "create-key-3")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(validRequest("1250.50", "MYR")))
-                .andExpect(status().isAccepted());
-
-        mockMvc.perform(post("/v1/domestic-payments")
-                        .header("Authorization", bearer("payments:create"))
-                        .header("Idempotency-Key", "create-key-3")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(validRequest("1251.50", "MYR")))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code", equalTo("IDEMPOTENCY_CONFLICT")));
-    }
-
-    @Test
-    void sameIdempotencyKeyCanBeUsedByDifferentClients() throws Exception {
-        var first = mockMvc.perform(post("/v1/domestic-payments")
-                        .header("Authorization", bearerForClient("client-a", "payments:create"))
-                        .header("Idempotency-Key", "create-key-client-scoped")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(validRequest("1250.50", "MYR")))
-                .andExpect(status().isAccepted())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        var second = mockMvc.perform(post("/v1/domestic-payments")
-                        .header("Authorization", bearerForClient("client-b", "payments:create"))
-                        .header("Idempotency-Key", "create-key-client-scoped")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(validRequest("1250.50", "MYR")))
-                .andExpect(status().isAccepted())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        org.assertj.core.api.Assertions.assertThat(JsonPath.<String>read(first, "$.paymentId"))
-                .isNotEqualTo(JsonPath.<String>read(second, "$.paymentId"));
-    }
-
-    @Test
-    void missingIdempotencyKeyReturnsBadRequest() throws Exception {
-        mockMvc.perform(post("/v1/domestic-payments")
-                        .header("Authorization", bearer("payments:create"))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(validRequest("1250.50", "MYR")))
+                        .content(validJsonRequest()))
                 .andExpect(status().isBadRequest())
+                .andExpect(header().string("X-Correlation-ID", "corr-json-unsupported"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.code", equalTo("VALIDATION_ERROR")))
+                .andExpect(jsonPath("$.correlationId", equalTo("corr-json-unsupported")));
+    }
+
+    @Test
+    void missingIdempotencyKeyStillReturnsJsonValidationError() throws Exception {
+        mockMvc.perform(post("/v1/domestic-payments")
+                        .header("Authorization", bearer("payments:create"))
+                        .contentType("application/xml")
+                        .content(fixture("iso/pain001-success.xml")))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.code", equalTo("VALIDATION_ERROR")));
     }
 
     @Test
-    void unsupportedCurrencyReturnsSemanticError() throws Exception {
+    void jsonRequestDoesNotCreateAcceptedIdempotencyRecord() throws Exception {
         mockMvc.perform(post("/v1/domestic-payments")
                         .header("Authorization", bearer("payments:create"))
-                        .header("Idempotency-Key", "create-key-4")
+                        .header("Idempotency-Key", "json-rejected-key")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(validRequest("1250.50", "USD")))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.code", equalTo("SEMANTIC_PAYMENT_ERROR")));
-    }
-
-    @Test
-    void unknownTopLevelFieldReturnsBadRequest() throws Exception {
-        mockMvc.perform(post("/v1/domestic-payments")
-                        .header("Authorization", bearer("payments:create"))
-                        .header("Idempotency-Key", "create-key-5")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "debtorAccount": {"bankCode":"CIBBMYKL","accountNumber":"1234567890","accountName":"Acme Treasury"},
-                                  "creditorAccount": {"bankCode":"PAYBMYKL","accountNumber":"9876543210","accountName":"Supplier Sdn Bhd"},
-                                  "amount": {"currency":"MYR","value":"1250.50"},
-                                  "paymentReference": "INV-2026-0001",
-                                  "unsupported": "value"
-                                }
-                                """))
+                        .content(validJsonRequest()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code", equalTo("VALIDATION_ERROR")));
+
+        mockMvc.perform(post("/v1/domestic-payments")
+                        .header("Authorization", bearer("payments:create"))
+                        .header("Idempotency-Key", "json-rejected-key")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validJsonRequest().replace("1250.50", "1251.50")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code", equalTo("VALIDATION_ERROR")));
+    }
+
+    private String fixture(String path) throws Exception {
+        return new ClassPathResource(path).getContentAsString(StandardCharsets.UTF_8);
     }
 
     private String bearer(String... scopes) {
-        return bearerForClient("client-a", scopes);
+        return "Bearer " + JwtTestSupport.tokenWithScopes("client-a", scopes);
     }
 
-    private String bearerForClient(String clientId, String... scopes) {
-        return "Bearer " + JwtTestSupport.tokenWithScopes(clientId, scopes);
-    }
-
-    private String validRequest(String amount, String currency) {
+    private String validJsonRequest() {
         return """
                 {
                   "debtorAccount": {
@@ -177,13 +98,12 @@ class CreateDomesticPaymentIntegrationTest {
                     "accountName": "Supplier Sdn Bhd"
                   },
                   "amount": {
-                    "currency": "%s",
-                    "value": "%s"
+                    "currency": "MYR",
+                    "value": "1250.50"
                   },
-                  "paymentReference": "INV-2026-0001",
-                  "remittanceInformation": "Invoice payment"
+                  "paymentReference": "INV-2026-0001"
                 }
-                """.formatted(currency, amount);
+                """;
     }
 
     static class JwtTestConfiguration {

@@ -1,8 +1,12 @@
 openapi: 3.0.3
 info:
   title: Domestic RTP Payment Service API
-  version: 0.1.0
-  description: External-facing domestic real-time payment initiation and status query API.
+  version: 0.2.0
+  description: >
+    ISO-native HK domestic realtime payment simulation API. Payment initiation
+    accepts supported pain.001.001.09 XML and returns pain.002.001.10 XML.
+    The simulator has no real HKICL/FPS connectivity, and pacs.008 is internal
+    only inside the payment engine mapping.
 servers:
   - url: http://localhost:8080
     description: Local development
@@ -12,8 +16,14 @@ paths:
   /v1/domestic-payments:
     post:
       operationId: CreateDomesticPayment
-      summary: Create a domestic real-time payment
-      description: Accepts one domestic real-time payment instruction for asynchronous processing.
+      summary: Create an ISO 20022 HK domestic realtime payment
+      description: >
+        Accepts one supported pain.001.001.09 customer credit transfer
+        initiation message for the HKD-only simulator profile. Request
+        admission failures return JSON errors and do not create a payment
+        record or pain.002. Once admitted, the Payment Engine owns the payment
+        record and returns a pain.002.001.10 status report with ACSC, RJCT, or
+        PDNG. pacs.008 is internal only.
       security:
         - bearerAuth: []
       parameters:
@@ -23,36 +33,66 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          application/pain.001+xml:
             schema:
-              $ref: '#/components/schemas/CreateDomesticPaymentRequest'
+              type: string
+              format: xml
+              description: Supported ISO 20022 pain.001.001.09 XML.
             examples:
               success:
-                value:
-                  debtorAccount:
-                    bankCode: CIBMYKL
-                    accountNumber: '1234567890'
-                    accountName: ACME Operating Account
-                  creditorAccount:
-                    bankCode: CIBMYKL
-                    accountNumber: '9876543210'
-                    accountName: Supplier Sdn Bhd
-                  amount:
-                    currency: MYR
-                    value: '1250.00'
-                  paymentReference: INV-2026-0001
-                  remittanceInformation: Invoice payment
-                  requestedExecutionDate: '2026-05-09'
+                summary: HKD success scenario
+                value: |-
+                  <?xml version="1.0" encoding="UTF-8"?>
+                  <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.09">
+                    <CstmrCdtTrfInitn>
+                      <GrpHdr><MsgId>MSG-20260524-0001</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr>
+                      <PmtInf>
+                        <PmtInfId>PMT-20260524-SUCCESS</PmtInfId>
+                        <CdtTrfTxInf>
+                          <PmtId><InstrId>INSTR-20260524-0001</InstrId><EndToEndId>INV-2026-0001</EndToEndId></PmtId>
+                          <Amt><InstdAmt Ccy="HKD">1250.50</InstdAmt></Amt>
+                          <Cdtr><Nm>Supplier HK Limited</Nm></Cdtr>
+                          <CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct>
+                          <RmtInf><Ustrd>Invoice INV-2026-0001 supplier settlement</Ustrd></RmtInf>
+                        </CdtTrfTxInf>
+                      </PmtInf>
+                    </CstmrCdtTrfInitn>
+                  </Document>
       responses:
-        '202':
-          description: Payment request accepted for asynchronous processing
+        '200':
+          description: >
+            Request was processed by the API and Payment Engine. The payment
+            outcome is reported in pain.002 using ACSC, RJCT, or PDNG.
           headers:
             X-Correlation-ID:
               $ref: '#/components/headers/CorrelationId'
           content:
-            application/json:
+            application/pain.002+xml:
               schema:
-                $ref: '#/components/schemas/PaymentResponse'
+                type: string
+                format: xml
+              examples:
+                settled:
+                  summary: ACSC settled report
+                  value: |-
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.002.001.10">
+                      <CstmrPmtStsRpt><OrgnlPmtInfAndSts><TxInfAndSts><OrgnlEndToEndId>INV-2026-0001</OrgnlEndToEndId><TxSts>ACSC</TxSts></TxInfAndSts></OrgnlPmtInfAndSts></CstmrPmtStsRpt>
+                    </Document>
+                rejected:
+                  summary: RJCT business or scheme rejection
+                  value: |-
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.002.001.10">
+                      <CstmrPmtStsRpt><OrgnlPmtInfAndSts><TxInfAndSts><OrgnlEndToEndId>INV-2026-0002</OrgnlEndToEndId><TxSts>RJCT</TxSts><StsRsnInf><Rsn><Cd>RJCT</Cd></Rsn></StsRsnInf></TxInfAndSts></OrgnlPmtInfAndSts></CstmrPmtStsRpt>
+                    </Document>
+                pending:
+                  summary: PDNG processing or timeout report
+                  value: |-
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.002.001.10">
+                      <CstmrPmtStsRpt><OrgnlPmtInfAndSts><TxInfAndSts><OrgnlEndToEndId>INV-2026-0005</OrgnlEndToEndId><TxSts>PDNG</TxSts><StsRsnInf><Rsn><Cd>PDNG</Cd></Rsn></StsRsnInf></TxInfAndSts></OrgnlPmtInfAndSts></CstmrPmtStsRpt>
+                    </Document>
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -68,29 +108,40 @@ paths:
   /v1/domestic-payments/{paymentId}:
     get:
       operationId: GetDomesticPaymentStatus
-      summary: Get domestic payment status
-      description: Returns the current known status for a payment visible to the authenticated client.
+      summary: Get latest ISO payment status report
+      description: >
+        Returns the latest engine-owned pain.002.001.10 report for an
+        ISO-created payment visible to the authenticated client.
       security:
         - bearerAuth: []
       parameters:
         - name: paymentId
           in: path
           required: true
-          description: Payment ID returned by payment creation.
+          description: Engine payment ID returned in the pain.002 report.
           schema:
             type: string
             format: uuid
         - $ref: '#/components/parameters/CorrelationId'
       responses:
         '200':
-          description: Current payment status
+          description: Latest pain.002.001.10 status report.
           headers:
             X-Correlation-ID:
               $ref: '#/components/headers/CorrelationId'
           content:
-            application/json:
+            application/pain.002+xml:
               schema:
-                $ref: '#/components/schemas/PaymentStatusResponse'
+                type: string
+                format: xml
+              examples:
+                current:
+                  summary: Current payment status report
+                  value: |-
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.002.001.10">
+                      <CstmrPmtStsRpt><OrgnlPmtInfAndSts><TxInfAndSts><OrgnlEndToEndId>INV-2026-0001</OrgnlEndToEndId><TxSts>ACSC</TxSts></TxInfAndSts></OrgnlPmtInfAndSts></CstmrPmtStsRpt>
+                    </Document>
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -130,12 +181,16 @@ components:
       name: X-Mock-Scenario
       in: header
       required: false
-      description: Local/test-only downstream mock scenario selector. Not part of production payment semantics.
+      description: >
+        Local/test-only HK clearing and settlement simulator scenario selector.
+        Not part of production payment semantics.
       schema:
         type: string
         enum:
           - success
           - rejection
+          - suspicious_proxy_or_account
+          - pending
           - timeout
           - internal_failure
   headers:
@@ -145,190 +200,48 @@ components:
         type: string
   responses:
     BadRequest:
-      description: Malformed request, validation failure, or missing required header
+      description: Malformed XML, unsupported media type, unsupported ISO version, validation failure, or missing required header.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
     Unauthorized:
-      description: Missing, expired, invalid, or unverifiable JWT
+      description: Missing, expired, invalid, or unverifiable JWT.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
     Forbidden:
-      description: Authenticated client lacks the required scope
+      description: Authenticated client lacks the required scope.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
     NotFound:
-      description: Payment not found or not visible to the authenticated client
+      description: Payment not found or not visible to the authenticated client.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
     IdempotencyConflict:
-      description: Idempotency key was reused with a different request body
+      description: Idempotency key was reused with different normalized payment semantics or scenario context.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
     UnprocessableEntity:
-      description: Semantically invalid payment instruction
+      description: HKD-only profile or payment semantic validation failure.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
     InternalServerError:
-      description: Unexpected API failure
+      description: Unexpected API failure.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
   schemas:
-    CreateDomesticPaymentRequest:
-      type: object
-      additionalProperties: false
-      required:
-        - debtorAccount
-        - creditorAccount
-        - amount
-        - paymentReference
-      properties:
-        debtorAccount:
-          $ref: '#/components/schemas/AccountReference'
-        creditorAccount:
-          $ref: '#/components/schemas/AccountReference'
-        amount:
-          $ref: '#/components/schemas/Money'
-        paymentReference:
-          type: string
-          minLength: 1
-          maxLength: 140
-        remittanceInformation:
-          type: string
-          maxLength: 280
-        requestedExecutionDate:
-          type: string
-          format: date
-    AccountReference:
-      type: object
-      additionalProperties: false
-      required:
-        - bankCode
-        - accountNumber
-        - accountName
-      properties:
-        bankCode:
-          type: string
-          minLength: 1
-          maxLength: 35
-        accountNumber:
-          type: string
-          minLength: 1
-          maxLength: 34
-        accountName:
-          type: string
-          minLength: 1
-          maxLength: 140
-    Money:
-      type: object
-      additionalProperties: false
-      required:
-        - currency
-        - value
-      properties:
-        currency:
-          type: string
-          minLength: 3
-          maxLength: 3
-          example: MYR
-        value:
-          type: string
-          pattern: '^[0-9]+(\.[0-9]{1,2})?$'
-          example: '1250.00'
-    PaymentResponse:
-      type: object
-      required:
-        - paymentId
-        - status
-        - createdAt
-        - updatedAt
-        - correlationId
-        - links
-      properties:
-        paymentId:
-          type: string
-          format: uuid
-        status:
-          $ref: '#/components/schemas/PaymentStatus'
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-        correlationId:
-          type: string
-        links:
-          type: object
-          required:
-            - status
-          properties:
-            status:
-              type: string
-    PaymentStatusResponse:
-      type: object
-      required:
-        - paymentId
-        - status
-        - createdAt
-        - updatedAt
-        - correlationId
-        - links
-      properties:
-        paymentId:
-          type: string
-          format: uuid
-        status:
-          $ref: '#/components/schemas/PaymentStatus'
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-        correlationId:
-          type: string
-        reason:
-          $ref: '#/components/schemas/PaymentReason'
-        links:
-          type: object
-          required:
-            - self
-          properties:
-            self:
-              type: string
-    PaymentStatus:
-      type: string
-      enum:
-        - ACCEPTED
-        - PROCESSING
-        - COMPLETED
-        - REJECTED
-        - FAILED
-        - TIMEOUT
-    PaymentReason:
-      type: object
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: string
-        message:
-          type: string
     ErrorResponse:
       type: object
       required:

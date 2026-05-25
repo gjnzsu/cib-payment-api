@@ -48,7 +48,7 @@ postman/domestic-rtp-payment-api.postman_collection.json
 postman/domestic-rtp-payment-api.local.postman_environment.json
 ```
 
-Import both files into Postman, select the local environment, then set `jwtToken` to a locally valid JWT before calling secured payment endpoints. Detailed local testing guidance is in `docs/developer-support/postman-local-testing.md`.
+Import both files into Postman, select the local environment, then set `jwtToken` to a locally valid JWT before calling secured payment endpoints. The collection contains ISO XML `pain.001.001.09` requests, `pain.002.001.10` examples, deterministic simulator scenarios, replay/conflict checks, and status query. Detailed local testing guidance is in `docs/developer-support/postman-local-testing.md`.
 
 Generate a local Postman token:
 

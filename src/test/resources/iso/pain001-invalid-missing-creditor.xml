@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.09">
+  <CstmrCdtTrfInitn>
+    <GrpHdr>
+      <MsgId>MSG-20260524-0006</MsgId>
+      <CreDtTm>2026-05-24T10:25:00+08:00</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <CtrlSum>99.99</CtrlSum>
+      <InitgPty>
+        <Nm>Acme Treasury HK</Nm>
+      </InitgPty>
+    </GrpHdr>
+    <PmtInf>
+      <PmtInfId>PMT-20260524-MISSING-CREDITOR</PmtInfId>
+      <PmtMtd>TRF</PmtMtd>
+      <NbOfTxs>1</NbOfTxs>
+      <CtrlSum>99.99</CtrlSum>
+      <ReqdExctnDt>
+        <Dt>2026-05-24</Dt>
+      </ReqdExctnDt>
+      <Dbtr>
+        <Nm>Acme Treasury HK</Nm>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <Othr>
+            <Id>000123456789</Id>
+          </Othr>
+        </Id>
+        <Ccy>HKD</Ccy>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId>
+          <BICFI>CIBBHKHH</BICFI>
+        </FinInstnId>
+      </DbtrAgt>
+      <CdtTrfTxInf>
+        <PmtId>
+          <InstrId>INSTR-20260524-0006</InstrId>
+          <EndToEndId>INV-2026-0006</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="HKD">99.99</InstdAmt>
+        </Amt>
+        <CdtrAgt>
+          <FinInstnId>
+            <BICFI>SUPPHKHH</BICFI>
+          </FinInstnId>
+        </CdtrAgt>
+        <Cdtr>
+          <Nm>Supplier HK Limited</Nm>
+        </Cdtr>
+        <RmtInf>
+          <Ustrd>Invoice INV-2026-0006 missing creditor account fixture</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+    </PmtInf>
+  </CstmrCdtTrfInitn>
+</Document>

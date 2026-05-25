@@ -5,10 +5,14 @@ import com.cib.payment.api.application.port.PaymentObservability;
 import com.cib.payment.api.domain.model.AuthorizationContext;
 import com.cib.payment.api.domain.model.CorrelationId;
 import com.cib.payment.api.domain.model.IdempotencyRecord;
+import com.cib.payment.api.domain.model.InternalInterbankTransfer;
+import com.cib.payment.api.domain.model.IsoPaymentCandidate;
 import com.cib.payment.api.domain.model.PaymentRecord;
+import com.cib.payment.api.domain.model.PaymentReason;
 import com.cib.payment.api.domain.model.PaymentStatus;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -99,6 +103,62 @@ public class MicrometerPaymentObservability implements PaymentObservability {
                 "downstream_mock_outcome correlationId={} scenario={} status={}",
                 correlationId.value(),
                 scenario,
+                status.name());
+    }
+
+    @Override
+    public void isoPaymentInitiationAdmitted(
+            IsoPaymentCandidate candidate,
+            AuthorizationContext authorizationContext) {
+        meterRegistry.counter("payment.iso.initiation.admitted").increment();
+        log.info(
+                "iso_payment_initiation_admitted correlationId={} clientId={} debtorAccount={} creditorAccount={} proxy={} currency={}",
+                authorizationContext.correlationId().value(),
+                authorizationContext.clientId(),
+                AccountNumberMasker.maskSensitive(candidate.debtor().accountNumber()),
+                candidate.beneficiary().accountNumber().map(AccountNumberMasker::maskSensitive).orElse(""),
+                candidate.beneficiary().fpsProxyValue().map(AccountNumberMasker::maskSensitive).orElse(""),
+                candidate.amount().currency());
+    }
+
+    @Override
+    public void enginePaymentMapped(
+            InternalInterbankTransfer transfer,
+            AuthorizationContext authorizationContext) {
+        meterRegistry.counter("payment.engine.mapped").increment();
+        log.info(
+                "engine_payment_mapped correlationId={} clientId={} paymentId={} debtorAccount={} creditorAccount={} proxy={} currency={}",
+                transfer.correlationId().value(),
+                authorizationContext.clientId(),
+                transfer.paymentId().value(),
+                AccountNumberMasker.maskSensitive(transfer.debtor().accountNumber()),
+                transfer.beneficiary().accountNumber().map(AccountNumberMasker::maskSensitive).orElse(""),
+                transfer.beneficiary().fpsProxyValue().map(AccountNumberMasker::maskSensitive).orElse(""),
+                transfer.amount().currency());
+    }
+
+    @Override
+    public void hkSimulatorOutcome(
+            String scenario,
+            PaymentStatus status,
+            Optional<PaymentReason> reason,
+            CorrelationId correlationId) {
+        meterRegistry.counter("payment.hk.simulator.outcomes", "scenario", scenario, "status", status.name()).increment();
+        log.info(
+                "hk_simulator_outcome correlationId={} scenario={} status={} reasonCode={}",
+                correlationId.value(),
+                scenario,
+                status.name(),
+                reason.map(PaymentReason::code).orElse(""));
+    }
+
+    @Override
+    public void pain002Generated(String paymentId, PaymentStatus status, CorrelationId correlationId) {
+        meterRegistry.counter("payment.pain002.generated", "status", status.name()).increment();
+        log.info(
+                "pain002_generated correlationId={} paymentId={} status={}",
+                correlationId.value(),
+                paymentId,
                 status.name());
     }
 }
