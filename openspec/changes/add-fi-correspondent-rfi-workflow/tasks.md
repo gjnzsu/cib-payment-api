@@ -32,19 +32,19 @@
 ## 5. camt.056 Recall Request and camt.029 Resolution
 
 - [x] 5.1 Implement secure supported-profile `camt.056` parser with external entity resolution disabled.
-- [ ] 5.2 Validate recall request identifiers, supported recall reason, target FI payment ownership, reference to the original FI payment, and eligibility for `SETTLED` or `PROCESSING` FI payment status.
-- [ ] 5.3 Implement deterministic recall/investigation simulator outcomes for `recall_accepted`, `recall_rejected`, and `investigation_pending`.
-- [ ] 5.4 Implement recall/investigation service that stores at most one recall record per FI payment linked to correspondent settlement context.
+- [x] 5.2 Validate recall request identifiers, supported recall reason, target FI payment ownership, reference to the original FI payment, and eligibility for `SETTLED` or `PROCESSING` FI payment status.
+- [x] 5.3 Implement deterministic recall/investigation simulator outcomes for `recall_accepted`, `recall_rejected`, and `investigation_pending`.
+- [x] 5.4 Implement recall/investigation service that stores at most one recall record per FI payment linked to correspondent settlement context.
 - [x] 5.5 Implement deterministic `camt.029` renderer for accepted, rejected, and pending investigation resolutions.
-- [ ] 5.6 Add unit tests for `camt.056` parsing, recall validation, `SETTLED` and `PROCESSING` recall eligibility, `REJECTED` payment recall rejection, one-record-per-payment rule, simulator outcomes, `camt.029` rendering, record storage, and latest investigation summary updates.
+- [x] 5.6 Add unit tests for `camt.056` parsing, recall validation, `SETTLED` and `PROCESSING` recall eligibility, `REJECTED` payment recall rejection, one-record-per-payment rule, simulator outcomes, `camt.029` rendering, record storage, and latest investigation summary updates.
 
 ## 6. Security, Idempotency, Correlation, and Masking
 
 - [ ] 6.1 Add FI-specific authorization enforcement for `fi-payments:create`, `fi-payments:read`, and `fi-payments:investigate`.
 - [ ] 6.2 Update local JWT token generation and test helpers to support FI-specific scopes.
-- [ ] 6.3 Require `Idempotency-Key` for FI payment creation and recall requests, while leaving FI status query idempotency-free.
-- [ ] 6.4 Implement normalized idempotency fingerprints for accepted `pacs.009` and `camt.056` business semantics.
-- [ ] 6.5 Replay duplicate FI payment and recall requests with the original accepted response, and reject semantic conflicts with `409 Conflict`.
+- [x] 6.3 Require `Idempotency-Key` for FI payment creation and recall requests, while leaving FI status query idempotency-free.
+- [x] 6.4 Implement normalized idempotency fingerprints for accepted `pacs.009` and `camt.056` business semantics.
+- [x] 6.5 Replay duplicate FI payment and recall requests with the original accepted response, and reject semantic conflicts with `409 Conflict`.
 - [ ] 6.6 Propagate correlation ID through FI records, recall records, idempotency records, simulator calls, logs, response headers, JSON responses, and `camt.029` XML responses.
 - [ ] 6.7 Extend sensitive data masking for FI XML payloads, BIC-linked account references, and simulated correspondent account references.
 - [ ] 6.8 Add integration tests for FI auth failures, scope failures, idempotency replay/conflict, correlation propagation, ownership checks, and sensitive logging.
