@@ -16,9 +16,9 @@
 
 ## 3. pacs.009 Admission and FI Payment Simulation
 
-- [ ] 3.1 Implement secure supported-profile `pacs.009` parser with external entity resolution disabled.
+- [x] 3.1 Implement secure supported-profile `pacs.009` parser with external entity resolution disabled.
 - [ ] 3.2 Validate required FI payment fields, single-payment request shape, USD-only settlement currency, and correspondent route profiles that derive supported account relationship roles.
-- [ ] 3.3 Implement FI payment admission service that returns a normalized FI payment candidate only after request admissibility checks pass.
+- [x] 3.3 Implement FI payment admission service that returns a normalized FI payment candidate only after request admissibility checks pass.
 - [ ] 3.4 Implement deterministic FI payment simulator outcomes for `fi_payment_accepted`, `fi_payment_rejected_unsupported_correspondent`, and `fi_payment_pending_correspondent_review`.
 - [ ] 3.5 Implement FI payment creation service that stores FI payment records with lifecycle status, correspondent context, owner client, idempotency link, and correlation ID.
 - [ ] 3.6 Add unit tests for parser behavior, admission validation, simulator outcomes, correspondent context capture, and FI payment record creation.
