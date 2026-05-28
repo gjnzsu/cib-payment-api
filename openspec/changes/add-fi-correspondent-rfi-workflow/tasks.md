@@ -4,7 +4,7 @@
 - [x] 1.2 Add synthetic `camt.056` XML fixtures for recall accepted, recall rejected, investigation pending, wrong original payment reference, malformed XML, and unsafe XML cases.
 - [x] 1.3 Add synthetic `camt.029` XML fixtures for accepted, rejected, and pending investigation resolutions.
 - [x] 1.4 Add fixture validation tests that verify namespaces, synthetic identifiers, USD-only valid FI fixtures, and absence of real sensitive account or customer data.
-- [ ] 1.5 Define a supported USD correspondent route profile matrix that deterministically derives `NOSTRO`, `VOSTRO`, and `LORO` settlement account roles for test fixtures and simulator scenarios.
+- [x] 1.5 Define a supported USD correspondent route profile matrix that deterministically derives `NOSTRO`, `VOSTRO`, and `LORO` settlement account roles for test fixtures and simulator scenarios.
 
 ## 2. FI Domain Model and Repository Boundaries
 
@@ -17,9 +17,9 @@
 ## 3. pacs.009 Admission and FI Payment Simulation
 
 - [x] 3.1 Implement secure supported-profile `pacs.009` parser with external entity resolution disabled.
-- [ ] 3.2 Validate required FI payment fields, single-payment request shape, USD-only settlement currency, and correspondent route profiles that derive supported account relationship roles.
+- [x] 3.2 Validate required FI payment fields, single-payment request shape, USD-only settlement currency, and correspondent route profiles that derive supported account relationship roles.
 - [x] 3.3 Implement FI payment admission service that returns a normalized FI payment candidate only after request admissibility checks pass.
-- [ ] 3.4 Implement deterministic FI payment simulator outcomes for `fi_payment_accepted`, `fi_payment_rejected_unsupported_correspondent`, and `fi_payment_pending_correspondent_review`.
+- [x] 3.4 Implement deterministic FI payment simulator outcomes for `fi_payment_accepted`, `fi_payment_rejected_unsupported_correspondent`, and `fi_payment_pending_correspondent_review`.
 - [ ] 3.5 Implement FI payment creation service that stores FI payment records with lifecycle status, correspondent context, owner client, idempotency link, and correlation ID.
 - [ ] 3.6 Add unit tests for parser behavior, admission validation, simulator outcomes, correspondent context capture, and FI payment record creation.
 
