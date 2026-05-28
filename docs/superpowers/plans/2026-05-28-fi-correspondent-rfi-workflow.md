@@ -61,7 +61,6 @@ Create or modify these areas:
 - Create: `src/test/resources/fi/camt029-rejected.xml`
 - Create: `src/test/resources/fi/camt029-pending.xml`
 - Create: `src/test/java/com/cib/payment/api/infrastructure/iso/FiIsoFixtureValidationTest.java`
-- Create: `src/test/java/com/cib/payment/api/infrastructure/simulator/FiCorrespondentRouteProfileTest.java`
 
 - [ ] **Step 1: Add fixture validation tests first**
 
@@ -110,30 +109,16 @@ Use message namespaces:
 - `camt.056`: `urn:iso:std:iso:20022:tech:xsd:camt.056.001.08`
 - `camt.029`: `urn:iso:std:iso:20022:tech:xsd:camt.029.001.09`
 
-- [ ] **Step 4: Add route profile matrix test**
+- [ ] **Step 4: Run fixture validation test**
 
-Create `FiCorrespondentRouteProfileTest` expecting:
+Run: `mvn test -Dtest=FiIsoFixtureValidationTest`
 
-```java
-assertThat(profile.derive("CIBBHKHH", "CORRUS33", "USD").accountRole()).isEqualTo(AccountRelationshipRole.NOSTRO);
-assertThat(profile.derive("VOSTUS33", "CIBBHKHH", "USD").accountRole()).isEqualTo(AccountRelationshipRole.VOSTRO);
-assertThat(profile.derive("CIBBHKHH", "LOROUS33", "USD").accountRole()).isEqualTo(AccountRelationshipRole.LORO);
-assertThatThrownBy(() -> profile.derive("CIBBHKHH", "UNKNOWN33", "USD"))
-        .isInstanceOf(ValidationFailureException.class);
-```
+Expected: PASS.
 
-- [ ] **Step 5: Run fixture and route tests**
-
-Run: `mvn test -Dtest=FiIsoFixtureValidationTest,FiCorrespondentRouteProfileTest`
-
-Expected: FAIL until route profile implementation exists in Task 4.
-
-- [ ] **Step 6: Commit fixture baseline**
-
-Commit after Task 1 and Task 4 route profile implementation pass together:
+- [ ] **Step 5: Commit fixture baseline**
 
 ```powershell
-git add src/test/resources/fi src/test/java/com/cib/payment/api/infrastructure/iso/FiIsoFixtureValidationTest.java src/test/java/com/cib/payment/api/infrastructure/simulator/FiCorrespondentRouteProfileTest.java
+git add src/test/resources/fi src/test/java/com/cib/payment/api/infrastructure/iso/FiIsoFixtureValidationTest.java
 git commit -m "test: add fi iso fixtures"
 ```
 
@@ -320,7 +305,7 @@ git commit -m "feat: add pacs009 fi payment admission"
 - Test: `src/test/java/com/cib/payment/api/infrastructure/simulator/FiCorrespondentRouteProfileTest.java`
 - Test: `src/test/java/com/cib/payment/api/infrastructure/simulator/DeterministicFiCorrespondentPaymentSimulatorTest.java`
 
-- [ ] **Step 1: Complete route profile tests from Task 1**
+- [ ] **Step 1: Write route profile matrix tests**
 
 Route matrix:
 
@@ -329,6 +314,16 @@ Route matrix:
 | `CIBBHKHH` | `CORRUS33` | `USD` | `NOSTRO` | `nostro-usd-corrus33-****1234` |
 | `VOSTUS33` | `CIBBHKHH` | `USD` | `VOSTRO` | `vostro-usd-vostus33-****5678` |
 | `CIBBHKHH` | `LOROUS33` | `USD` | `LORO` | `loro-usd-lorous33-****9012` |
+
+Create `FiCorrespondentRouteProfileTest` expecting:
+
+```java
+assertThat(profile.derive("CIBBHKHH", "CORRUS33", "USD").accountRole()).isEqualTo(AccountRelationshipRole.NOSTRO);
+assertThat(profile.derive("VOSTUS33", "CIBBHKHH", "USD").accountRole()).isEqualTo(AccountRelationshipRole.VOSTRO);
+assertThat(profile.derive("CIBBHKHH", "LOROUS33", "USD").accountRole()).isEqualTo(AccountRelationshipRole.LORO);
+assertThatThrownBy(() -> profile.derive("CIBBHKHH", "UNKNOWN33", "USD"))
+        .isInstanceOf(ValidationFailureException.class);
+```
 
 - [ ] **Step 2: Implement `FiCorrespondentRouteProfile`**
 
