@@ -55,6 +55,34 @@ class EdgeEngineBoundaryTest {
         }
     }
 
+    @Test
+    void fiControllersDoNotAccessFiRepositoriesDirectly() throws IOException {
+        for (var source : javaSources("com/cib/payment/api/api/controller")) {
+            assertThat(read(source))
+                    .as("%s must delegate FI persistence through application services", source)
+                    .doesNotContain("FiPaymentRepository")
+                    .doesNotContain("RecallInvestigationRepository")
+                    .doesNotContain("InMemoryFiPaymentRepository")
+                    .doesNotContain("InMemoryRecallInvestigationRepository");
+        }
+    }
+
+    @Test
+    void fiDomainModelsDoNotDependOnApiHttpSpringOrXmlClasses() throws IOException {
+        for (var source : fiDomainSources()) {
+            assertThat(read(source))
+                    .as("%s must stay framework and adapter independent", source)
+                    .doesNotContain("com.cib.payment.api.api")
+                    .doesNotContain("jakarta.servlet")
+                    .doesNotContain("javax.servlet")
+                    .doesNotContain("org.springframework")
+                    .doesNotContain("org.w3c.dom")
+                    .doesNotContain("javax.xml")
+                    .doesNotContain("jakarta.xml")
+                    .doesNotContain("org.xml.sax");
+        }
+    }
+
     private List<Path> javaSources(String packagePath) throws IOException {
         var root = MAIN_SOURCES.resolve(packagePath);
         try (Stream<Path> paths = Files.walk(root)) {
@@ -62,6 +90,18 @@ class EdgeEngineBoundaryTest {
                     .filter(path -> path.toString().endsWith(".java"))
                     .toList();
         }
+    }
+
+    private List<Path> fiDomainSources() throws IOException {
+        return javaSources("com/cib/payment/api/domain/model").stream()
+                .filter(path -> {
+                    var fileName = path.getFileName().toString();
+                    return fileName.startsWith("Fi")
+                            || fileName.startsWith("RecallInvestigation")
+                            || fileName.equals("AccountRelationshipRole.java")
+                            || fileName.equals("CorrespondentSettlementContext.java");
+                })
+                .toList();
     }
 
     private String read(Path path) throws IOException {

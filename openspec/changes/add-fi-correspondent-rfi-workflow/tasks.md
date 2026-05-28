@@ -8,11 +8,11 @@
 
 ## 2. FI Domain Model and Repository Boundaries
 
-- [ ] 2.1 Define FI payment domain concepts for FI payment ID, FI payment record, FI payment status, FI parties, supported FI payment identifiers, and USD settlement amount.
-- [ ] 2.2 Define correspondent settlement context with instructing agent, instructed agent, optional correspondent/intermediary bank, account relationship role, and masked simulated account reference.
-- [ ] 2.3 Define recall/investigation domain concepts for recall request record, investigation status, investigation reason, and `camt.029` resolution summary.
-- [ ] 2.4 Add in-memory FI payment and recall/investigation repositories behind application ports, separate from domestic payment and idempotency storage.
-- [ ] 2.5 Add architecture tests that prevent controllers from directly accessing FI repositories and prevent FI domain code from depending on HTTP, Spring, or XML parser implementation details.
+- [x] 2.1 Define FI payment domain concepts for FI payment ID, FI payment record, FI payment status, FI parties, supported FI payment identifiers, and USD settlement amount.
+- [x] 2.2 Define correspondent settlement context with instructing agent, instructed agent, optional correspondent/intermediary bank, account relationship role, and masked simulated account reference.
+- [x] 2.3 Define recall/investigation domain concepts for recall request record, investigation status, investigation reason, and `camt.029` resolution summary.
+- [x] 2.4 Add in-memory FI payment and recall/investigation repositories behind application ports, separate from domestic payment and idempotency storage.
+- [x] 2.5 Add architecture tests that prevent controllers from directly accessing FI repositories and prevent FI domain code from depending on HTTP, Spring, or XML parser implementation details.
 
 ## 3. pacs.009 Admission and FI Payment Simulation
 
