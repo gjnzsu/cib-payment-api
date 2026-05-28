@@ -8,6 +8,7 @@ import com.cib.payment.api.application.port.FiPaymentRepository;
 import com.cib.payment.api.application.port.IdempotencyRepository;
 import com.cib.payment.api.application.port.RecallInvestigationOutcome;
 import com.cib.payment.api.application.port.RecallInvestigationRepository;
+import com.cib.payment.api.application.port.RecallInvestigationResponseRenderer;
 import com.cib.payment.api.application.port.RecallInvestigationSimulator;
 import com.cib.payment.api.domain.model.AuthorizationContext;
 import com.cib.payment.api.domain.model.FiPaymentId;
@@ -19,7 +20,6 @@ import com.cib.payment.api.domain.model.PaymentStatus;
 import com.cib.payment.api.domain.model.RecallInvestigationId;
 import com.cib.payment.api.domain.model.RecallInvestigationRecord;
 import com.cib.payment.api.domain.model.RecallInvestigationStatus;
-import com.cib.payment.api.infrastructure.iso.Camt029Renderer;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Map;
@@ -38,7 +38,7 @@ public class CreateRecallInvestigationService {
 
     private final Camt056RecallRequestParser parser;
     private final RecallInvestigationSimulator simulator;
-    private final Camt029Renderer renderer;
+    private final RecallInvestigationResponseRenderer renderer;
     private final FiPaymentRepository fiPaymentRepository;
     private final RecallInvestigationRepository recallInvestigationRepository;
     private final IdempotencyRepository idempotencyRepository;
@@ -49,7 +49,7 @@ public class CreateRecallInvestigationService {
     public CreateRecallInvestigationService(
             Camt056RecallRequestParser parser,
             RecallInvestigationSimulator simulator,
-            Camt029Renderer renderer,
+            RecallInvestigationResponseRenderer renderer,
             FiPaymentRepository fiPaymentRepository,
             RecallInvestigationRepository recallInvestigationRepository,
             IdempotencyRepository idempotencyRepository,
@@ -68,7 +68,7 @@ public class CreateRecallInvestigationService {
     CreateRecallInvestigationService(
             Camt056RecallRequestParser parser,
             RecallInvestigationSimulator simulator,
-            Camt029Renderer renderer,
+            RecallInvestigationResponseRenderer renderer,
             FiPaymentRepository fiPaymentRepository,
             RecallInvestigationRepository recallInvestigationRepository,
             IdempotencyRepository idempotencyRepository,
@@ -115,7 +115,7 @@ public class CreateRecallInvestigationService {
         synchronized (idempotencyLock(authorizationContext.clientId(), idempotencyKey)) {
             var existing = idempotencyRepository.find(authorizationContext.clientId(), idempotencyKey);
             if (existing.isPresent()) {
-                return replayOrConflict(existing.get(), fingerprint);
+                return replayOrConflict(existing.get(), fingerprint, paymentId);
             }
 
             if (recallInvestigationRepository.findByPaymentId(paymentId).isPresent()) {
@@ -126,11 +126,6 @@ public class CreateRecallInvestigationService {
             var now = Instant.now(clock);
             var record = toRecord(payment, recallRequest, outcome, authorizationContext, now);
             var responseXml = renderer.render(record);
-
-            var storedRecall = recallInvestigationRepository.saveIfAbsent(record);
-            if (!storedRecall.equals(record)) {
-                throw new IdempotencyConflictException("Recall investigation already exists for FI payment");
-            }
 
             var idempotencyRecord = new IdempotencyRecord(
                     authorizationContext.clientId(),
@@ -146,7 +141,12 @@ public class CreateRecallInvestigationService {
 
             var storedIdempotencyRecord = idempotencyRepository.saveIfAbsent(idempotencyRecord);
             if (!storedIdempotencyRecord.equals(idempotencyRecord)) {
-                return replayOrConflict(storedIdempotencyRecord, fingerprint);
+                return replayOrConflict(storedIdempotencyRecord, fingerprint, paymentId);
+            }
+
+            var storedRecall = recallInvestigationRepository.saveIfAbsent(record);
+            if (!storedRecall.equals(record)) {
+                throw new IdempotencyConflictException("Recall investigation already exists for FI payment");
             }
 
             return responseXml;
@@ -211,12 +211,17 @@ public class CreateRecallInvestigationService {
         return mockScenario;
     }
 
-    private String replayOrConflict(IdempotencyRecord existing, String fingerprint) {
+    private String replayOrConflict(IdempotencyRecord existing, String fingerprint, FiPaymentId paymentId) {
         if (!existing.requestFingerprint().equals(fingerprint)) {
             throw new IdempotencyConflictException("Idempotency key was reused with a different recall request");
         }
         if (existing.originalResponseXml() == null || existing.originalResponseXml().isBlank()) {
             throw new IdempotencyConflictException("Idempotency record does not contain a camt.029 response");
+        }
+        var storedRecall = recallInvestigationRepository.findByPaymentId(paymentId)
+                .orElseThrow(() -> new IdempotencyConflictException("Recall investigation is not available for idempotent replay"));
+        if (!existing.originalResponseXml().contains(storedRecall.investigationId().value().toString())) {
+            throw new IdempotencyConflictException("Idempotency record does not match the stored recall investigation");
         }
         return existing.originalResponseXml();
     }

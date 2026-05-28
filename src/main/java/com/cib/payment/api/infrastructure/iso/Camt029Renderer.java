@@ -1,5 +1,6 @@
 package com.cib.payment.api.infrastructure.iso;
 
+import com.cib.payment.api.application.port.RecallInvestigationResponseRenderer;
 import com.cib.payment.api.domain.model.RecallInvestigationRecord;
 import com.cib.payment.api.domain.model.RecallInvestigationStatus;
 import java.io.StringWriter;
@@ -14,7 +15,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 @Component
-public class Camt029Renderer {
+public class Camt029Renderer implements RecallInvestigationResponseRenderer {
     private static final String CAMT_029_NAMESPACE = "urn:iso:std:iso:20022:tech:xsd:camt.029.001.09";
     private static final String ORIGINAL_MESSAGE_TYPE = "camt.056.001.08";
 

@@ -6,6 +6,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.cib.payment.api.application.exception.IdempotencyConflictException;
 import com.cib.payment.api.application.exception.PaymentNotFoundException;
 import com.cib.payment.api.application.exception.ValidationFailureException;
+import com.cib.payment.api.application.port.IdempotencyRepository;
+import com.cib.payment.api.application.port.RecallInvestigationRepository;
+import com.cib.payment.api.application.port.RecallInvestigationResponseRenderer;
+import com.cib.payment.api.domain.model.IdempotencyRecord;
 import com.cib.payment.api.domain.model.AccountRelationshipRole;
 import com.cib.payment.api.domain.model.AuthorizationContext;
 import com.cib.payment.api.domain.model.CorrelationId;
@@ -17,7 +21,9 @@ import com.cib.payment.api.domain.model.FiPaymentRecord;
 import com.cib.payment.api.domain.model.FiPaymentStatus;
 import com.cib.payment.api.domain.model.Money;
 import com.cib.payment.api.domain.model.PaymentReason;
-import com.cib.payment.api.infrastructure.iso.Camt029Renderer;
+import com.cib.payment.api.domain.model.RecallInvestigationId;
+import com.cib.payment.api.domain.model.RecallInvestigationRecord;
+import com.cib.payment.api.domain.model.RecallInvestigationStatus;
 import com.cib.payment.api.infrastructure.iso.Camt056Parser;
 import com.cib.payment.api.infrastructure.persistence.InMemoryFiPaymentRepository;
 import com.cib.payment.api.infrastructure.persistence.InMemoryIdempotencyRepository;
@@ -39,7 +45,7 @@ class CreateRecallInvestigationServiceTest {
     private final CreateRecallInvestigationService service = new CreateRecallInvestigationService(
             new Camt056Parser(),
             new DeterministicRecallInvestigationSimulator(),
-            new Camt029Renderer(),
+            new TestRecallInvestigationResponseRenderer(),
             fiPaymentRepository,
             recallRepository,
             new InMemoryIdempotencyRepository(),
@@ -202,6 +208,84 @@ class CreateRecallInvestigationServiceTest {
     }
 
     @Test
+    void idempotencySaveFailureDoesNotPersistRecallSideEffect() throws Exception {
+        var payment = storePayment("fi-client-a", FiPaymentStatus.SETTLED);
+        var recallRepository = new InMemoryRecallInvestigationRepository();
+        var service = new CreateRecallInvestigationService(
+                new Camt056Parser(),
+                new DeterministicRecallInvestigationSimulator(),
+                new TestRecallInvestigationResponseRenderer(),
+                fiPaymentRepository,
+                recallRepository,
+                new FailingSaveIdempotencyRepository(),
+                new RequestFingerprintService());
+
+        assertThatThrownBy(() -> service.create(
+                        payment.paymentId().value().toString(),
+                        readFixture("camt056-recall-accepted.xml"),
+                        "application/camt.056+xml",
+                        authorizationContext("fi-client-a", "corr-fi-recall-idem-failure"),
+                        "idem-recall-save-failure",
+                        "recall_accepted"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("simulated idempotency save failure");
+        assertThat(recallRepository.findByPaymentId(payment.paymentId())).isEmpty();
+    }
+
+    @Test
+    void idempotencyRecordSavedBeforeRecallConflictDoesNotReplayDifferentRecall() throws Exception {
+        var payment = storePayment("fi-client-a", FiPaymentStatus.SETTLED);
+        var existingRecall = existingRecallFor(payment);
+        var recallRepository = new RaceConflictRecallInvestigationRepository(existingRecall);
+        var service = new CreateRecallInvestigationService(
+                new Camt056Parser(),
+                new DeterministicRecallInvestigationSimulator(),
+                new TestRecallInvestigationResponseRenderer(),
+                fiPaymentRepository,
+                recallRepository,
+                new InMemoryIdempotencyRepository(),
+                new RequestFingerprintService());
+
+        assertThatThrownBy(() -> service.create(
+                        payment.paymentId().value().toString(),
+                        readFixture("camt056-recall-accepted.xml"),
+                        "application/camt.056+xml",
+                        authorizationContext("fi-client-a", "corr-fi-recall-race-first"),
+                        "idem-recall-race",
+                        "recall_accepted"))
+                .isInstanceOf(IdempotencyConflictException.class)
+                .hasMessageContaining("Recall investigation already exists for FI payment");
+
+        assertThatThrownBy(() -> service.create(
+                        payment.paymentId().value().toString(),
+                        readFixture("camt056-recall-accepted.xml"),
+                        "application/camt.056+xml",
+                        authorizationContext("fi-client-a", "corr-fi-recall-race-replay"),
+                        "idem-recall-race",
+                        "recall_accepted"))
+                .isInstanceOf(IdempotencyConflictException.class)
+                .hasMessageContaining("Idempotency record does not match the stored recall investigation");
+    }
+
+    private RecallInvestigationRecord existingRecallFor(FiPaymentRecord payment) {
+        var now = Instant.parse("2026-05-28T00:00:00Z");
+        return new RecallInvestigationRecord(
+                new RecallInvestigationId(UUID.randomUUID()),
+                payment.paymentId(),
+                payment.ownerClientId(),
+                "EXISTING-CAMT056",
+                "EXISTING-CASE",
+                payment.identifiers().originalPaymentReference(),
+                RecallInvestigationStatus.ACCEPTED,
+                Optional.of("AC01"),
+                Optional.of("Existing recall"),
+                payment.correspondentSettlementContext(),
+                new CorrelationId("corr-existing-recall"),
+                now,
+                now);
+    }
+
+    @Test
     void missingIdempotencyKeyFails() throws Exception {
         var payment = storePayment("fi-client-a", FiPaymentStatus.SETTLED);
 
@@ -279,5 +363,65 @@ class CreateRecallInvestigationServiceTest {
 
     private String readFixture(String fileName) throws Exception {
         return Files.readString(Path.of("src", "test", "resources", "fi", fileName), StandardCharsets.UTF_8);
+    }
+
+    private static final class FailingSaveIdempotencyRepository implements IdempotencyRepository {
+        @Override
+        public Optional<IdempotencyRecord> find(String clientId, String idempotencyKey) {
+            return Optional.empty();
+        }
+
+        @Override
+        public IdempotencyRecord saveIfAbsent(IdempotencyRecord record) {
+            throw new IllegalStateException("simulated idempotency save failure");
+        }
+    }
+
+    private static final class RaceConflictRecallInvestigationRepository implements RecallInvestigationRepository {
+        private final RecallInvestigationRecord existing;
+        private boolean saveAttempted;
+
+        private RaceConflictRecallInvestigationRepository(RecallInvestigationRecord existing) {
+            this.existing = existing;
+        }
+
+        @Override
+        public Optional<RecallInvestigationRecord> findByPaymentId(FiPaymentId paymentId) {
+            if (!saveAttempted) {
+                return Optional.empty();
+            }
+            return Optional.of(existing).filter(record -> record.fiPaymentId().equals(paymentId));
+        }
+
+        @Override
+        public Optional<RecallInvestigationRecord> findByPaymentIdAndOwnerClientId(
+                FiPaymentId paymentId,
+                String ownerClientId) {
+            return findByPaymentId(paymentId).filter(record -> record.ownerClientId().equals(ownerClientId));
+        }
+
+        @Override
+        public RecallInvestigationRecord saveIfAbsent(RecallInvestigationRecord record) {
+            saveAttempted = true;
+            return existing;
+        }
+    }
+
+    private static final class TestRecallInvestigationResponseRenderer implements RecallInvestigationResponseRenderer {
+        @Override
+        public String render(RecallInvestigationRecord record) {
+            return "<camt029 id=\"camt029-" + record.investigationId().value()
+                    + "\" statusCode=\"" + confirmationCode(record.status())
+                    + "\" correlationId=\"" + record.correlationId().value()
+                    + "\"/>";
+        }
+
+        private String confirmationCode(RecallInvestigationStatus status) {
+            return switch (status) {
+                case ACCEPTED -> "CNCL";
+                case REJECTED -> "RJCR";
+                case PENDING -> "PDCR";
+            };
+        }
     }
 }
