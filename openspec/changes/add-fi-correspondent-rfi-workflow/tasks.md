@@ -61,11 +61,11 @@
 
 ## 8. Developer Support and Product Documentation
 
-- [ ] 8.1 Update OpenAPI 3.0.3 documentation for FI payment endpoints, media types, scopes, idempotency, JSON status response, `camt.029` response examples, and simulator-only limitations.
-- [ ] 8.2 Update Postman collection and local environment with FI payment creation, status query, recall accepted, recall rejected, investigation pending, idempotency replay, idempotency conflict, auth failure, scope failure, and validation failure scenarios.
-- [ ] 8.3 Update README or developer support docs with FI-specific token generation, USD-only profile, correspondent account context, and no-real-ledger limitations.
-- [ ] 8.4 Update product strategy or developer docs to note that `baas-api-sandbox` integration remains a future scenario-pack integration, not part of this runtime change.
-- [ ] 8.5 Add artifact validation tests that verify OpenAPI, Postman, and fixtures align with the FI behavior specs.
+- [x] 8.1 Update OpenAPI 3.0.3 documentation for FI payment endpoints, media types, scopes, idempotency, JSON status response, `camt.029` response examples, and simulator-only limitations.
+- [x] 8.2 Update Postman collection and local environment with FI payment creation, status query, recall accepted, recall rejected, investigation pending, idempotency replay, idempotency conflict, auth failure, scope failure, and validation failure scenarios.
+- [x] 8.3 Update README or developer support docs with FI-specific token generation, USD-only profile, correspondent account context, and no-real-ledger limitations.
+- [x] 8.4 Update product strategy or developer docs to note that `baas-api-sandbox` integration remains a future scenario-pack integration, not part of this runtime change.
+- [x] 8.5 Add artifact validation tests that verify OpenAPI, Postman, and fixtures align with the FI behavior specs.
 
 ## 9. Verification and OpenSpec Closure
 

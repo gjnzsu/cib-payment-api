@@ -160,6 +160,8 @@ Examples:
 
 This is fast, low-risk, and strong enough for product interviews and roadmap discussion.
 
+For the FI correspondent RFI workflow, `baas-api-sandbox` remains a future scenario-pack integration, not part of this runtime change. The current runtime change stays inside `cib-payment-api`: FI payment endpoints, simulator outcomes, OpenAPI, Postman, and developer support artifacts.
+
 ### Option B: Sandbox Proxy / Orchestration
 
 This is a useful medium-term technical demonstration.

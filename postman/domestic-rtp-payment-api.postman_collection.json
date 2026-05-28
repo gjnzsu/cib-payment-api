@@ -297,6 +297,195 @@
           "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('idempotency conflict returns conflict', function () {", "  pm.response.to.have.status(409);", "  const body = pm.response.json();", "  pm.expect(body.code).to.eql('IDEMPOTENCY_CONFLICT');", "});"]}}]
         }
       ]
+    },
+    {
+      "name": "FI Correspondent Payment Scenarios",
+      "item": [
+        {
+          "name": "Create FI Payment - Accepted",
+          "request": {
+            "description": "CreateFiPayment using the supported USD-only pacs.009.001.08 simulator profile. FI scenarios: fi_payment_accepted, fi_payment_rejected_unsupported_correspondent, fi_payment_pending_correspondent_review. Account roles include NOSTRO, VOSTRO, and LORO.",
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{fiJwtToken}}"},
+              {"key": "Idempotency-Key", "value": "{{fiIdempotencyKey}}"},
+              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
+              {"key": "X-Mock-Scenario", "value": "{{fiMockScenario}}"},
+              {"key": "Content-Type", "value": "application/pacs.009+xml"},
+              {"key": "Accept", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FICdtTrf><GrpHdr><MsgId>FI-MSG-20260528-ACCEPTED-NOSTRO</MsgId><NbOfTxs>1</NbOfTxs><InstgAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></InstgAgt><InstdAgt><FinInstnId><BICFI>CORRUS33</BICFI></FinInstnId></InstdAgt></GrpHdr><CdtTrfTxInf><PmtId><InstrId>FICLIENT01-PACS009-ACCEPTED-NOSTRO</InstrId><EndToEndId>FI-E2E-20260528-0001</EndToEndId></PmtId><IntrBkSttlmAmt Ccy=\"USD\">100000.00</IntrBkSttlmAmt><IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt><RmtInf><Ustrd>FICLIENT01 NOSTRO SYNTHETIC FIXTURE</Ustrd></RmtInf></CdtTrfTxInf></FICdtTrf></Document>"},
+            "url": {"raw": "{{baseUrl}}/v1/fi-payments", "host": ["{{baseUrl}}"], "path": ["v1", "fi-payments"]}
+          },
+          "response": [{"name": "202 Accepted - FI Payment SETTLED", "status": "Accepted", "code": 202, "_postman_previewlanguage": "json", "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\"paymentId\":\"550e8400-e29b-41d4-a716-446655440000\",\"status\":\"SETTLED\",\"correspondentSettlementContext\":{\"accountRelationshipRole\":\"NOSTRO\",\"maskedSimulatedAccountReference\":\"SIM-USD-NOSTRO-****0001\"},\"correlationId\":\"postman-local-correlation-001\",\"statusLink\":\"/v1/fi-payments/550e8400-e29b-41d4-a716-446655440000\"}"}],
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('FI payment acknowledgement contains JSON status and correlation', function () {", "  pm.response.to.have.status(202);", "  const body = pm.response.json();", "  pm.expect(body.status).to.be.oneOf(['SETTLED', 'REJECTED', 'PROCESSING']);", "  pm.expect(body.correlationId).to.exist;", "  if (body.paymentId) { pm.environment.set('fiPaymentId', body.paymentId); }", "});"]}}]
+        },
+        {
+          "name": "Get FI Payment Status",
+          "request": {
+            "description": "GetFiPaymentStatus returns JSON and intentionally has no Idempotency-Key header.",
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{fiJwtToken}}"},
+              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
+              {"key": "Accept", "value": "application/json"}
+            ],
+            "url": {"raw": "{{baseUrl}}/v1/fi-payments/{{fiPaymentId}}", "host": ["{{baseUrl}}"], "path": ["v1", "fi-payments", "{{fiPaymentId}}"]}
+          },
+          "response": [{"name": "200 OK - FI Status SETTLED", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\"paymentId\":\"550e8400-e29b-41d4-a716-446655440000\",\"status\":\"SETTLED\",\"messageId\":\"FI-MSG-20260528-ACCEPTED-NOSTRO\",\"instructionId\":\"FICLIENT01-PACS009-ACCEPTED-NOSTRO\",\"originalPaymentReference\":\"FI-E2E-20260528-0001\",\"settlementCurrency\":\"USD\",\"correspondentSettlementContext\":{\"accountRelationshipRole\":\"NOSTRO\",\"maskedSimulatedAccountReference\":\"SIM-USD-NOSTRO-****0001\"},\"correlationId\":\"postman-local-correlation-001\"}"}],
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('FI status query returns JSON without Idempotency-Key', function () {", "  pm.response.to.have.status(200);", "  pm.expect(pm.response.json().correspondentSettlementContext).to.exist;", "});"]}}]
+        },
+        {
+          "name": "Create FI Recall - Accepted",
+          "request": {
+            "description": "CreateFiRecallInvestigation recall_accepted scenario using camt.056.001.08 and returning camt.029.001.09.",
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{fiInvestigateToken}}"},
+              {"key": "Idempotency-Key", "value": "{{fiRecallIdempotencyKey}}"},
+              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
+              {"key": "X-Mock-Scenario", "value": "{{fiRecallScenario}}"},
+              {"key": "Content-Type", "value": "application/camt.056+xml"},
+              {"key": "Accept", "value": "application/camt.029+xml"}
+            ],
+            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.056.001.08\"><FIToFIPmtCxlReq><Assgnmt><Id>FICLIENT01-CAMT056-RECALL-ACCEPTED</Id></Assgnmt><Undrlyg><TxInf><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId><CxlRsnInf><Rsn><Cd>DUPL</Cd></Rsn></CxlRsnInf></TxInf></Undrlyg></FIToFIPmtCxlReq></Document>"},
+            "url": {"raw": "{{baseUrl}}/v1/fi-payments/{{fiPaymentId}}/recall-requests", "host": ["{{baseUrl}}"], "path": ["v1", "fi-payments", "{{fiPaymentId}}", "recall-requests"]}
+          },
+          "response": [{"name": "202 Accepted - camt.029 Recall Accepted", "status": "Accepted", "code": 202, "_postman_previewlanguage": "xml", "header": [{"key": "Content-Type", "value": "application/camt.029+xml"}], "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.029.001.09\"><RsltnOfInvstgtn><CxlDtls><TxInfAndSts><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId><CxlStsId>FICLIENT01-CANCEL-ACCEPTED</CxlStsId><TxCxlSts>ACCP</TxCxlSts></TxInfAndSts></CxlDtls></RsltnOfInvstgtn></Document>"}],
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('FI recall response is camt.029', function () {", "  pm.response.to.have.status(202);", "  pm.expect(pm.response.text()).to.include('camt.029.001.09');", "});"]}}]
+        },
+        {
+          "name": "Create FI Recall - Rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{fiInvestigateToken}}"},
+              {"key": "Idempotency-Key", "value": "postman-fi-recall-rejected-{{$guid}}"},
+              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
+              {"key": "X-Mock-Scenario", "value": "recall_rejected"},
+              {"key": "Content-Type", "value": "application/camt.056+xml"},
+              {"key": "Accept", "value": "application/camt.029+xml"}
+            ],
+            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.056.001.08\"><FIToFIPmtCxlReq><Assgnmt><Id>FICLIENT01-CAMT056-RECALL-ACCEPTED</Id></Assgnmt><Undrlyg><TxInf><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId></TxInf></Undrlyg></FIToFIPmtCxlReq></Document>"},
+            "url": {"raw": "{{baseUrl}}/v1/fi-payments/{{fiPaymentId}}/recall-requests", "host": ["{{baseUrl}}"], "path": ["v1", "fi-payments", "{{fiPaymentId}}", "recall-requests"]}
+          },
+          "response": [{"name": "202 Accepted - camt.029 Recall Rejected", "status": "Accepted", "code": 202, "_postman_previewlanguage": "xml", "body": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.029.001.09\"><RsltnOfInvstgtn><CxlDtls><TxInfAndSts><TxCxlSts>RJCR</TxCxlSts></TxInfAndSts></CxlDtls></RsltnOfInvstgtn></Document>"}]
+        },
+        {
+          "name": "Create FI Recall - Investigation Pending",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{fiInvestigateToken}}"},
+              {"key": "Idempotency-Key", "value": "postman-fi-investigation-pending-{{$guid}}"},
+              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
+              {"key": "X-Mock-Scenario", "value": "investigation_pending"},
+              {"key": "Content-Type", "value": "application/camt.056+xml"},
+              {"key": "Accept", "value": "application/camt.029+xml"}
+            ],
+            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.056.001.08\"><FIToFIPmtCxlReq><Assgnmt><Id>FICLIENT01-CAMT056-RECALL-ACCEPTED</Id></Assgnmt><Undrlyg><TxInf><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId></TxInf></Undrlyg></FIToFIPmtCxlReq></Document>"},
+            "url": {"raw": "{{baseUrl}}/v1/fi-payments/{{fiPaymentId}}/recall-requests", "host": ["{{baseUrl}}"], "path": ["v1", "fi-payments", "{{fiPaymentId}}", "recall-requests"]}
+          },
+          "response": [{"name": "202 Accepted - camt.029 Investigation Pending", "status": "Accepted", "code": 202, "_postman_previewlanguage": "xml", "body": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.029.001.09\"><RsltnOfInvstgtn><CxlDtls><TxInfAndSts><TxCxlSts>PDCR</TxCxlSts></TxInfAndSts></CxlDtls></RsltnOfInvstgtn></Document>"}]
+        },
+        {
+          "name": "Create FI Payment - Replay",
+          "request": {
+            "description": "Run after Create FI Payment - Accepted with the same fiIdempotencyKey and same normalized pacs.009 semantics.",
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{fiJwtToken}}"},
+              {"key": "Idempotency-Key", "value": "{{fiIdempotencyKey}}"},
+              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
+              {"key": "X-Mock-Scenario", "value": "{{fiMockScenario}}"},
+              {"key": "Content-Type", "value": "application/pacs.009+xml"}
+            ],
+            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FICdtTrf><GrpHdr><MsgId>FI-MSG-20260528-ACCEPTED-NOSTRO</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><CdtTrfTxInf><PmtId><InstrId>FICLIENT01-PACS009-ACCEPTED-NOSTRO</InstrId><EndToEndId>FI-E2E-20260528-0001</EndToEndId></PmtId><IntrBkSttlmAmt Ccy=\"USD\">100000.00</IntrBkSttlmAmt><IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt></CdtTrfTxInf></FICdtTrf></Document>"},
+            "url": {"raw": "{{baseUrl}}/v1/fi-payments", "host": ["{{baseUrl}}"], "path": ["v1", "fi-payments"]}
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('FI idempotent replay returns the original acknowledgement', function () {", "  pm.response.to.have.status(202);", "  pm.expect(pm.response.json().paymentId).to.exist;", "});"]}}]
+        },
+        {
+          "name": "Create FI Payment - Idempotency Conflict Setup",
+          "request": {
+            "description": "Run first for FI idempotency conflict testing.",
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{fiJwtToken}}"},
+              {"key": "Idempotency-Key", "value": "{{fiConflictIdempotencyKey}}"},
+              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
+              {"key": "Content-Type", "value": "application/pacs.009+xml"}
+            ],
+            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FICdtTrf><GrpHdr><MsgId>FI-MSG-20260528-ACCEPTED-NOSTRO</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><CdtTrfTxInf><PmtId><InstrId>FICLIENT01-PACS009-ACCEPTED-NOSTRO</InstrId><EndToEndId>FI-E2E-20260528-0001</EndToEndId></PmtId><IntrBkSttlmAmt Ccy=\"USD\">100000.00</IntrBkSttlmAmt><IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt></CdtTrfTxInf></FICdtTrf></Document>"},
+            "url": {"raw": "{{baseUrl}}/v1/fi-payments", "host": ["{{baseUrl}}"], "path": ["v1", "fi-payments"]}
+          }
+        },
+        {
+          "name": "Create FI Payment - Idempotency Conflict",
+          "request": {
+            "description": "Run after the FI conflict setup; this reuses the key with different FI semantics.",
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{fiJwtToken}}"},
+              {"key": "Idempotency-Key", "value": "{{fiConflictIdempotencyKey}}"},
+              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
+              {"key": "Content-Type", "value": "application/pacs.009+xml"}
+            ],
+            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FICdtTrf><GrpHdr><MsgId>FI-MSG-20260528-CONFLICT</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><CdtTrfTxInf><PmtId><InstrId>FICLIENT01-PACS009-CONFLICT</InstrId><EndToEndId>FI-E2E-20260528-CONFLICT</EndToEndId></PmtId><IntrBkSttlmAmt Ccy=\"USD\">101000.00</IntrBkSttlmAmt><IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt></CdtTrfTxInf></FICdtTrf></Document>"},
+            "url": {"raw": "{{baseUrl}}/v1/fi-payments", "host": ["{{baseUrl}}"], "path": ["v1", "fi-payments"]}
+          },
+          "response": [{"name": "409 Conflict - FI Idempotency", "status": "Conflict", "code": 409, "_postman_previewlanguage": "json", "body": "{\"code\":\"IDEMPOTENCY_CONFLICT\",\"message\":\"Idempotency key was reused with different FI payment semantics\",\"status\":409,\"correlationId\":\"postman-local-correlation-001\"}"}],
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('FI idempotency conflict returns conflict', function () {", "  pm.response.to.have.status(409);", "  pm.expect(pm.response.json().code).to.eql('IDEMPOTENCY_CONFLICT');", "});"]}}]
+        },
+        {
+          "name": "Create FI Payment - Authentication Failure",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer invalid-local-test-token"},
+              {"key": "Idempotency-Key", "value": "postman-fi-auth-failure-{{$guid}}"},
+              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
+              {"key": "Content-Type", "value": "application/pacs.009+xml"}
+            ],
+            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"/>"},
+            "url": {"raw": "{{baseUrl}}/v1/fi-payments", "host": ["{{baseUrl}}"], "path": ["v1", "fi-payments"]}
+          },
+          "response": [{"name": "401 Unauthorized - FI Authentication", "status": "Unauthorized", "code": 401, "_postman_previewlanguage": "json", "body": "{\"code\":\"UNAUTHORIZED\",\"message\":\"Authentication is required or invalid\",\"status\":401,\"correlationId\":\"postman-local-correlation-001\"}"}],
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('FI authentication failure returns unauthorized', function () { pm.response.to.have.status(401); });"]}}]
+        },
+        {
+          "name": "Create FI Payment - Scope Failure",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{fiReadOnlyJwtToken}}"},
+              {"key": "Idempotency-Key", "value": "postman-fi-scope-failure-{{$guid}}"},
+              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
+              {"key": "Content-Type", "value": "application/pacs.009+xml"}
+            ],
+            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"/>"},
+            "url": {"raw": "{{baseUrl}}/v1/fi-payments", "host": ["{{baseUrl}}"], "path": ["v1", "fi-payments"]}
+          },
+          "response": [{"name": "403 Forbidden - FI Scope", "status": "Forbidden", "code": 403, "_postman_previewlanguage": "json", "body": "{\"code\":\"FORBIDDEN\",\"message\":\"Authenticated client lacks the required scope\",\"status\":403,\"correlationId\":\"postman-local-correlation-001\"}"}],
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('FI scope failure returns forbidden', function () { pm.response.to.have.status(403); });"]}}]
+        },
+        {
+          "name": "Create FI Payment - Validation Failure",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{fiJwtToken}}"},
+              {"key": "Idempotency-Key", "value": "postman-fi-validation-{{$guid}}"},
+              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
+              {"key": "Content-Type", "value": "application/pacs.009+xml"}
+            ],
+            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FICdtTrf><GrpHdr><MsgId>FI-MSG-20260528-NONUSD</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><CdtTrfTxInf><PmtId><InstrId>FICLIENT01-PACS009-NONUSD</InstrId><EndToEndId>FI-E2E-20260528-NONUSD</EndToEndId></PmtId><IntrBkSttlmAmt Ccy=\"EUR\">100000.00</IntrBkSttlmAmt><IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt></CdtTrfTxInf></FICdtTrf></Document>"},
+            "url": {"raw": "{{baseUrl}}/v1/fi-payments", "host": ["{{baseUrl}}"], "path": ["v1", "fi-payments"]}
+          },
+          "response": [{"name": "400 Bad Request - FI Validation", "status": "Bad Request", "code": 400, "_postman_previewlanguage": "json", "body": "{\"code\":\"VALIDATION_ERROR\",\"message\":\"Request validation failed\",\"status\":400,\"correlationId\":\"postman-local-correlation-001\"}"}],
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('FI validation failure returns validation error', function () {", "  pm.response.to.have.status(400);", "  pm.expect(pm.response.json().code).to.eql('VALIDATION_ERROR');", "});"]}}]
+        }
+      ]
     }
   ]
 }
