@@ -82,6 +82,23 @@ class FiPaymentControllerIntegrationTest {
                 .andExpect(jsonPath("$.links.self", equalTo("/v1/fi-payments/" + paymentId)));
     }
 
+    @Test
+    void fiCreateDefaultsToAcceptedScenarioWhenMockScenarioHeaderIsAbsent() throws Exception {
+        mockMvc.perform(post("/v1/fi-payments")
+                        .header("Authorization", bearer("fi-client-a", "fi-payments:create"))
+                        .header("Idempotency-Key", "fi-api-default-create")
+                        .header("X-Correlation-ID", "corr-fi-api-default-create")
+                        .contentType("application/pacs.009+xml")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(fixture("pacs009-accepted-nostro.xml")))
+                .andExpect(status().isAccepted())
+                .andExpect(header().string("X-Correlation-ID", "corr-fi-api-default-create"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status", equalTo("SETTLED")))
+                .andExpect(jsonPath("$.reason", nullValue()))
+                .andExpect(jsonPath("$.correlationId", equalTo("corr-fi-api-default-create")));
+    }
+
     @ParameterizedTest
     @MethodSource("fiPaymentOutcomes")
     void fiPaymentCreateReturnsExpectedStatusAndCorrespondentContext(
@@ -199,6 +216,31 @@ class FiPaymentControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.recallInvestigation.status", equalTo("ACCEPTED")))
                 .andExpect(jsonPath("$.recallInvestigation.originalPaymentReference", equalTo("FI-E2E-20260528-0001")));
+    }
+
+    @Test
+    void recallDefaultsToAcceptedScenarioWhenMockScenarioHeaderIsAbsent() throws Exception {
+        var paymentId = createFiPayment(
+                        "fi-client-a",
+                        "fi-api-default-recall-payment",
+                        "corr-fi-api-default-recall-payment",
+                        "fi_payment_accepted",
+                        "pacs009-accepted-nostro.xml")
+                .get("paymentId")
+                .asText();
+
+        mockMvc.perform(post("/v1/fi-payments/{paymentId}/recall-requests", paymentId)
+                        .header("Authorization", bearer("fi-client-a", "fi-payments:investigate"))
+                        .header("Idempotency-Key", "fi-api-default-recall")
+                        .header("X-Correlation-ID", "corr-fi-api-default-recall")
+                        .contentType("application/camt.056+xml")
+                        .accept("application/camt.029+xml")
+                        .content(fixture("camt056-recall-accepted.xml")))
+                .andExpect(status().isAccepted())
+                .andExpect(header().string("X-Correlation-ID", "corr-fi-api-default-recall"))
+                .andExpect(content().contentTypeCompatibleWith("application/camt.029+xml"))
+                .andExpect(xpath("//iso:Conf", CAMT_NS).string("CNCL"))
+                .andExpect(xpath("//iso:CorrelationId", CAMT_NS).string("corr-fi-api-default-recall"));
     }
 
     @ParameterizedTest
@@ -327,6 +369,59 @@ class FiPaymentControllerIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code", equalTo("VALIDATION_ERROR")))
                 .andExpect(jsonPath("$.correlationId", equalTo("corr-fi-api-recall-rejected-payment")));
+    }
+
+    @Test
+    void recallBoundaryValidationFailuresReturnJsonWithCorrelationHeaderAndBody() throws Exception {
+        var paymentId = createFiPayment(
+                        "fi-client-a",
+                        "fi-api-recall-boundary-payment",
+                        "corr-fi-api-recall-boundary-payment",
+                        "fi_payment_accepted",
+                        "pacs009-accepted-nostro.xml")
+                .get("paymentId")
+                .asText();
+
+        mockMvc.perform(post("/v1/fi-payments/{paymentId}/recall-requests", paymentId)
+                        .header("Authorization", bearer("fi-client-a", "fi-payments:investigate"))
+                        .header("X-Correlation-ID", "corr-fi-api-recall-missing-idem")
+                        .header("X-Mock-Scenario", "recall_accepted")
+                        .contentType("application/camt.056+xml")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(fixture("camt056-recall-accepted.xml")))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("X-Correlation-ID", "corr-fi-api-recall-missing-idem"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.code", equalTo("VALIDATION_ERROR")))
+                .andExpect(jsonPath("$.correlationId", equalTo("corr-fi-api-recall-missing-idem")));
+
+        mockMvc.perform(post("/v1/fi-payments/{paymentId}/recall-requests", paymentId)
+                        .header("Authorization", bearer("fi-client-a", "fi-payments:investigate"))
+                        .header("Idempotency-Key", "fi-api-recall-malformed")
+                        .header("X-Correlation-ID", "corr-fi-api-recall-malformed")
+                        .header("X-Mock-Scenario", "recall_accepted")
+                        .contentType("application/camt.056+xml")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(fixture("camt056-malformed.xml")))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("X-Correlation-ID", "corr-fi-api-recall-malformed"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.code", equalTo("VALIDATION_ERROR")))
+                .andExpect(jsonPath("$.correlationId", equalTo("corr-fi-api-recall-malformed")));
+
+        mockMvc.perform(post("/v1/fi-payments/{paymentId}/recall-requests", paymentId)
+                        .header("Authorization", bearer("fi-client-a", "fi-payments:investigate"))
+                        .header("Idempotency-Key", "fi-api-recall-unsafe")
+                        .header("X-Correlation-ID", "corr-fi-api-recall-unsafe")
+                        .header("X-Mock-Scenario", "recall_accepted")
+                        .contentType("application/camt.056+xml")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(fixture("camt056-unsafe.xml")))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("X-Correlation-ID", "corr-fi-api-recall-unsafe"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.code", equalTo("VALIDATION_ERROR")))
+                .andExpect(jsonPath("$.correlationId", equalTo("corr-fi-api-recall-unsafe")));
     }
 
     @Test

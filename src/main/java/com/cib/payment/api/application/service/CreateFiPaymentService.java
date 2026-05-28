@@ -34,6 +34,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class CreateFiPaymentService {
+    private static final String DEFAULT_MOCK_SCENARIO = "fi_payment_accepted";
+
     private final FiPaymentAdmissionService admissionService;
     private final FiCorrespondentRouteProfilePort routeProfile;
     private final FiCorrespondentPaymentSimulator simulator;
@@ -139,10 +141,11 @@ public class CreateFiPaymentService {
                 candidate.instructingParty().bic(),
                 candidate.instructedParty().bic(),
                 candidate.settlementCurrency());
+        var scenario = scenarioOrDefault(mockScenario);
         var fingerprint = fingerprintService.fingerprint(
                 authorizationContext.clientId(),
                 candidate,
-                Map.of("mockScenario", requireScenario(mockScenario)));
+                Map.of("mockScenario", scenario));
 
         synchronized (idempotencyLock(authorizationContext.clientId(), idempotencyKey)) {
             var existing = idempotencyRepository.find(authorizationContext.clientId(), idempotencyKey);
@@ -150,7 +153,7 @@ public class CreateFiPaymentService {
                 return replayOrConflict(existing.get(), fingerprint);
             }
 
-            var outcome = simulator.process(candidate, settlementContext, authorizationContext, mockScenario);
+            var outcome = simulator.process(candidate, settlementContext, authorizationContext, scenario);
             var now = Instant.now(clock);
             var paymentId = new FiPaymentId(UUID.randomUUID());
             var record = toRecord(
@@ -185,11 +188,11 @@ public class CreateFiPaymentService {
         }
     }
 
-    private String requireScenario(String mockScenario) {
+    private String scenarioOrDefault(String mockScenario) {
         if (mockScenario == null || mockScenario.isBlank()) {
-            throw new ValidationFailureException("FI payment simulator scenario is required");
+            return DEFAULT_MOCK_SCENARIO;
         }
-        return mockScenario;
+        return mockScenario.trim();
     }
 
     private FiPaymentRecord toRecord(

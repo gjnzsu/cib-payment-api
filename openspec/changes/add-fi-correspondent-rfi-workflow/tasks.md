@@ -73,4 +73,4 @@
 - [x] 9.2 Run architecture and sensitive logging tests.
 - [x] 9.3 Run full Maven test suite.
 - [x] 9.4 Run `npx.cmd openspec validate add-fi-correspondent-rfi-workflow`.
-- [x] 9.5 Review implementation against proposal, design, specs, and tasks for OpenSpec-to-Superpowers alignment before starting archive or branch completion.
+- [ ] 9.5 Review implementation against proposal, design, specs, and tasks for OpenSpec-to-Superpowers alignment before starting archive or branch completion.

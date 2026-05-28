@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class CreateRecallInvestigationService {
+    private static final String DEFAULT_MOCK_SCENARIO = "recall_accepted";
     private static final Set<String> SUPPORTED_CONTENT_TYPES = Set.of(
             "application/camt.056+xml",
             "application/xml",
@@ -155,7 +156,7 @@ public class CreateRecallInvestigationService {
         var recallRequest = parser.parse(rawXml);
         validateRecallRequest(recallRequest, payment);
 
-        var scenario = requireScenario(mockScenario);
+        var scenario = scenarioOrDefault(mockScenario);
         var fingerprint = fingerprintService.fingerprint(
                 authorizationContext.clientId(),
                 paymentId,
@@ -256,11 +257,11 @@ public class CreateRecallInvestigationService {
         }
     }
 
-    private String requireScenario(String mockScenario) {
+    private String scenarioOrDefault(String mockScenario) {
         if (mockScenario == null || mockScenario.isBlank()) {
-            throw new ValidationFailureException("Recall investigation simulator scenario is required");
+            return DEFAULT_MOCK_SCENARIO;
         }
-        return mockScenario;
+        return mockScenario.trim();
     }
 
     private String replayOrConflict(IdempotencyRecord existing, String fingerprint, FiPaymentId paymentId) {
