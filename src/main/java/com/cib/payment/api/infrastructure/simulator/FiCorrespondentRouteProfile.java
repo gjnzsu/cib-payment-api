@@ -1,6 +1,7 @@
 package com.cib.payment.api.infrastructure.simulator;
 
 import com.cib.payment.api.application.exception.ValidationFailureException;
+import com.cib.payment.api.application.port.FiCorrespondentRouteProfilePort;
 import com.cib.payment.api.domain.model.AccountRelationshipRole;
 import com.cib.payment.api.domain.model.CorrespondentSettlementContext;
 import com.cib.payment.api.domain.model.FiParty;
@@ -9,7 +10,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Component;
 
 @Component
-public class FiCorrespondentRouteProfile {
+public class FiCorrespondentRouteProfile implements FiCorrespondentRouteProfilePort {
     private static final String SUPPORTED_CURRENCY = "USD";
     private static final Map<RouteKey, RouteProfileEntry> ROUTES = Map.of(
             new RouteKey("CIBBHKHH", "CORRUS33"),
@@ -28,6 +29,7 @@ public class FiCorrespondentRouteProfile {
                     "LOROUS33",
                     "loro-usd-lorous33-****9012"));
 
+    @Override
     public CorrespondentSettlementContext derive(String instructingAgent, String instructedAgent, String currency) {
         var normalizedCurrency = normalize(currency);
         if (!SUPPORTED_CURRENCY.equals(normalizedCurrency)) {
