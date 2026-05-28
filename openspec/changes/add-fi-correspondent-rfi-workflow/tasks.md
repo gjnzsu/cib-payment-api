@@ -45,19 +45,19 @@
 - [x] 6.3 Require `Idempotency-Key` for FI payment creation and recall requests, while leaving FI status query idempotency-free.
 - [x] 6.4 Implement normalized idempotency fingerprints for accepted `pacs.009` and `camt.056` business semantics.
 - [x] 6.5 Replay duplicate FI payment and recall requests with the original accepted response, and reject semantic conflicts with `409 Conflict`.
-- [ ] 6.6 Propagate correlation ID through FI records, recall records, idempotency records, simulator calls, logs, response headers, JSON responses, and `camt.029` XML responses.
+- [x] 6.6 Propagate correlation ID through FI records, recall records, idempotency records, simulator calls, logs, response headers, JSON responses, and `camt.029` XML responses.
 - [x] 6.7 Extend sensitive data masking for FI XML payloads, BIC-linked account references, and simulated correspondent account references.
-- [ ] 6.8 Add integration tests for FI auth failures, scope failures, idempotency replay/conflict, correlation propagation, ownership checks, and sensitive logging.
+- [x] 6.8 Add integration tests for FI auth failures, scope failures, idempotency replay/conflict, correlation propagation, ownership checks, and sensitive logging.
 
 ## 7. FI API Integration
 
-- [ ] 7.1 Add `POST /v1/fi-payments` controller path for supported `pacs.009` XML and JSON acknowledgement responses.
-- [ ] 7.2 Add `GET /v1/fi-payments/{paymentId}` controller path for JSON FI status responses.
-- [ ] 7.3 Add `POST /v1/fi-payments/{paymentId}/recall-requests` controller path for supported `camt.056` XML requests and `camt.029` XML responses.
-- [ ] 7.4 Ensure validation, authentication, authorization, idempotency, ownership, not-found, and XML parse failures return consistent JSON error envelopes with correlation ID.
-- [ ] 7.5 Add FI payment creation and status integration tests for accepted FI payment, rejected FI payment, pending FI payment, derived correspondent account context, and FI status query.
-- [ ] 7.6 Add recall and `camt.029` integration tests for recall accepted, recall rejected, investigation pending, wrong original payment reference, rejected payment recall rejection, and duplicate recall conflict.
-- [ ] 7.7 Add FI error, security, and ownership integration tests for invalid XML, missing idempotency key, scope failures, not-found lookup, and unrelated-client access.
+- [x] 7.1 Add `POST /v1/fi-payments` controller path for supported `pacs.009` XML and JSON acknowledgement responses.
+- [x] 7.2 Add `GET /v1/fi-payments/{paymentId}` controller path for JSON FI status responses.
+- [x] 7.3 Add `POST /v1/fi-payments/{paymentId}/recall-requests` controller path for supported `camt.056` XML requests and `camt.029` XML responses.
+- [x] 7.4 Ensure validation, authentication, authorization, idempotency, ownership, not-found, and XML parse failures return consistent JSON error envelopes with correlation ID.
+- [x] 7.5 Add FI payment creation and status integration tests for accepted FI payment, rejected FI payment, pending FI payment, derived correspondent account context, and FI status query.
+- [x] 7.6 Add recall and `camt.029` integration tests for recall accepted, recall rejected, investigation pending, wrong original payment reference, rejected payment recall rejection, and duplicate recall conflict.
+- [x] 7.7 Add FI error, security, and ownership integration tests for invalid XML, missing idempotency key, scope failures, not-found lookup, and unrelated-client access.
 
 ## 8. Developer Support and Product Documentation
 
@@ -69,8 +69,8 @@
 
 ## 9. Verification and OpenSpec Closure
 
-- [ ] 9.1 Run focused FI parser, renderer, service, simulator, security, and integration tests.
-- [ ] 9.2 Run architecture and sensitive logging tests.
-- [ ] 9.3 Run full Maven test suite.
-- [ ] 9.4 Run `npx.cmd openspec validate add-fi-correspondent-rfi-workflow`.
-- [ ] 9.5 Review implementation against proposal, design, specs, and tasks for OpenSpec-to-Superpowers alignment before starting archive or branch completion.
+- [x] 9.1 Run focused FI parser, renderer, service, simulator, security, and integration tests.
+- [x] 9.2 Run architecture and sensitive logging tests.
+- [x] 9.3 Run full Maven test suite.
+- [x] 9.4 Run `npx.cmd openspec validate add-fi-correspondent-rfi-workflow`.
+- [x] 9.5 Review implementation against proposal, design, specs, and tasks for OpenSpec-to-Superpowers alignment before starting archive or branch completion.

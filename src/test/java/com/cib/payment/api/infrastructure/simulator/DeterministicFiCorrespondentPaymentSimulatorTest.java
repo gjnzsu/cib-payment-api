@@ -4,13 +4,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.cib.payment.api.application.exception.ValidationFailureException;
+import com.cib.payment.api.domain.model.AuthorizationContext;
+import com.cib.payment.api.domain.model.CorrelationId;
 import com.cib.payment.api.domain.model.FiParty;
 import com.cib.payment.api.domain.model.FiPaymentCandidate;
 import com.cib.payment.api.domain.model.FiPaymentIdentifiers;
 import com.cib.payment.api.domain.model.FiPaymentStatus;
 import com.cib.payment.api.domain.model.Money;
 import java.time.LocalDate;
+import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class DeterministicFiCorrespondentPaymentSimulatorTest {
@@ -23,6 +28,7 @@ class DeterministicFiCorrespondentPaymentSimulatorTest {
         var outcome = simulator.process(
                 candidate("CIBBHKHH", "CORRUS33", "USD"),
                 routeProfile.derive("CIBBHKHH", "CORRUS33", "USD"),
+                authorizationContext(),
                 "fi_payment_accepted");
 
         assertThat(outcome.status()).isEqualTo(FiPaymentStatus.SETTLED);
@@ -34,6 +40,7 @@ class DeterministicFiCorrespondentPaymentSimulatorTest {
         var outcome = simulator.process(
                 candidate("CIBBHKHH", "CORRUS33", "USD"),
                 routeProfile.derive("CIBBHKHH", "CORRUS33", "USD"),
+                authorizationContext(),
                 "fi_payment_pending_correspondent_review");
 
         assertThat(outcome.status()).isEqualTo(FiPaymentStatus.PROCESSING);
@@ -48,6 +55,7 @@ class DeterministicFiCorrespondentPaymentSimulatorTest {
         var outcome = simulator.process(
                 candidate("CIBBHKHH", "LOROUS33", "USD"),
                 routeProfile.derive("CIBBHKHH", "LOROUS33", "USD"),
+                authorizationContext(),
                 "fi_payment_rejected_unsupported_correspondent");
 
         assertThat(outcome.status()).isEqualTo(FiPaymentStatus.REJECTED);
@@ -62,6 +70,7 @@ class DeterministicFiCorrespondentPaymentSimulatorTest {
         assertThatThrownBy(() -> simulator.process(
                         candidate("CIBBHKHH", "CORRUS33", "USD"),
                         routeProfile.derive("CIBBHKHH", "CORRUS33", "USD"),
+                        authorizationContext(),
                         "unsupported"))
                 .isInstanceOf(ValidationFailureException.class)
                 .hasMessageContaining("Unsupported FI payment simulator scenario");
@@ -72,6 +81,7 @@ class DeterministicFiCorrespondentPaymentSimulatorTest {
         assertThatThrownBy(() -> simulator.process(
                         candidate("CIBBHKHH", "CORRUS33", "USD"),
                         routeProfile.derive("CIBBHKHH", "CORRUS33", "USD"),
+                        authorizationContext(),
                         "  "))
                 .isInstanceOf(ValidationFailureException.class)
                 .hasMessageContaining("FI payment simulator scenario is required");
@@ -87,5 +97,17 @@ class DeterministicFiCorrespondentPaymentSimulatorTest {
                 currency,
                 LocalDate.parse("2026-05-28"),
                 "pacs.009.001.08");
+    }
+
+    private AuthorizationContext authorizationContext() {
+        return new AuthorizationContext(
+                "fi-client-a",
+                "fi-client-a",
+                Set.of("fi-payments:create"),
+                "tenant-a",
+                Map.of(),
+                Instant.parse("2026-05-28T00:00:00Z"),
+                "jwt-id",
+                new CorrelationId("corr-fi-simulator"));
     }
 }

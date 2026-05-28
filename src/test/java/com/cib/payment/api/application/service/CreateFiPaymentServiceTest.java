@@ -102,6 +102,29 @@ class CreateFiPaymentServiceTest {
     }
 
     @Test
+    void simulatorReceivesAuthorizationContextWithCorrelation() throws Exception {
+        var simulator = new CapturingFiCorrespondentPaymentSimulator();
+        var service = new CreateFiPaymentService(
+                new FiPaymentAdmissionService(new Pacs009Parser()),
+                new FiCorrespondentRouteProfile(),
+                simulator,
+                new InMemoryFiPaymentRepository(),
+                new InMemoryIdempotencyRepository(),
+                new RequestFingerprintService());
+        var authorizationContext = authorizationContext("fi-client-a", "corr-fi-simulator");
+
+        service.create(
+                readFixture("pacs009-accepted-nostro.xml"),
+                "application/pacs.009+xml",
+                authorizationContext,
+                "idem-fi-simulator-context",
+                "fi_payment_accepted");
+
+        assertThat(simulator.authorizationContext()).isSameAs(authorizationContext);
+        assertThat(simulator.authorizationContext().correlationId().value()).isEqualTo("corr-fi-simulator");
+    }
+
+    @Test
     void routeValidationCatchesUnsupportedRouteInProductionCreateFlow() throws Exception {
         assertThatThrownBy(() -> service.create(
                         readFixture("pacs009-accepted-nostro.xml").replace("CORRUS33", "UNKNOWN33"),
@@ -248,6 +271,7 @@ class CreateFiPaymentServiceTest {
         public FiCorrespondentPaymentOutcome process(
                 FiPaymentCandidate candidate,
                 CorrespondentSettlementContext settlementContext,
+                AuthorizationContext authorizationContext,
                 String scenarioContext) {
             invocations.incrementAndGet();
             sleep();
@@ -264,6 +288,24 @@ class CreateFiPaymentServiceTest {
             } catch (InterruptedException exception) {
                 Thread.currentThread().interrupt();
             }
+        }
+    }
+
+    private static class CapturingFiCorrespondentPaymentSimulator implements FiCorrespondentPaymentSimulator {
+        private AuthorizationContext authorizationContext;
+
+        @Override
+        public FiCorrespondentPaymentOutcome process(
+                FiPaymentCandidate candidate,
+                CorrespondentSettlementContext settlementContext,
+                AuthorizationContext authorizationContext,
+                String scenarioContext) {
+            this.authorizationContext = authorizationContext;
+            return new FiCorrespondentPaymentOutcome(FiPaymentStatus.SETTLED, Optional.empty());
+        }
+
+        AuthorizationContext authorizationContext() {
+            return authorizationContext;
         }
     }
 }

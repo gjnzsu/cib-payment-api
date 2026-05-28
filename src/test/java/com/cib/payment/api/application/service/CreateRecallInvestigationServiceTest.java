@@ -7,8 +7,10 @@ import com.cib.payment.api.application.exception.IdempotencyConflictException;
 import com.cib.payment.api.application.exception.PaymentNotFoundException;
 import com.cib.payment.api.application.exception.ValidationFailureException;
 import com.cib.payment.api.application.port.IdempotencyRepository;
+import com.cib.payment.api.application.port.RecallInvestigationOutcome;
 import com.cib.payment.api.application.port.RecallInvestigationRepository;
 import com.cib.payment.api.application.port.RecallInvestigationResponseRenderer;
+import com.cib.payment.api.application.port.RecallInvestigationSimulator;
 import com.cib.payment.api.domain.model.IdempotencyRecord;
 import com.cib.payment.api.domain.model.AccountRelationshipRole;
 import com.cib.payment.api.domain.model.AuthorizationContext;
@@ -92,6 +94,32 @@ class CreateRecallInvestigationServiceTest {
         var recall = recallRepository.findByPaymentId(payment.paymentId()).orElseThrow();
         assertThat(recall.status().name()).isEqualTo("PENDING");
         assertThat(responseXml).contains("PDCR").contains("corr-fi-recall-processing");
+    }
+
+    @Test
+    void simulatorReceivesAuthorizationContextWithCorrelation() throws Exception {
+        var payment = storePayment("fi-client-a", FiPaymentStatus.SETTLED);
+        var simulator = new CapturingRecallInvestigationSimulator();
+        var service = new CreateRecallInvestigationService(
+                new Camt056Parser(),
+                simulator,
+                new TestRecallInvestigationResponseRenderer(),
+                fiPaymentRepository,
+                new InMemoryRecallInvestigationRepository(),
+                new InMemoryIdempotencyRepository(),
+                new RequestFingerprintService());
+        var authorizationContext = authorizationContext("fi-client-a", "corr-fi-recall-simulator");
+
+        service.create(
+                payment.paymentId().value().toString(),
+                readFixture("camt056-recall-accepted.xml"),
+                "application/camt.056+xml",
+                authorizationContext,
+                "idem-recall-simulator-context",
+                "recall_accepted");
+
+        assertThat(simulator.authorizationContext()).isSameAs(authorizationContext);
+        assertThat(simulator.authorizationContext().correlationId().value()).isEqualTo("corr-fi-recall-simulator");
     }
 
     @Test
@@ -422,6 +450,25 @@ class CreateRecallInvestigationServiceTest {
                 case REJECTED -> "RJCR";
                 case PENDING -> "PDCR";
             };
+        }
+    }
+
+    private static final class CapturingRecallInvestigationSimulator implements RecallInvestigationSimulator {
+        private AuthorizationContext authorizationContext;
+
+        @Override
+        public RecallInvestigationOutcome investigate(
+                AuthorizationContext authorizationContext,
+                String scenarioContext) {
+            this.authorizationContext = authorizationContext;
+            return new RecallInvestigationOutcome(
+                    RecallInvestigationStatus.ACCEPTED,
+                    "AC01",
+                    "Recall accepted by correspondent simulator");
+        }
+
+        AuthorizationContext authorizationContext() {
+            return authorizationContext;
         }
     }
 }

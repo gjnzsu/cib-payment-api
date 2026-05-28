@@ -3,6 +3,7 @@ package com.cib.payment.api.infrastructure.simulator;
 import com.cib.payment.api.application.exception.ValidationFailureException;
 import com.cib.payment.api.application.port.FiCorrespondentPaymentOutcome;
 import com.cib.payment.api.application.port.FiCorrespondentPaymentSimulator;
+import com.cib.payment.api.domain.model.AuthorizationContext;
 import com.cib.payment.api.domain.model.CorrespondentSettlementContext;
 import com.cib.payment.api.domain.model.FiPaymentCandidate;
 import com.cib.payment.api.domain.model.FiPaymentStatus;
@@ -17,9 +18,11 @@ public class DeterministicFiCorrespondentPaymentSimulator implements FiCorrespon
     public FiCorrespondentPaymentOutcome process(
             FiPaymentCandidate candidate,
             CorrespondentSettlementContext settlementContext,
+            AuthorizationContext authorizationContext,
             String scenarioContext) {
         Objects.requireNonNull(candidate, "candidate must not be null");
         Objects.requireNonNull(settlementContext, "settlementContext must not be null");
+        Objects.requireNonNull(authorizationContext, "authorizationContext must not be null");
 
         if (scenarioContext == null || scenarioContext.isBlank()) {
             throw new ValidationFailureException("FI payment simulator scenario is required");

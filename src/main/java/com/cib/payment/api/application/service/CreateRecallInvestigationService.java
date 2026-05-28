@@ -172,7 +172,7 @@ public class CreateRecallInvestigationService {
                 throw new IdempotencyConflictException("Recall investigation already exists for FI payment");
             }
 
-            var outcome = simulator.investigate(scenario);
+            var outcome = simulator.investigate(authorizationContext, scenario);
             var now = Instant.now(clock);
             var record = toRecord(payment, recallRequest, outcome, authorizationContext, now);
             var responseXml = renderer.render(record);

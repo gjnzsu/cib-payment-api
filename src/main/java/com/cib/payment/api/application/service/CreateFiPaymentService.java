@@ -150,7 +150,7 @@ public class CreateFiPaymentService {
                 return replayOrConflict(existing.get(), fingerprint);
             }
 
-            var outcome = simulator.process(candidate, settlementContext, mockScenario);
+            var outcome = simulator.process(candidate, settlementContext, authorizationContext, mockScenario);
             var now = Instant.now(clock);
             var paymentId = new FiPaymentId(UUID.randomUUID());
             var record = toRecord(
