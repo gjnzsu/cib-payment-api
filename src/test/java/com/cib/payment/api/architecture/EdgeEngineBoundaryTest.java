@@ -107,6 +107,16 @@ class EdgeEngineBoundaryTest {
     }
 
     @Test
+    void applicationServicesDoNotDependOnInfrastructureAdapters() throws IOException {
+        for (var source : javaSources("com/cib/payment/api/application/service")) {
+            assertNoForbiddenDependencies(
+                    source,
+                    List.of("com.cib.payment.api.infrastructure"),
+                    "%s must depend on application ports and domain models, not infrastructure adapters");
+        }
+    }
+
+    @Test
     void engineImplementationDoesNotDependOnApiControllerOrDtoClasses() throws IOException {
         for (var source : javaSources("com/cib/payment/api/infrastructure/engine")) {
             assertThat(read(source))

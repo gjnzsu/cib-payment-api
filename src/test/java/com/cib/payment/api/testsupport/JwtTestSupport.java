@@ -31,6 +31,10 @@ public final class JwtTestSupport {
         return token(subject, AUDIENCE, Instant.now().minusSeconds(60), Instant.now().plusSeconds(3600), scopes);
     }
 
+    public static String fiTokenWithScopes(String subject, String... scopes) {
+        return tokenWithScopes(subject, scopes);
+    }
+
     public static String expiredToken() {
         return token("client-a", AUDIENCE, Instant.now().minusSeconds(7200), Instant.now().minusSeconds(3600), "payments:create");
     }

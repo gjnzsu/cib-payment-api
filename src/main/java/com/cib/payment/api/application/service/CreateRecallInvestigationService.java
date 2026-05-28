@@ -6,6 +6,7 @@ import com.cib.payment.api.application.exception.ValidationFailureException;
 import com.cib.payment.api.application.port.Camt056RecallRequestParser;
 import com.cib.payment.api.application.port.FiPaymentRepository;
 import com.cib.payment.api.application.port.IdempotencyRepository;
+import com.cib.payment.api.application.port.PaymentObservability;
 import com.cib.payment.api.application.port.RecallInvestigationOutcome;
 import com.cib.payment.api.application.port.RecallInvestigationRepository;
 import com.cib.payment.api.application.port.RecallInvestigationResponseRenderer;
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.IntStream;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -43,10 +45,33 @@ public class CreateRecallInvestigationService {
     private final RecallInvestigationRepository recallInvestigationRepository;
     private final IdempotencyRepository idempotencyRepository;
     private final RequestFingerprintService fingerprintService;
+    private final PaymentObservability observability;
     private final Clock clock;
     private final Object[] idempotencyLocks;
 
+    @Autowired
     public CreateRecallInvestigationService(
+            Camt056RecallRequestParser parser,
+            RecallInvestigationSimulator simulator,
+            RecallInvestigationResponseRenderer renderer,
+            FiPaymentRepository fiPaymentRepository,
+            RecallInvestigationRepository recallInvestigationRepository,
+            IdempotencyRepository idempotencyRepository,
+            RequestFingerprintService fingerprintService,
+            PaymentObservability observability) {
+        this(
+                parser,
+                simulator,
+                renderer,
+                fiPaymentRepository,
+                recallInvestigationRepository,
+                idempotencyRepository,
+                fingerprintService,
+                observability,
+                Clock.systemUTC());
+    }
+
+    CreateRecallInvestigationService(
             Camt056RecallRequestParser parser,
             RecallInvestigationSimulator simulator,
             RecallInvestigationResponseRenderer renderer,
@@ -62,6 +87,7 @@ public class CreateRecallInvestigationService {
                 recallInvestigationRepository,
                 idempotencyRepository,
                 fingerprintService,
+                PaymentObservability.noop(),
                 Clock.systemUTC());
     }
 
@@ -74,6 +100,28 @@ public class CreateRecallInvestigationService {
             IdempotencyRepository idempotencyRepository,
             RequestFingerprintService fingerprintService,
             Clock clock) {
+        this(
+                parser,
+                simulator,
+                renderer,
+                fiPaymentRepository,
+                recallInvestigationRepository,
+                idempotencyRepository,
+                fingerprintService,
+                PaymentObservability.noop(),
+                clock);
+    }
+
+    CreateRecallInvestigationService(
+            Camt056RecallRequestParser parser,
+            RecallInvestigationSimulator simulator,
+            RecallInvestigationResponseRenderer renderer,
+            FiPaymentRepository fiPaymentRepository,
+            RecallInvestigationRepository recallInvestigationRepository,
+            IdempotencyRepository idempotencyRepository,
+            RequestFingerprintService fingerprintService,
+            PaymentObservability observability,
+            Clock clock) {
         this.parser = parser;
         this.simulator = simulator;
         this.renderer = renderer;
@@ -81,6 +129,7 @@ public class CreateRecallInvestigationService {
         this.recallInvestigationRepository = recallInvestigationRepository;
         this.idempotencyRepository = idempotencyRepository;
         this.fingerprintService = fingerprintService;
+        this.observability = observability;
         this.clock = clock;
         this.idempotencyLocks = IntStream.range(0, 256).mapToObj(index -> new Object()).toArray();
     }
@@ -96,6 +145,7 @@ public class CreateRecallInvestigationService {
             throw new ValidationFailureException("Idempotency-Key is required");
         }
         validateBodyAndContentType(rawXml, contentType);
+        observability.fiXmlPayloadHandled("camt.056", rawXml, authorizationContext.correlationId());
 
         var paymentId = parsePaymentId(fiPaymentIdValue);
         var payment = fiPaymentRepository.findByIdAndOwnerClientId(paymentId, authorizationContext.clientId())
@@ -149,6 +199,8 @@ public class CreateRecallInvestigationService {
                 throw new IdempotencyConflictException("Recall investigation already exists for FI payment");
             }
 
+            observability.recallInvestigationCreated(record, authorizationContext);
+            observability.fiXmlPayloadHandled("camt.029", responseXml, authorizationContext.correlationId());
             return responseXml;
         }
     }

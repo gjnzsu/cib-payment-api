@@ -40,13 +40,13 @@
 
 ## 6. Security, Idempotency, Correlation, and Masking
 
-- [ ] 6.1 Add FI-specific authorization enforcement for `fi-payments:create`, `fi-payments:read`, and `fi-payments:investigate`.
-- [ ] 6.2 Update local JWT token generation and test helpers to support FI-specific scopes.
+- [x] 6.1 Add FI-specific authorization enforcement for `fi-payments:create`, `fi-payments:read`, and `fi-payments:investigate`.
+- [x] 6.2 Update local JWT token generation and test helpers to support FI-specific scopes.
 - [x] 6.3 Require `Idempotency-Key` for FI payment creation and recall requests, while leaving FI status query idempotency-free.
 - [x] 6.4 Implement normalized idempotency fingerprints for accepted `pacs.009` and `camt.056` business semantics.
 - [x] 6.5 Replay duplicate FI payment and recall requests with the original accepted response, and reject semantic conflicts with `409 Conflict`.
 - [ ] 6.6 Propagate correlation ID through FI records, recall records, idempotency records, simulator calls, logs, response headers, JSON responses, and `camt.029` XML responses.
-- [ ] 6.7 Extend sensitive data masking for FI XML payloads, BIC-linked account references, and simulated correspondent account references.
+- [x] 6.7 Extend sensitive data masking for FI XML payloads, BIC-linked account references, and simulated correspondent account references.
 - [ ] 6.8 Add integration tests for FI auth failures, scope failures, idempotency replay/conflict, correlation propagation, ownership checks, and sensitive logging.
 
 ## 7. FI API Integration

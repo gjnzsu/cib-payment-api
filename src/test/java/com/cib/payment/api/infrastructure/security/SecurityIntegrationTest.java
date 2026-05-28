@@ -100,6 +100,34 @@ class SecurityIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void missingFiCreateScopeReturnsForbiddenOnPost() throws Exception {
+        mockMvc.perform(post("/v1/fi-payments")
+                        .header("Authorization", "Bearer " + JwtTestSupport.fiTokenWithScopes("client-a", "payments:create"))
+                        .header("X-Correlation-ID", "security-fi-create-403")
+                        .contentType("application/pacs.009+xml")
+                        .content("<Document/>"))
+                .andExpect(status().isForbidden())
+                .andExpect(header().string("X-Correlation-ID", "security-fi-create-403"))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+    }
+
+    @Test
+    void missingFiReadScopeReturnsForbiddenOnGet() throws Exception {
+        mockMvc.perform(get("/v1/fi-payments/550e8400-e29b-41d4-a716-446655440000")
+                        .header("Authorization", "Bearer " + JwtTestSupport.fiTokenWithScopes("client-a", "payments:read")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void missingFiInvestigateScopeReturnsForbiddenOnRecallPost() throws Exception {
+        mockMvc.perform(post("/v1/fi-payments/550e8400-e29b-41d4-a716-446655440000/recall-requests")
+                        .header("Authorization", "Bearer " + JwtTestSupport.fiTokenWithScopes("client-a", "payments:create"))
+                        .contentType("application/camt.056+xml")
+                        .content("<Document/>"))
+                .andExpect(status().isForbidden());
+    }
+
     static class JwtTestConfiguration {
         @Bean
         JwtDecoder jwtDecoder() {

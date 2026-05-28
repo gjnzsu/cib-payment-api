@@ -9,6 +9,7 @@ import com.cib.payment.api.application.port.FiCorrespondentPaymentSimulator;
 import com.cib.payment.api.application.port.FiCorrespondentRouteProfilePort;
 import com.cib.payment.api.application.port.FiPaymentRepository;
 import com.cib.payment.api.application.port.IdempotencyRepository;
+import com.cib.payment.api.application.port.PaymentObservability;
 import com.cib.payment.api.domain.model.AuthorizationContext;
 import com.cib.payment.api.domain.model.CorrelationId;
 import com.cib.payment.api.domain.model.CorrespondentSettlementContext;
@@ -28,6 +29,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.IntStream;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -38,18 +40,47 @@ public class CreateFiPaymentService {
     private final FiPaymentRepository fiPaymentRepository;
     private final IdempotencyRepository idempotencyRepository;
     private final RequestFingerprintService fingerprintService;
+    private final PaymentObservability observability;
     private final ObjectMapper objectMapper;
     private final Clock clock;
     private final Object[] idempotencyLocks;
 
+    @Autowired
     public CreateFiPaymentService(
             FiPaymentAdmissionService admissionService,
             FiCorrespondentRouteProfilePort routeProfile,
             FiCorrespondentPaymentSimulator simulator,
             FiPaymentRepository fiPaymentRepository,
             IdempotencyRepository idempotencyRepository,
+            RequestFingerprintService fingerprintService,
+            PaymentObservability observability) {
+        this(
+                admissionService,
+                routeProfile,
+                simulator,
+                fiPaymentRepository,
+                idempotencyRepository,
+                fingerprintService,
+                observability,
+                Clock.systemUTC());
+    }
+
+    CreateFiPaymentService(
+            FiPaymentAdmissionService admissionService,
+            FiCorrespondentRouteProfilePort routeProfile,
+            FiCorrespondentPaymentSimulator simulator,
+            FiPaymentRepository fiPaymentRepository,
+            IdempotencyRepository idempotencyRepository,
             RequestFingerprintService fingerprintService) {
-        this(admissionService, routeProfile, simulator, fiPaymentRepository, idempotencyRepository, fingerprintService, Clock.systemUTC());
+        this(
+                admissionService,
+                routeProfile,
+                simulator,
+                fiPaymentRepository,
+                idempotencyRepository,
+                fingerprintService,
+                PaymentObservability.noop(),
+                Clock.systemUTC());
     }
 
     CreateFiPaymentService(
@@ -60,12 +91,33 @@ public class CreateFiPaymentService {
             IdempotencyRepository idempotencyRepository,
             RequestFingerprintService fingerprintService,
             Clock clock) {
+        this(
+                admissionService,
+                routeProfile,
+                simulator,
+                fiPaymentRepository,
+                idempotencyRepository,
+                fingerprintService,
+                PaymentObservability.noop(),
+                clock);
+    }
+
+    CreateFiPaymentService(
+            FiPaymentAdmissionService admissionService,
+            FiCorrespondentRouteProfilePort routeProfile,
+            FiCorrespondentPaymentSimulator simulator,
+            FiPaymentRepository fiPaymentRepository,
+            IdempotencyRepository idempotencyRepository,
+            RequestFingerprintService fingerprintService,
+            PaymentObservability observability,
+            Clock clock) {
         this.admissionService = admissionService;
         this.routeProfile = routeProfile;
         this.simulator = simulator;
         this.fiPaymentRepository = fiPaymentRepository;
         this.idempotencyRepository = idempotencyRepository;
         this.fingerprintService = fingerprintService;
+        this.observability = observability;
         this.objectMapper = new ObjectMapper().findAndRegisterModules();
         this.clock = clock;
         this.idempotencyLocks = IntStream.range(0, 256).mapToObj(index -> new Object()).toArray();
@@ -81,6 +133,7 @@ public class CreateFiPaymentService {
             throw new ValidationFailureException("Idempotency-Key is required");
         }
 
+        observability.fiXmlPayloadHandled("pacs.009", rawXml, authorizationContext.correlationId());
         var candidate = admissionService.admit(rawXml, contentType);
         var settlementContext = routeProfile.derive(
                 candidate.instructingParty().bic(),
@@ -127,6 +180,7 @@ public class CreateFiPaymentService {
             }
 
             fiPaymentRepository.save(record);
+            observability.fiPaymentAccepted(record, authorizationContext);
             return response;
         }
     }

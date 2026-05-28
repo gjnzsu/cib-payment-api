@@ -6,6 +6,14 @@ public final class AccountNumberMasker {
     private static final Pattern EMAIL = Pattern.compile("^([^@]{1,64})@(.+)$");
     private static final Pattern HKID_LIKE = Pattern.compile("^[A-Z]{1,2}\\d{6}\\([0-9A]\\)$", Pattern.CASE_INSENSITIVE);
     private static final Pattern MOBILE_LIKE = Pattern.compile("^\\+?\\d[\\d\\s-]{7,}$");
+    private static final Pattern FI_XML_PAYLOAD = Pattern.compile(
+            "(?is)<\\s*Document\\b.*(?:pacs\\.009|camt\\.056|camt\\.029).*<\\s*/\\s*Document\\s*>");
+    private static final Pattern BIC_LINKED_ACCOUNT_REFERENCE = Pattern.compile(
+            "^([A-Z0-9]{8,11}-[A-Z]{3}-)([A-Za-z0-9]{5,})$");
+    private static final Pattern SIMULATED_CORRESPONDENT_ACCOUNT_REFERENCE = Pattern.compile(
+            "^((?:nostro|vostro|loro)-[a-z]{3}-[a-z0-9]{8,11}-)([A-Za-z0-9]{5,})$",
+            Pattern.CASE_INSENSITIVE);
+    private static final String FI_XML_PAYLOAD_OMITTED = "[FI_XML_PAYLOAD_OMITTED]";
 
     private AccountNumberMasker() {
     }
@@ -19,6 +27,13 @@ public final class AccountNumberMasker {
             return "";
         }
         var trimmed = value.trim();
+        if (FI_XML_PAYLOAD.matcher(trimmed).find()) {
+            return FI_XML_PAYLOAD_OMITTED;
+        }
+        var maskedFiReference = maskFiReference(trimmed);
+        if (maskedFiReference != null) {
+            return maskedFiReference;
+        }
         if (HKID_LIKE.matcher(trimmed).matches()) {
             return trimmed.charAt(0) + "******(*)";
         }
@@ -66,6 +81,19 @@ public final class AccountNumberMasker {
             return "*".repeat(value.length());
         }
         return value.charAt(0) + "*".repeat(Math.min(15, value.length() - 5)) + value.substring(value.length() - 4);
+    }
+
+    private static String maskFiReference(String value) {
+        var simulatedAccount = SIMULATED_CORRESPONDENT_ACCOUNT_REFERENCE.matcher(value);
+        if (simulatedAccount.matches()) {
+            return simulatedAccount.group(1) + maskAccount(simulatedAccount.group(2));
+        }
+
+        var bicLinkedAccount = BIC_LINKED_ACCOUNT_REFERENCE.matcher(value);
+        if (bicLinkedAccount.matches()) {
+            return bicLinkedAccount.group(1) + maskAccount(bicLinkedAccount.group(2));
+        }
+        return null;
     }
 
     private static String digitsOnly(String value) {

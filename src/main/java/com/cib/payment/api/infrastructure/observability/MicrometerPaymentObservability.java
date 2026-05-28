@@ -4,12 +4,14 @@ import com.cib.payment.api.api.dto.CreateDomesticPaymentRequest;
 import com.cib.payment.api.application.port.PaymentObservability;
 import com.cib.payment.api.domain.model.AuthorizationContext;
 import com.cib.payment.api.domain.model.CorrelationId;
+import com.cib.payment.api.domain.model.FiPaymentRecord;
 import com.cib.payment.api.domain.model.IdempotencyRecord;
 import com.cib.payment.api.domain.model.InternalInterbankTransfer;
 import com.cib.payment.api.domain.model.IsoPaymentCandidate;
 import com.cib.payment.api.domain.model.PaymentRecord;
 import com.cib.payment.api.domain.model.PaymentReason;
 import com.cib.payment.api.domain.model.PaymentStatus;
+import com.cib.payment.api.domain.model.RecallInvestigationRecord;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
 import java.util.Optional;
@@ -160,5 +162,59 @@ public class MicrometerPaymentObservability implements PaymentObservability {
                 correlationId.value(),
                 paymentId,
                 status.name());
+    }
+
+    @Override
+    public void fiXmlPayloadHandled(String messageType, String rawXml, CorrelationId correlationId) {
+        meterRegistry.counter("payment.fi.xml.payloads", "messageType", messageType).increment();
+        log.info(
+                "fi_xml_payload_handled correlationId={} messageType={} xmlPayload={}",
+                correlationId.value(),
+                messageType,
+                AccountNumberMasker.maskSensitive(rawXml));
+    }
+
+    @Override
+    public void fiPaymentAccepted(FiPaymentRecord record, AuthorizationContext authorizationContext) {
+        meterRegistry.counter("payment.fi.accepted", "status", record.status().name()).increment();
+        log.info(
+                "fi_payment_accepted correlationId={} clientId={} paymentId={} status={} instructingAgent={} instructedAgent={} currency={} accountRole={} simulatedAccount={}",
+                record.correlationId().value(),
+                authorizationContext.clientId(),
+                record.paymentId().value(),
+                record.status().name(),
+                record.instructingParty().bic(),
+                record.instructedParty().bic(),
+                record.settlementCurrency(),
+                record.correspondentSettlementContext().accountRelationshipRole().name(),
+                AccountNumberMasker.maskSensitive(record.correspondentSettlementContext().maskedSimulatedAccountReference()));
+    }
+
+    @Override
+    public void fiPaymentStatusLookup(FiPaymentRecord record, AuthorizationContext authorizationContext) {
+        meterRegistry.counter("payment.fi.status.distribution", "status", record.status().name()).increment();
+        log.info(
+                "fi_payment_status_lookup correlationId={} clientId={} paymentId={} status={} simulatedAccount={}",
+                authorizationContext.correlationId().value(),
+                authorizationContext.clientId(),
+                record.paymentId().value(),
+                record.status().name(),
+                AccountNumberMasker.maskSensitive(record.correspondentSettlementContext().maskedSimulatedAccountReference()));
+    }
+
+    @Override
+    public void recallInvestigationCreated(
+            RecallInvestigationRecord record,
+            AuthorizationContext authorizationContext) {
+        meterRegistry.counter("payment.fi.recall.created", "status", record.status().name()).increment();
+        log.info(
+                "fi_recall_investigation_created correlationId={} clientId={} paymentId={} investigationId={} status={} originalReference={} simulatedAccount={}",
+                record.correlationId().value(),
+                authorizationContext.clientId(),
+                record.fiPaymentId().value(),
+                record.investigationId().value(),
+                record.status().name(),
+                AccountNumberMasker.maskSensitive(record.originalPaymentReference()),
+                AccountNumberMasker.maskSensitive(record.settlementContext().maskedSimulatedAccountReference()));
     }
 }

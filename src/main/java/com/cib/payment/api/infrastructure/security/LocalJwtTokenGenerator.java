@@ -22,7 +22,7 @@ public final class LocalJwtTokenGenerator {
 
     public static String generateFromArgs(String[] args, Instant issuedAt) {
         var subject = value(args, 0, "client-a");
-        var scope = normalizeScope(value(args, 1, "payments:create,payments:read"));
+        var scope = normalizeScope(value(args, 1, defaultScopes()));
         var ttlSeconds = Long.parseLong(value(args, 2, "3600"));
         return generate(subject, scope, issuedAt, ttlSeconds);
     }
@@ -54,5 +54,9 @@ public final class LocalJwtTokenGenerator {
 
     private static String normalizeScope(String scope) {
         return scope.replace(',', ' ').trim().replaceAll("\\s+", " ");
+    }
+
+    private static String defaultScopes() {
+        return "payments:create,payments:read,fi-payments:create,fi-payments:read,fi-payments:investigate";
     }
 }

@@ -8,6 +8,7 @@ import com.cib.payment.api.api.dto.RecallInvestigationSummaryResponse;
 import com.cib.payment.api.application.exception.PaymentNotFoundException;
 import com.cib.payment.api.application.exception.ValidationFailureException;
 import com.cib.payment.api.application.port.FiPaymentRepository;
+import com.cib.payment.api.application.port.PaymentObservability;
 import com.cib.payment.api.application.port.RecallInvestigationRepository;
 import com.cib.payment.api.domain.model.AuthorizationContext;
 import com.cib.payment.api.domain.model.CorrespondentSettlementContext;
@@ -16,24 +17,36 @@ import com.cib.payment.api.domain.model.FiPaymentRecord;
 import com.cib.payment.api.domain.model.PaymentReason;
 import com.cib.payment.api.domain.model.RecallInvestigationRecord;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class GetFiPaymentStatusService {
     private final FiPaymentRepository fiPaymentRepository;
     private final RecallInvestigationRepository recallInvestigationRepository;
+    private final PaymentObservability observability;
 
-    public GetFiPaymentStatusService(
+    GetFiPaymentStatusService(
             FiPaymentRepository fiPaymentRepository,
             RecallInvestigationRepository recallInvestigationRepository) {
+        this(fiPaymentRepository, recallInvestigationRepository, PaymentObservability.noop());
+    }
+
+    @Autowired
+    public GetFiPaymentStatusService(
+            FiPaymentRepository fiPaymentRepository,
+            RecallInvestigationRepository recallInvestigationRepository,
+            PaymentObservability observability) {
         this.fiPaymentRepository = fiPaymentRepository;
         this.recallInvestigationRepository = recallInvestigationRepository;
+        this.observability = observability;
     }
 
     public FiPaymentStatusResponse getStatus(String paymentIdValue, AuthorizationContext authorizationContext) {
         var paymentId = parsePaymentId(paymentIdValue);
         var record = fiPaymentRepository.findByIdAndOwnerClientId(paymentId, authorizationContext.clientId())
                 .orElseThrow(() -> new PaymentNotFoundException("Payment was not found"));
+        observability.fiPaymentStatusLookup(record, authorizationContext);
         var recallSummary = recallInvestigationRepository
                 .findByPaymentIdAndOwnerClientId(paymentId, authorizationContext.clientId())
                 .map(this::toRecallSummary)
