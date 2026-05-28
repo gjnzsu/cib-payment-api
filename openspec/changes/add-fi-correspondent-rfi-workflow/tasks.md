@@ -31,11 +31,11 @@
 
 ## 5. camt.056 Recall Request and camt.029 Resolution
 
-- [ ] 5.1 Implement secure supported-profile `camt.056` parser with external entity resolution disabled.
+- [x] 5.1 Implement secure supported-profile `camt.056` parser with external entity resolution disabled.
 - [ ] 5.2 Validate recall request identifiers, supported recall reason, target FI payment ownership, reference to the original FI payment, and eligibility for `SETTLED` or `PROCESSING` FI payment status.
 - [ ] 5.3 Implement deterministic recall/investigation simulator outcomes for `recall_accepted`, `recall_rejected`, and `investigation_pending`.
 - [ ] 5.4 Implement recall/investigation service that stores at most one recall record per FI payment linked to correspondent settlement context.
-- [ ] 5.5 Implement deterministic `camt.029` renderer for accepted, rejected, and pending investigation resolutions.
+- [x] 5.5 Implement deterministic `camt.029` renderer for accepted, rejected, and pending investigation resolutions.
 - [ ] 5.6 Add unit tests for `camt.056` parsing, recall validation, `SETTLED` and `PROCESSING` recall eligibility, `REJECTED` payment recall rejection, one-record-per-payment rule, simulator outcomes, `camt.029` rendering, record storage, and latest investigation summary updates.
 
 ## 6. Security, Idempotency, Correlation, and Masking
