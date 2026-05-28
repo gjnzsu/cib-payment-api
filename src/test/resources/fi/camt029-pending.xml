@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.029.001.09">
+  <RsltnOfInvstgtn>
+    <Assgnmt>
+      <Id>FICLIENT01-CAMT029-PENDING</Id>
+      <Assgnr><Agt><FinInstnId><BICFI>VOSTUS33</BICFI></FinInstnId></Agt></Assgnr>
+      <Assgne><Agt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></Agt></Assgne>
+      <CreDtTm>2026-05-28T10:10:00Z</CreDtTm>
+    </Assgnmt>
+    <Sts><Conf>PDCR</Conf></Sts>
+    <CxlDtls>
+      <TxInfAndSts>
+        <OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId>
+        <CxlStsId>FICLIENT01-CANCEL-PENDING</CxlStsId>
+        <CxlStsRsnInf><Rsn><Cd>IPAY</Cd></Rsn><AddtlInf>FICLIENT01 CANCEL PENDING</AddtlInf></CxlStsRsnInf>
+      </TxInfAndSts>
+    </CxlDtls>
+  </RsltnOfInvstgtn>
+</Document>
