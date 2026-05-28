@@ -92,8 +92,7 @@ class FiInMemoryRepositoryTest {
                 settlementContext(),
                 new CorrelationId("corr-fi-456"),
                 now,
-                now,
-                Optional.of("<camt.029>synthetic</camt.029>"));
+                now);
     }
 
     private FiPaymentIdentifiers identifiers() {

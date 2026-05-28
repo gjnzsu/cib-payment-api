@@ -66,7 +66,18 @@ class EdgeEngineBoundaryTest {
             "PaymentStatusRepository",
             "IdempotencyRepository",
             "PaymentEngineRecordRepository");
+    private static final List<String> FI_DOMAIN_FORBIDDEN_IDENTIFIER_TERMS = List.of(
+            "Xml",
+            "XML",
+            "Camt029Xml",
+            "Rendered",
+            "rendered",
+            "Renderer",
+            "renderer",
+            "Parser",
+            "parser");
     private static final Pattern IMPORT_PATTERN = Pattern.compile("(?m)^\\s*import\\s+(?:static\\s+)?([^;]+);");
+    private static final Pattern IDENTIFIER_PATTERN = Pattern.compile("\\b[A-Za-z_$][\\w$]*\\b");
     private static final Pattern PACKAGE_REFERENCE_PATTERN = Pattern.compile(
             "\\b(?:com\\.cib\\.payment\\.api|java\\.net\\.http|java\\.sql|javax\\.(?:persistence|servlet|sql|ws\\.rs|xml)"
                     + "|jakarta\\.(?:persistence|servlet|ws\\.rs|xml)|org\\.(?:apache\\.(?:cxf|http|xerces|xmlbeans)|dom4j"
@@ -152,12 +163,36 @@ class EdgeEngineBoundaryTest {
         }
     }
 
+    @Test
+    void fiDomainModelNamesDoNotExposeXmlRenderingOrParsingDetails() throws IOException {
+        for (var source : domainModelSources()) {
+            var identifiers = identifiersIn(source);
+            var forbiddenIdentifiers = identifiers.stream()
+                    .filter(this::isForbiddenFiDomainIdentifier)
+                    .toList();
+
+            assertThat(forbiddenIdentifiers)
+                    .as("%s must model FI recall/payment concepts, not XML rendering or parser adapter details", source)
+                    .isEmpty();
+        }
+    }
+
     private List<Path> domainModelSources() throws IOException {
-        var sources = javaSources("com/cib/payment/api/domain/model");
+        var sources = javaSources("com/cib/payment/api/domain/model").stream()
+                .filter(this::isFiDomainModelSource)
+                .toList();
         assertThat(sources)
                 .as("FI domain guardrail must scan the domain model surface that contains FI models")
                 .isNotEmpty();
         return sources;
+    }
+
+    private boolean isFiDomainModelSource(Path source) {
+        var fileName = source.getFileName().toString();
+        return fileName.startsWith("Fi")
+                || fileName.startsWith("Correspondent")
+                || fileName.startsWith("RecallInvestigation")
+                || fileName.equals("AccountRelationshipRole.java");
     }
 
     private List<Path> optionalJavaSources(String packagePath, String fileName) throws IOException {
@@ -209,6 +244,21 @@ class EdgeEngineBoundaryTest {
         }
 
         return Set.copyOf(dependencies);
+    }
+
+    private Set<String> identifiersIn(Path source) throws IOException {
+        var stripped = stripCommentsAndStringLiterals(read(source));
+        var identifiers = new ArrayList<String>();
+        var matcher = IDENTIFIER_PATTERN.matcher(stripped);
+        while (matcher.find()) {
+            identifiers.add(matcher.group());
+        }
+        return Set.copyOf(identifiers);
+    }
+
+    private boolean isForbiddenFiDomainIdentifier(String identifier) {
+        return FI_DOMAIN_FORBIDDEN_IDENTIFIER_TERMS.stream()
+                .anyMatch(term -> identifier.equals(term) || identifier.contains(term));
     }
 
     private String read(Path path) throws IOException {

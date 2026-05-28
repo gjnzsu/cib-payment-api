@@ -16,6 +16,5 @@ public record RecallInvestigationRecord(
         CorrespondentSettlementContext settlementContext,
         CorrelationId correlationId,
         Instant createdAt,
-        Instant updatedAt,
-        Optional<String> renderedCamt029Xml) {
+        Instant updatedAt) {
 }
