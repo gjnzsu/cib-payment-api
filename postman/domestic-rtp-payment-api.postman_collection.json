@@ -366,10 +366,10 @@
               {"key": "Content-Type", "value": "application/camt.056+xml"},
               {"key": "Accept", "value": "application/camt.029+xml"}
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.056.001.08\"><FIToFIPmtCxlReq><Assgnmt><Id>FICLIENT01-CAMT056-RECALL-ACCEPTED</Id></Assgnmt><Undrlyg><TxInf><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId></TxInf></Undrlyg></FIToFIPmtCxlReq></Document>"},
+            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.056.001.08\"><FIToFIPmtCxlReq><Assgnmt><Id>FICLIENT01-CAMT056-RECALL-REJECTED</Id></Assgnmt><Undrlyg><TxInf><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId><CxlRsnInf><Rsn><Cd>CUST</Cd></Rsn><AddtlInf>FICLIENT01 RECALL REJECTED</AddtlInf></CxlRsnInf></TxInf></Undrlyg></FIToFIPmtCxlReq></Document>"},
             "url": {"raw": "{{baseUrl}}/v1/fi-payments/{{fiPaymentId}}/recall-requests", "host": ["{{baseUrl}}"], "path": ["v1", "fi-payments", "{{fiPaymentId}}", "recall-requests"]}
           },
-          "response": [{"name": "202 Accepted - camt.029 Recall Rejected", "status": "Accepted", "code": 202, "_postman_previewlanguage": "xml", "body": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.029.001.09\"><RsltnOfInvstgtn><CxlDtls><TxInfAndSts><TxCxlSts>RJCR</TxCxlSts></TxInfAndSts></CxlDtls></RsltnOfInvstgtn></Document>"}]
+          "response": [{"name": "202 Accepted - camt.029 Recall Rejected", "status": "Accepted", "code": 202, "_postman_previewlanguage": "xml", "header": [{"key": "Content-Type", "value": "application/camt.029+xml"}], "body": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.029.001.09\"><RsltnOfInvstgtn><Sts><Conf>RJCR</Conf></Sts><CxlDtls><TxInfAndSts><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId><CxlStsId>FICLIENT01-CANCEL-REJECTED</CxlStsId><TxCxlSts>RJCR</TxCxlSts><CxlStsRsnInf><Rsn><Cd>NOAS</Cd></Rsn><AddtlInf>FICLIENT01 CANCEL REJECTED</AddtlInf></CxlStsRsnInf></TxInfAndSts></CxlDtls></RsltnOfInvstgtn></Document>"}]
         },
         {
           "name": "Create FI Recall - Investigation Pending",
@@ -383,10 +383,10 @@
               {"key": "Content-Type", "value": "application/camt.056+xml"},
               {"key": "Accept", "value": "application/camt.029+xml"}
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.056.001.08\"><FIToFIPmtCxlReq><Assgnmt><Id>FICLIENT01-CAMT056-RECALL-ACCEPTED</Id></Assgnmt><Undrlyg><TxInf><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId></TxInf></Undrlyg></FIToFIPmtCxlReq></Document>"},
+            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.056.001.08\"><FIToFIPmtCxlReq><Assgnmt><Id>FICLIENT01-CAMT056-INVESTIGATION-PENDING</Id></Assgnmt><Undrlyg><TxInf><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId><CxlRsnInf><Rsn><Cd>TECH</Cd></Rsn><AddtlInf>FICLIENT01 INVESTIGATION PENDING</AddtlInf></CxlRsnInf></TxInf></Undrlyg></FIToFIPmtCxlReq></Document>"},
             "url": {"raw": "{{baseUrl}}/v1/fi-payments/{{fiPaymentId}}/recall-requests", "host": ["{{baseUrl}}"], "path": ["v1", "fi-payments", "{{fiPaymentId}}", "recall-requests"]}
           },
-          "response": [{"name": "202 Accepted - camt.029 Investigation Pending", "status": "Accepted", "code": 202, "_postman_previewlanguage": "xml", "body": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.029.001.09\"><RsltnOfInvstgtn><CxlDtls><TxInfAndSts><TxCxlSts>PDCR</TxCxlSts></TxInfAndSts></CxlDtls></RsltnOfInvstgtn></Document>"}]
+          "response": [{"name": "202 Accepted - camt.029 Investigation Pending", "status": "Accepted", "code": 202, "_postman_previewlanguage": "xml", "header": [{"key": "Content-Type", "value": "application/camt.029+xml"}], "body": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.029.001.09\"><RsltnOfInvstgtn><Sts><Conf>PDCR</Conf></Sts><CxlDtls><TxInfAndSts><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId><CxlStsId>FICLIENT01-CANCEL-PENDING</CxlStsId><TxCxlSts>PDCR</TxCxlSts><CxlStsRsnInf><Rsn><Cd>IPAY</Cd></Rsn><AddtlInf>FICLIENT01 CANCEL PENDING</AddtlInf></CxlStsRsnInf></TxInfAndSts></CxlDtls></RsltnOfInvstgtn></Document>"}]
         },
         {
           "name": "Create FI Payment - Replay",
@@ -400,7 +400,7 @@
               {"key": "X-Mock-Scenario", "value": "{{fiMockScenario}}"},
               {"key": "Content-Type", "value": "application/pacs.009+xml"}
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FICdtTrf><GrpHdr><MsgId>FI-MSG-20260528-ACCEPTED-NOSTRO</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><CdtTrfTxInf><PmtId><InstrId>FICLIENT01-PACS009-ACCEPTED-NOSTRO</InstrId><EndToEndId>FI-E2E-20260528-0001</EndToEndId></PmtId><IntrBkSttlmAmt Ccy=\"USD\">100000.00</IntrBkSttlmAmt><IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt></CdtTrfTxInf></FICdtTrf></Document>"},
+            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FICdtTrf><GrpHdr><MsgId>FI-MSG-20260528-ACCEPTED-NOSTRO</MsgId><NbOfTxs>1</NbOfTxs><InstgAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></InstgAgt><InstdAgt><FinInstnId><BICFI>CORRUS33</BICFI></FinInstnId></InstdAgt></GrpHdr><CdtTrfTxInf><PmtId><InstrId>FICLIENT01-PACS009-ACCEPTED-NOSTRO</InstrId><EndToEndId>FI-E2E-20260528-0001</EndToEndId></PmtId><IntrBkSttlmAmt Ccy=\"USD\">100000.00</IntrBkSttlmAmt><IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt><RmtInf><Ustrd>FICLIENT01 NOSTRO SYNTHETIC FIXTURE</Ustrd></RmtInf></CdtTrfTxInf></FICdtTrf></Document>"},
             "url": {"raw": "{{baseUrl}}/v1/fi-payments", "host": ["{{baseUrl}}"], "path": ["v1", "fi-payments"]}
           },
           "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('FI idempotent replay returns the original acknowledgement', function () {", "  pm.response.to.have.status(202);", "  pm.expect(pm.response.json().paymentId).to.exist;", "});"]}}]
@@ -416,7 +416,7 @@
               {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
               {"key": "Content-Type", "value": "application/pacs.009+xml"}
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FICdtTrf><GrpHdr><MsgId>FI-MSG-20260528-ACCEPTED-NOSTRO</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><CdtTrfTxInf><PmtId><InstrId>FICLIENT01-PACS009-ACCEPTED-NOSTRO</InstrId><EndToEndId>FI-E2E-20260528-0001</EndToEndId></PmtId><IntrBkSttlmAmt Ccy=\"USD\">100000.00</IntrBkSttlmAmt><IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt></CdtTrfTxInf></FICdtTrf></Document>"},
+            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FICdtTrf><GrpHdr><MsgId>FI-MSG-20260528-ACCEPTED-NOSTRO</MsgId><NbOfTxs>1</NbOfTxs><InstgAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></InstgAgt><InstdAgt><FinInstnId><BICFI>CORRUS33</BICFI></FinInstnId></InstdAgt></GrpHdr><CdtTrfTxInf><PmtId><InstrId>FICLIENT01-PACS009-ACCEPTED-NOSTRO</InstrId><EndToEndId>FI-E2E-20260528-0001</EndToEndId></PmtId><IntrBkSttlmAmt Ccy=\"USD\">100000.00</IntrBkSttlmAmt><IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt><RmtInf><Ustrd>FICLIENT01 NOSTRO SYNTHETIC FIXTURE</Ustrd></RmtInf></CdtTrfTxInf></FICdtTrf></Document>"},
             "url": {"raw": "{{baseUrl}}/v1/fi-payments", "host": ["{{baseUrl}}"], "path": ["v1", "fi-payments"]}
           }
         },
@@ -431,7 +431,7 @@
               {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
               {"key": "Content-Type", "value": "application/pacs.009+xml"}
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FICdtTrf><GrpHdr><MsgId>FI-MSG-20260528-CONFLICT</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><CdtTrfTxInf><PmtId><InstrId>FICLIENT01-PACS009-CONFLICT</InstrId><EndToEndId>FI-E2E-20260528-CONFLICT</EndToEndId></PmtId><IntrBkSttlmAmt Ccy=\"USD\">101000.00</IntrBkSttlmAmt><IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt></CdtTrfTxInf></FICdtTrf></Document>"},
+            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FICdtTrf><GrpHdr><MsgId>FI-MSG-20260528-CONFLICT</MsgId><NbOfTxs>1</NbOfTxs><InstgAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></InstgAgt><InstdAgt><FinInstnId><BICFI>CORRUS33</BICFI></FinInstnId></InstdAgt></GrpHdr><CdtTrfTxInf><PmtId><InstrId>FICLIENT01-PACS009-CONFLICT</InstrId><EndToEndId>FI-E2E-20260528-CONFLICT</EndToEndId></PmtId><IntrBkSttlmAmt Ccy=\"USD\">101000.00</IntrBkSttlmAmt><IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt><RmtInf><Ustrd>FICLIENT01 NOSTRO CONFLICT FIXTURE</Ustrd></RmtInf></CdtTrfTxInf></FICdtTrf></Document>"},
             "url": {"raw": "{{baseUrl}}/v1/fi-payments", "host": ["{{baseUrl}}"], "path": ["v1", "fi-payments"]}
           },
           "response": [{"name": "409 Conflict - FI Idempotency", "status": "Conflict", "code": 409, "_postman_previewlanguage": "json", "body": "{\"code\":\"IDEMPOTENCY_CONFLICT\",\"message\":\"Idempotency key was reused with different FI payment semantics\",\"status\":409,\"correlationId\":\"postman-local-correlation-001\"}"}],
@@ -479,7 +479,7 @@
               {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
               {"key": "Content-Type", "value": "application/pacs.009+xml"}
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FICdtTrf><GrpHdr><MsgId>FI-MSG-20260528-NONUSD</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><CdtTrfTxInf><PmtId><InstrId>FICLIENT01-PACS009-NONUSD</InstrId><EndToEndId>FI-E2E-20260528-NONUSD</EndToEndId></PmtId><IntrBkSttlmAmt Ccy=\"EUR\">100000.00</IntrBkSttlmAmt><IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt></CdtTrfTxInf></FICdtTrf></Document>"},
+            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FICdtTrf><GrpHdr><MsgId>FI-MSG-20260528-NONUSD</MsgId><NbOfTxs>1</NbOfTxs><InstgAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></InstgAgt><InstdAgt><FinInstnId><BICFI>CORRUS33</BICFI></FinInstnId></InstdAgt></GrpHdr><CdtTrfTxInf><PmtId><InstrId>FICLIENT01-PACS009-NONUSD</InstrId><EndToEndId>FI-E2E-20260528-NONUSD</EndToEndId></PmtId><IntrBkSttlmAmt Ccy=\"EUR\">100000.00</IntrBkSttlmAmt><IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt><RmtInf><Ustrd>FICLIENT01 NON-USD VALIDATION FIXTURE</Ustrd></RmtInf></CdtTrfTxInf></FICdtTrf></Document>"},
             "url": {"raw": "{{baseUrl}}/v1/fi-payments", "host": ["{{baseUrl}}"], "path": ["v1", "fi-payments"]}
           },
           "response": [{"name": "400 Bad Request - FI Validation", "status": "Bad Request", "code": 400, "_postman_previewlanguage": "json", "body": "{\"code\":\"VALIDATION_ERROR\",\"message\":\"Request validation failed\",\"status\":400,\"correlationId\":\"postman-local-correlation-001\"}"}],

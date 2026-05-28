@@ -2,12 +2,18 @@ package com.cib.payment.api.developer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.cib.payment.api.application.service.FiPaymentAdmissionService;
+import com.cib.payment.api.infrastructure.iso.Camt056Parser;
+import com.cib.payment.api.infrastructure.iso.Pacs009Parser;
+import com.cib.payment.api.infrastructure.simulator.FiCorrespondentRouteProfile;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -16,8 +22,14 @@ class PostmanArtifactValidationTest {
     private static final Path COLLECTION = Path.of("postman", "domestic-rtp-payment-api.postman_collection.json");
     private static final Path ENVIRONMENT = Path.of("postman", "domestic-rtp-payment-api.local.postman_environment.json");
     private static final Path DOCS = Path.of("docs", "developer-support", "postman-local-testing.md");
+    private static final String ORIGINAL_FI_REFERENCE = "FI-E2E-20260528-0001";
+    private static final Set<String> SUPPORTED_FI_RECALL_REASONS = Set.of("DUPL", "CUST", "AM09", "FRAD", "TECH");
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final Pacs009Parser pacs009Parser = new Pacs009Parser();
+    private final FiPaymentAdmissionService fiPaymentAdmissionService = new FiPaymentAdmissionService(pacs009Parser);
+    private final FiCorrespondentRouteProfile routeProfile = new FiCorrespondentRouteProfile();
+    private final Camt056Parser camt056Parser = new Camt056Parser();
 
     @Test
     void postmanCollectionCoversContractEndpointsHeadersScenariosAndExamples() throws Exception {
@@ -126,6 +138,15 @@ class PostmanArtifactValidationTest {
         assertThat(serialized).contains("FICLIENT01", "FI-E2E-20260528-0001");
         assertThat(serialized).contains("SETTLED", "REJECTED", "PROCESSING");
         assertThat(serialized).contains("NOSTRO", "VOSTRO", "LORO");
+        assertThat(serialized).contains(
+                "FICLIENT01-CANCEL-ACCEPTED",
+                "FICLIENT01-CANCEL-REJECTED",
+                "FICLIENT01-CANCEL-PENDING",
+                "ACCP",
+                "RJCR",
+                "PDCR",
+                "NOAS",
+                "IPAY");
         assertThat(serialized).contains("VALIDATION_ERROR", "IDEMPOTENCY_CONFLICT", "UNAUTHORIZED", "FORBIDDEN");
         assertThat(serialized).contains("X-Correlation-ID");
 
@@ -222,6 +243,41 @@ class PostmanArtifactValidationTest {
         assertThat(camt029).contains("<CxlStsId>FICLIENT01-CANCEL-ACCEPTED</CxlStsId>");
     }
 
+    @Test
+    void fiOpenApiXmlExamplesAreExecutableAgainstRuntimeParsersAndRouteProfile() throws Exception {
+        var openApi = new ClassPathResource("openapi/domestic-payment-api.yaml")
+                .getContentAsString(StandardCharsets.UTF_8);
+        var pacs009 = openApiXmlExample(openApi, "application/pacs.009+xml");
+        var camt056 = openApiXmlExample(openApi, "application/camt.056+xml");
+
+        assertPacs009AcceptedByRuntimeContract(pacs009);
+        assertCamt056AcceptedByRuntimeParser(camt056);
+    }
+
+    @Test
+    void fiPostmanPacs009BodiesForCreateReplayAndConflictAreExecutableAgainstRuntimeContract() throws Exception {
+        var collection = objectMapper.readTree(Files.readString(COLLECTION, StandardCharsets.UTF_8));
+
+        for (var requestName : List.of(
+                "Create FI Payment - Accepted",
+                "Create FI Payment - Replay",
+                "Create FI Payment - Idempotency Conflict Setup",
+                "Create FI Payment - Idempotency Conflict")) {
+            assertPacs009AcceptedByRuntimeContract(requestBody(collection, requestName));
+        }
+    }
+
+    @Test
+    void fiPostmanRecallBodiesIncludeSupportedReasonAndMatchOriginalReference() throws Exception {
+        var collection = objectMapper.readTree(Files.readString(COLLECTION, StandardCharsets.UTF_8));
+
+        for (var requestName : List.of(
+                "Create FI Recall - Accepted",
+                "Create FI Recall - Rejected",
+                "Create FI Recall - Investigation Pending")) {
+            assertCamt056AcceptedByRuntimeParser(requestBody(collection, requestName));
+        }
+    }
 
     @Test
     void localPostmanDocumentationExplainsRunDocsJwtMockScenariosAndCollectionUsage() throws Exception {
@@ -278,6 +334,57 @@ class PostmanArtifactValidationTest {
         return variables;
     }
 
+    private void assertPacs009AcceptedByRuntimeContract(String xml) {
+        var parsed = pacs009Parser.parse(xml);
+        assertThat(parsed.instructingAgentBic()).isNotBlank();
+        assertThat(parsed.instructedAgentBic()).isNotBlank();
+        assertThat(parsed.currency()).isEqualTo("USD");
+
+        var candidate = fiPaymentAdmissionService.admit(xml, "application/pacs.009+xml");
+        assertThat(candidate.instructingParty().bic()).isNotBlank();
+        assertThat(candidate.instructedParty().bic()).isNotBlank();
+        assertThat(candidate.settlementCurrency()).isEqualTo("USD");
+
+        var settlementContext = routeProfile.derive(
+                candidate.instructingParty().bic(),
+                candidate.instructedParty().bic(),
+                candidate.settlementCurrency());
+        assertThat(settlementContext.accountRelationshipRole().name()).isIn("NOSTRO", "VOSTRO", "LORO");
+    }
+
+    private void assertCamt056AcceptedByRuntimeParser(String xml) {
+        var parsed = camt056Parser.parse(xml);
+
+        assertThat(parsed.originalPaymentReference()).isEqualTo(ORIGINAL_FI_REFERENCE);
+        assertThat(parsed.reasonCode()).isIn(SUPPORTED_FI_RECALL_REASONS);
+    }
+
+    private String openApiXmlExample(String openApi, String mediaType) {
+        var mediaTypeIndex = openApi.indexOf(mediaType);
+        assertThat(mediaTypeIndex).as(mediaType + " media type is documented").isNotNegative();
+        var valueIndex = openApi.indexOf("value: |-", mediaTypeIndex);
+        assertThat(valueIndex).as(mediaType + " example value is documented").isNotNegative();
+        var xmlStart = openApi.indexOf("<?xml", valueIndex);
+        assertThat(xmlStart).as(mediaType + " XML example starts with an XML declaration").isNotNegative();
+
+        var lines = openApi.substring(xmlStart).split("\\R");
+        var xml = new StringBuilder();
+        for (var line : lines) {
+            if (xml.length() > 0 && !line.startsWith("                  ")) {
+                break;
+            }
+            xml.append(line.stripLeading()).append(System.lineSeparator());
+        }
+        return xml.toString().trim();
+    }
+
+    private String requestBody(JsonNode collection, String requestName) {
+        var matchingBodies = new ArrayList<String>();
+        collectRequestBodies(collection.path("item"), requestName, matchingBodies);
+        assertThat(matchingBodies).as(requestName + " request body").hasSize(1);
+        return matchingBodies.getFirst();
+    }
+
     private void collectNames(JsonNode items, Set<String> names) {
         items.forEach(item -> {
             if (item.has("request")) {
@@ -291,6 +398,15 @@ class PostmanArtifactValidationTest {
         items.forEach(item -> {
             item.path("response").forEach(response -> names.add(response.path("name").asText()));
             collectResponseNames(item.path("item"), names);
+        });
+    }
+
+    private void collectRequestBodies(JsonNode items, String requestName, List<String> bodies) {
+        items.forEach(item -> {
+            if (item.has("request") && requestName.equals(item.path("name").asText())) {
+                bodies.add(item.path("request").path("body").path("raw").asText());
+            }
+            collectRequestBodies(item.path("item"), requestName, bodies);
         });
     }
 }

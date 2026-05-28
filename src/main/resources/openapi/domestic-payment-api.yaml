@@ -191,14 +191,17 @@ paths:
                   <?xml version="1.0" encoding="UTF-8"?>
                   <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08">
                     <FICdtTrf>
-                      <GrpHdr><MsgId>FI-MSG-20260528-0001</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr>
+                      <GrpHdr>
+                        <MsgId>FI-MSG-20260528-ACCEPTED-NOSTRO</MsgId>
+                        <NbOfTxs>1</NbOfTxs>
+                        <InstgAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></InstgAgt>
+                        <InstdAgt><FinInstnId><BICFI>CORRUS33</BICFI></FinInstnId></InstdAgt>
+                      </GrpHdr>
                       <CdtTrfTxInf>
-                        <PmtId><InstrId>FI-INSTR-20260528-0001</InstrId><EndToEndId>FI-E2E-20260528-0001</EndToEndId></PmtId>
-                        <IntrBkSttlmAmt Ccy="USD">250000.00</IntrBkSttlmAmt>
+                        <PmtId><InstrId>FICLIENT01-PACS009-ACCEPTED-NOSTRO</InstrId><EndToEndId>FI-E2E-20260528-0001</EndToEndId></PmtId>
+                        <IntrBkSttlmAmt Ccy="USD">100000.00</IntrBkSttlmAmt>
                         <IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt>
-                        <InstgAgt><FinInstnId><BICFI>FICLIENT01</BICFI></FinInstnId></InstgAgt>
-                        <InstdAgt><FinInstnId><BICFI>FIBENEF01</BICFI></FinInstnId></InstdAgt>
-                        <IntrmyAgt1><FinInstnId><BICFI>FICORR01</BICFI></FinInstnId></IntrmyAgt1>
+                        <RmtInf><Ustrd>FICLIENT01 NOSTRO SYNTHETIC FIXTURE</Ustrd></RmtInf>
                       </CdtTrfTxInf>
                     </FICdtTrf>
                   </Document>
@@ -309,9 +312,9 @@ paths:
                   <?xml version="1.0" encoding="UTF-8"?>
                   <Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.056.001.08">
                     <FIToFIPmtCxlReq>
-                      <Assgnmt><Id>FI-RECALL-20260528-0001</Id><Assgnr><Agt><FinInstnId><BICFI>FICLIENT01</BICFI></FinInstnId></Agt></Assgnr></Assgnmt>
+                      <Assgnmt><Id>FICLIENT01-CAMT056-RECALL-ACCEPTED</Id><Assgnr><Agt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></Agt></Assgnr></Assgnmt>
                       <CtrlData><NbOfTxs>1</NbOfTxs></CtrlData>
-                      <Undrlyg><TxInf><CxlId>FI-CXL-20260528-0001</CxlId><Case><Id>FI-CASE-20260528-0001</Id></Case><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId></TxInf></Undrlyg>
+                      <Undrlyg><TxInf><CxlId>FICLIENT01-CANCEL-ACCEPTED</CxlId><Case><Id>FICLIENT01-CASE-ACCEPTED</Id></Case><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId><CxlRsnInf><Rsn><Cd>DUPL</Cd></Rsn><AddtlInf>FICLIENT01 RECALL ACCEPTED</AddtlInf></CxlRsnInf></TxInf></Undrlyg>
                     </FIToFIPmtCxlReq>
                   </Document>
       responses:
