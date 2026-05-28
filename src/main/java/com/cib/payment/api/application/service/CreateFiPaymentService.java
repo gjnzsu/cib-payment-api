@@ -186,7 +186,7 @@ public class CreateFiPaymentService {
 
     private FiPaymentAcknowledgementResponse toAcknowledgement(FiPaymentRecord record) {
         return new FiPaymentAcknowledgementResponse(
-                record.paymentId(),
+                record.paymentId().value().toString(),
                 record.status().name(),
                 toContextResponse(record.correspondentSettlementContext()),
                 record.correlationId().value(),
