@@ -1,9 +1,9 @@
 ## 1. FI ISO Fixtures and Contract Baseline
 
-- [ ] 1.1 Add synthetic `pacs.009` XML fixtures for FI payment accepted, unsupported correspondent rejection, correspondent review pending, non-USD validation failure, missing required field, and unsafe XML cases.
-- [ ] 1.2 Add synthetic `camt.056` XML fixtures for recall accepted, recall rejected, investigation pending, wrong original payment reference, malformed XML, and unsafe XML cases.
-- [ ] 1.3 Add synthetic `camt.029` XML fixtures for accepted, rejected, and pending investigation resolutions.
-- [ ] 1.4 Add fixture validation tests that verify namespaces, synthetic identifiers, USD-only valid FI fixtures, and absence of real sensitive account or customer data.
+- [x] 1.1 Add synthetic `pacs.009` XML fixtures for FI payment accepted, unsupported correspondent rejection, correspondent review pending, non-USD validation failure, missing required field, and unsafe XML cases.
+- [x] 1.2 Add synthetic `camt.056` XML fixtures for recall accepted, recall rejected, investigation pending, wrong original payment reference, malformed XML, and unsafe XML cases.
+- [x] 1.3 Add synthetic `camt.029` XML fixtures for accepted, rejected, and pending investigation resolutions.
+- [x] 1.4 Add fixture validation tests that verify namespaces, synthetic identifiers, USD-only valid FI fixtures, and absence of real sensitive account or customer data.
 - [ ] 1.5 Define a supported USD correspondent route profile matrix that deterministically derives `NOSTRO`, `VOSTRO`, and `LORO` settlement account roles for test fixtures and simulator scenarios.
 
 ## 2. FI Domain Model and Repository Boundaries
