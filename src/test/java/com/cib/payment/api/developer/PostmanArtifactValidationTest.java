@@ -8,6 +8,7 @@ import com.cib.payment.api.infrastructure.iso.Pacs009Parser;
 import com.cib.payment.api.infrastructure.simulator.FiCorrespondentRouteProfile;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,6 +27,7 @@ class PostmanArtifactValidationTest {
     private static final Set<String> SUPPORTED_FI_RECALL_REASONS = Set.of("DUPL", "CUST", "AM09", "FRAD", "TECH");
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
     private final Pacs009Parser pacs009Parser = new Pacs009Parser();
     private final FiPaymentAdmissionService fiPaymentAdmissionService = new FiPaymentAdmissionService(pacs009Parser);
     private final FiCorrespondentRouteProfile routeProfile = new FiCorrespondentRouteProfile();
@@ -200,6 +202,34 @@ class PostmanArtifactValidationTest {
     }
 
     @Test
+    void fiRecallScenariosDocumentOneRecallRecordPerFreshPayment() throws Exception {
+        var collection = objectMapper.readTree(Files.readString(COLLECTION, StandardCharsets.UTF_8));
+        var docs = Files.readString(DOCS, StandardCharsets.UTF_8);
+
+        assertThat(docs).contains(
+                "one recall or investigation record per FI payment",
+                "fresh FI payment",
+                "Do not run the accepted, rejected, and pending recall requests sequentially against the same fiPaymentId");
+        assertThat(requestDescription(collection, "Create FI Recall - Accepted")).contains(
+                "requires a fresh FI payment",
+                "do not run another recall scenario against the same payment ID");
+        assertThat(requestDescription(collection, "Create FI Recall - Rejected")).contains(
+                "Create a fresh FI payment",
+                "before running this rejected recall scenario");
+        assertThat(requestDescription(collection, "Create FI Recall - Investigation Pending")).contains(
+                "Create a fresh FI payment",
+                "before running this pending investigation scenario");
+    }
+
+    @Test
+    void fiJsonSavedExamplesIncludeFullCorrespondentSettlementContextShape() throws Exception {
+        var collection = objectMapper.readTree(Files.readString(COLLECTION, StandardCharsets.UTF_8));
+
+        assertFiCorrespondentContext(savedJsonExample(collection, "202 Accepted - FI Payment SETTLED"));
+        assertFiCorrespondentContext(savedJsonExample(collection, "200 OK - FI Status SETTLED"));
+    }
+
+    @Test
     void postmanExamplesAlignWithOpenApiAndFixtures() throws Exception {
         var collection = Files.readString(COLLECTION, StandardCharsets.UTF_8);
         var openApi = new ClassPathResource("openapi/domestic-payment-api.yaml")
@@ -245,10 +275,19 @@ class PostmanArtifactValidationTest {
 
     @Test
     void fiOpenApiXmlExamplesAreExecutableAgainstRuntimeParsersAndRouteProfile() throws Exception {
-        var openApi = new ClassPathResource("openapi/domestic-payment-api.yaml")
-                .getContentAsString(StandardCharsets.UTF_8);
-        var pacs009 = openApiXmlExample(openApi, "application/pacs.009+xml");
-        var camt056 = openApiXmlExample(openApi, "application/camt.056+xml");
+        var openApi = readOpenApi();
+        var pacs009 = openApiRequestExample(
+                openApi,
+                "/v1/fi-payments",
+                "post",
+                "application/pacs.009+xml",
+                "accepted");
+        var camt056 = openApiRequestExample(
+                openApi,
+                "/v1/fi-payments/{paymentId}/recall-requests",
+                "post",
+                "application/camt.056+xml",
+                "recallAccepted");
 
         assertPacs009AcceptedByRuntimeContract(pacs009);
         assertCamt056AcceptedByRuntimeParser(camt056);
@@ -359,23 +398,29 @@ class PostmanArtifactValidationTest {
         assertThat(parsed.reasonCode()).isIn(SUPPORTED_FI_RECALL_REASONS);
     }
 
-    private String openApiXmlExample(String openApi, String mediaType) {
-        var mediaTypeIndex = openApi.indexOf(mediaType);
-        assertThat(mediaTypeIndex).as(mediaType + " media type is documented").isNotNegative();
-        var valueIndex = openApi.indexOf("value: |-", mediaTypeIndex);
-        assertThat(valueIndex).as(mediaType + " example value is documented").isNotNegative();
-        var xmlStart = openApi.indexOf("<?xml", valueIndex);
-        assertThat(xmlStart).as(mediaType + " XML example starts with an XML declaration").isNotNegative();
+    private JsonNode readOpenApi() throws Exception {
+        return yamlMapper.readTree(new ClassPathResource("openapi/domestic-payment-api.yaml").getInputStream());
+    }
 
-        var lines = openApi.substring(xmlStart).split("\\R");
-        var xml = new StringBuilder();
-        for (var line : lines) {
-            if (xml.length() > 0 && !line.startsWith("                  ")) {
-                break;
-            }
-            xml.append(line.stripLeading()).append(System.lineSeparator());
-        }
-        return xml.toString().trim();
+    private String openApiRequestExample(
+            JsonNode openApi,
+            String path,
+            String method,
+            String mediaType,
+            String exampleName) {
+        var value = openApi
+                .path("paths")
+                .path(path)
+                .path(method)
+                .path("requestBody")
+                .path("content")
+                .path(mediaType)
+                .path("examples")
+                .path(exampleName)
+                .path("value")
+                .asText();
+        assertThat(value).as("%s %s %s %s example".formatted(method, path, mediaType, exampleName)).isNotBlank();
+        return value;
     }
 
     private String requestBody(JsonNode collection, String requestName) {
@@ -383,6 +428,31 @@ class PostmanArtifactValidationTest {
         collectRequestBodies(collection.path("item"), requestName, matchingBodies);
         assertThat(matchingBodies).as(requestName + " request body").hasSize(1);
         return matchingBodies.getFirst();
+    }
+
+    private String requestDescription(JsonNode collection, String requestName) {
+        var matchingDescriptions = new ArrayList<String>();
+        collectRequestDescriptions(collection.path("item"), requestName, matchingDescriptions);
+        assertThat(matchingDescriptions).as(requestName + " description").hasSize(1);
+        return matchingDescriptions.getFirst();
+    }
+
+    private JsonNode savedJsonExample(JsonNode collection, String exampleName) throws Exception {
+        var matchingBodies = new ArrayList<String>();
+        collectResponseBodies(collection.path("item"), exampleName, matchingBodies);
+        assertThat(matchingBodies).as(exampleName + " saved response body").hasSize(1);
+        return objectMapper.readTree(matchingBodies.getFirst());
+    }
+
+    private void assertFiCorrespondentContext(JsonNode response) {
+        var context = response.path("correspondentSettlementContext");
+
+        assertThat(context.path("instructingAgentBic").asText()).isEqualTo("CIBBHKHH");
+        assertThat(context.path("instructedAgentBic").asText()).isEqualTo("CORRUS33");
+        assertThat(context.path("correspondentOrIntermediaryBic").asText()).isEqualTo("CORRUS33");
+        assertThat(context.path("settlementCurrency").asText()).isEqualTo("USD");
+        assertThat(context.path("accountRelationshipRole").asText()).isEqualTo("NOSTRO");
+        assertThat(context.path("maskedSimulatedAccountReference").asText()).isEqualTo("SIM-USD-NOSTRO-****0001");
     }
 
     private void collectNames(JsonNode items, Set<String> names) {
@@ -401,12 +471,32 @@ class PostmanArtifactValidationTest {
         });
     }
 
+    private void collectRequestDescriptions(JsonNode items, String requestName, List<String> descriptions) {
+        items.forEach(item -> {
+            if (item.has("request") && requestName.equals(item.path("name").asText())) {
+                descriptions.add(item.path("request").path("description").asText());
+            }
+            collectRequestDescriptions(item.path("item"), requestName, descriptions);
+        });
+    }
+
     private void collectRequestBodies(JsonNode items, String requestName, List<String> bodies) {
         items.forEach(item -> {
             if (item.has("request") && requestName.equals(item.path("name").asText())) {
                 bodies.add(item.path("request").path("body").path("raw").asText());
             }
             collectRequestBodies(item.path("item"), requestName, bodies);
+        });
+    }
+
+    private void collectResponseBodies(JsonNode items, String responseName, List<String> bodies) {
+        items.forEach(item -> {
+            item.path("response").forEach(response -> {
+                if (responseName.equals(response.path("name").asText())) {
+                    bodies.add(response.path("body").asText());
+                }
+            });
+            collectResponseBodies(item.path("item"), responseName, bodies);
         });
     }
 }

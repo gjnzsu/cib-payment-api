@@ -317,7 +317,7 @@
             "body": {"mode": "raw", "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FICdtTrf><GrpHdr><MsgId>FI-MSG-20260528-ACCEPTED-NOSTRO</MsgId><NbOfTxs>1</NbOfTxs><InstgAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></InstgAgt><InstdAgt><FinInstnId><BICFI>CORRUS33</BICFI></FinInstnId></InstdAgt></GrpHdr><CdtTrfTxInf><PmtId><InstrId>FICLIENT01-PACS009-ACCEPTED-NOSTRO</InstrId><EndToEndId>FI-E2E-20260528-0001</EndToEndId></PmtId><IntrBkSttlmAmt Ccy=\"USD\">100000.00</IntrBkSttlmAmt><IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt><RmtInf><Ustrd>FICLIENT01 NOSTRO SYNTHETIC FIXTURE</Ustrd></RmtInf></CdtTrfTxInf></FICdtTrf></Document>"},
             "url": {"raw": "{{baseUrl}}/v1/fi-payments", "host": ["{{baseUrl}}"], "path": ["v1", "fi-payments"]}
           },
-          "response": [{"name": "202 Accepted - FI Payment SETTLED", "status": "Accepted", "code": 202, "_postman_previewlanguage": "json", "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\"paymentId\":\"550e8400-e29b-41d4-a716-446655440000\",\"status\":\"SETTLED\",\"correspondentSettlementContext\":{\"accountRelationshipRole\":\"NOSTRO\",\"maskedSimulatedAccountReference\":\"SIM-USD-NOSTRO-****0001\"},\"correlationId\":\"postman-local-correlation-001\",\"statusLink\":\"/v1/fi-payments/550e8400-e29b-41d4-a716-446655440000\"}"}],
+          "response": [{"name": "202 Accepted - FI Payment SETTLED", "status": "Accepted", "code": 202, "_postman_previewlanguage": "json", "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\"paymentId\":\"550e8400-e29b-41d4-a716-446655440000\",\"status\":\"SETTLED\",\"correspondentSettlementContext\":{\"instructingAgentBic\":\"CIBBHKHH\",\"instructedAgentBic\":\"CORRUS33\",\"correspondentOrIntermediaryBic\":\"CORRUS33\",\"settlementCurrency\":\"USD\",\"accountRelationshipRole\":\"NOSTRO\",\"maskedSimulatedAccountReference\":\"SIM-USD-NOSTRO-****0001\"},\"correlationId\":\"postman-local-correlation-001\",\"statusLink\":\"/v1/fi-payments/550e8400-e29b-41d4-a716-446655440000\"}"}],
           "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('FI payment acknowledgement contains JSON status and correlation', function () {", "  pm.response.to.have.status(202);", "  const body = pm.response.json();", "  pm.expect(body.status).to.be.oneOf(['SETTLED', 'REJECTED', 'PROCESSING']);", "  pm.expect(body.correlationId).to.exist;", "  if (body.paymentId) { pm.environment.set('fiPaymentId', body.paymentId); }", "});"]}}]
         },
         {
@@ -332,13 +332,13 @@
             ],
             "url": {"raw": "{{baseUrl}}/v1/fi-payments/{{fiPaymentId}}", "host": ["{{baseUrl}}"], "path": ["v1", "fi-payments", "{{fiPaymentId}}"]}
           },
-          "response": [{"name": "200 OK - FI Status SETTLED", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\"paymentId\":\"550e8400-e29b-41d4-a716-446655440000\",\"status\":\"SETTLED\",\"messageId\":\"FI-MSG-20260528-ACCEPTED-NOSTRO\",\"instructionId\":\"FICLIENT01-PACS009-ACCEPTED-NOSTRO\",\"originalPaymentReference\":\"FI-E2E-20260528-0001\",\"settlementCurrency\":\"USD\",\"correspondentSettlementContext\":{\"accountRelationshipRole\":\"NOSTRO\",\"maskedSimulatedAccountReference\":\"SIM-USD-NOSTRO-****0001\"},\"correlationId\":\"postman-local-correlation-001\"}"}],
+          "response": [{"name": "200 OK - FI Status SETTLED", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\"paymentId\":\"550e8400-e29b-41d4-a716-446655440000\",\"status\":\"SETTLED\",\"messageId\":\"FI-MSG-20260528-ACCEPTED-NOSTRO\",\"instructionId\":\"FICLIENT01-PACS009-ACCEPTED-NOSTRO\",\"originalPaymentReference\":\"FI-E2E-20260528-0001\",\"instructingAgentBic\":\"CIBBHKHH\",\"instructedAgentBic\":\"CORRUS33\",\"settlementCurrency\":\"USD\",\"correspondentSettlementContext\":{\"instructingAgentBic\":\"CIBBHKHH\",\"instructedAgentBic\":\"CORRUS33\",\"correspondentOrIntermediaryBic\":\"CORRUS33\",\"settlementCurrency\":\"USD\",\"accountRelationshipRole\":\"NOSTRO\",\"maskedSimulatedAccountReference\":\"SIM-USD-NOSTRO-****0001\"},\"correlationId\":\"postman-local-correlation-001\",\"links\":{\"self\":\"/v1/fi-payments/550e8400-e29b-41d4-a716-446655440000\"}}"}],
           "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('FI status query returns JSON without Idempotency-Key', function () {", "  pm.response.to.have.status(200);", "  pm.expect(pm.response.json().correspondentSettlementContext).to.exist;", "});"]}}]
         },
         {
           "name": "Create FI Recall - Accepted",
           "request": {
-            "description": "CreateFiRecallInvestigation recall_accepted scenario using camt.056.001.08 and returning camt.029.001.09.",
+            "description": "CreateFiRecallInvestigation recall_accepted scenario using camt.056.001.08 and returning camt.029.001.09. This request requires a fresh FI payment because the runtime stores one recall or investigation record per FI payment; do not run another recall scenario against the same payment ID.",
             "method": "POST",
             "header": [
               {"key": "Authorization", "value": "Bearer {{fiInvestigateToken}}"},
@@ -357,6 +357,7 @@
         {
           "name": "Create FI Recall - Rejected",
           "request": {
+            "description": "Create a fresh FI payment before running this rejected recall scenario. The runtime stores one recall or investigation record per FI payment, so do not run this after another recall scenario against the same {{fiPaymentId}}.",
             "method": "POST",
             "header": [
               {"key": "Authorization", "value": "Bearer {{fiInvestigateToken}}"},
@@ -374,6 +375,7 @@
         {
           "name": "Create FI Recall - Investigation Pending",
           "request": {
+            "description": "Create a fresh FI payment before running this pending investigation scenario. The runtime stores one recall or investigation record per FI payment, so do not run this after another recall scenario against the same {{fiPaymentId}}.",
             "method": "POST",
             "header": [
               {"key": "Authorization", "value": "Bearer {{fiInvestigateToken}}"},

@@ -160,13 +160,16 @@ Allowed FI recall/investigation `X-Mock-Scenario` values:
 - `recall_rejected`: simulator returns rejected `camt.029`.
 - `investigation_pending`: simulator returns pending investigation `camt.029`.
 
+The MVP stores one recall or investigation record per FI payment. Each 202 recall outcome scenario therefore needs a fresh FI payment. Do not run the accepted, rejected, and pending recall requests sequentially against the same fiPaymentId; create a new FI payment and use its captured `fiPaymentId` before each recall outcome scenario.
+
 Suggested FI flow:
 
 1. Run `Create FI Payment - Accepted`.
 2. Confirm the response is `202 Accepted`, JSON, and contains `SETTLED`, `correlationId`, and `correspondentSettlementContext`.
 3. Run `Get FI Payment Status`.
-4. Run `Create FI Recall - Accepted`, then run the rejected and pending recall scenarios as needed.
-5. Run FI replay, FI idempotency conflict, FI authentication failure, FI scope failure, and FI validation failure scenarios.
+4. Run one FI recall outcome request, such as `Create FI Recall - Accepted`.
+5. For `Create FI Recall - Rejected` or `Create FI Recall - Investigation Pending`, first run `Create FI Payment - Accepted` again with a new `fiIdempotencyKey`, confirm Postman captured the fresh `fiPaymentId`, and then run exactly one recall outcome request for that payment.
+6. Run FI replay, FI idempotency conflict, FI authentication failure, FI scope failure, and FI validation failure scenarios.
 
 `baas-api-sandbox` integration remains a future scenario-pack integration, not part of this runtime change. This repository owns the payment capability simulator and local developer artifacts; a later sandbox scenario pack can call or describe these FI flows after the contract stabilizes.
 

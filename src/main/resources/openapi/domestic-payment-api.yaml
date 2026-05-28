@@ -172,6 +172,8 @@ paths:
         ledger, AML, sanctions, fraud, or settlement connectivity.
       security:
         - bearerAuth: []
+      x-required-scopes:
+        - fi-payments:create
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
         - $ref: '#/components/parameters/CorrelationId'
@@ -240,6 +242,8 @@ paths:
         reason details, links, and correlation ID.
       security:
         - bearerAuth: []
+      x-required-scopes:
+        - fi-payments:read
       parameters:
         - name: paymentId
           in: path
@@ -286,6 +290,8 @@ paths:
         context only and not production ledger accounting.
       security:
         - bearerAuth: []
+      x-required-scopes:
+        - fi-payments:investigate
       parameters:
         - name: paymentId
           in: path
