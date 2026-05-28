@@ -117,55 +117,35 @@ class IsoPaymentAdmissionServiceTest {
 
     private String proxyOnlyWithStructuredReference() throws Exception {
         return readFixture("pain001-success.xml")
-                .replace("""
+                .replaceFirst("(?s)<CdtrAcct>\\s*<Id>\\s*<Othr>\\s*<Id>000987654321</Id>\\s*</Othr>\\s*</Id>\\s*<Ccy>HKD</Ccy>\\s*</CdtrAcct>", """
                         <CdtrAcct>
-                                  <Id>
-                                    <Othr>
-                                      <Id>000987654321</Id>
-                                    </Othr>
-                                  </Id>
-                                  <Ccy>HKD</Ccy>
-                                </CdtrAcct>
-                        """, """
-                        <CdtrAcct>
-                                  <Prxy>
-                                    <Tp>
-                                      <Cd>EMAL</Cd>
-                                    </Tp>
-                                    <Id>supplier-proxy@example.test</Id>
-                                  </Prxy>
-                                  <Ccy>HKD</Ccy>
-                                </CdtrAcct>
+          <Prxy>
+            <Tp>
+              <Cd>EMAL</Cd>
+            </Tp>
+            <Id>supplier-proxy@example.test</Id>
+          </Prxy>
+          <Ccy>HKD</Ccy>
+        </CdtrAcct>
                         """)
-                .replace("""
+                .replaceFirst("(?s)<RmtInf>\\s*<Ustrd>Invoice INV-2026-0001 supplier settlement</Ustrd>\\s*</RmtInf>", """
                         <RmtInf>
-                                  <Ustrd>Invoice INV-2026-0001 supplier settlement</Ustrd>
-                                </RmtInf>
-                        """, """
-                        <RmtInf>
-                                  <Ustrd>Invoice INV-2026-0001 supplier settlement</Ustrd>
-                                  <Strd>
-                                    <CdtrRefInf>
-                                      <Ref>SCREF-2026-0001</Ref>
-                                    </CdtrRefInf>
-                                  </Strd>
-                                </RmtInf>
+          <Ustrd>Invoice INV-2026-0001 supplier settlement</Ustrd>
+          <Strd>
+            <CdtrRefInf>
+              <Ref>SCREF-2026-0001</Ref>
+            </CdtrRefInf>
+          </Strd>
+        </RmtInf>
                         """);
     }
 
     private String minimalProxyOnlyWithStructuredReference() throws Exception {
         return proxyOnlyWithStructuredReference()
-                .replace("""
+                .replaceFirst("(?s)<Prxy>\\s*<Tp>\\s*<Cd>EMAL</Cd>\\s*</Tp>\\s*<Id>supplier-proxy@example.test</Id>\\s*</Prxy>", """
                         <Prxy>
-                                    <Tp>
-                                      <Cd>EMAL</Cd>
-                                    </Tp>
-                                    <Id>supplier-proxy@example.test</Id>
-                                  </Prxy>
-                        """, """
-                        <Prxy>
-                                    <Id>proxy@example.test</Id>
-                                  </Prxy>
+            <Id>proxy@example.test</Id>
+          </Prxy>
                         """);
     }
 }
