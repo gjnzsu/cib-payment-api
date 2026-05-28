@@ -6,8 +6,8 @@
       <CreDtTm>2026-05-28T08:05:00Z</CreDtTm>
       <NbOfTxs>1</NbOfTxs>
       <SttlmInf><SttlmMtd>CLRG</SttlmMtd></SttlmInf>
-      <InstgAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></InstgAgt>
-      <InstdAgt><FinInstnId><BICFI>VOSTUS33</BICFI></FinInstnId></InstdAgt>
+      <InstgAgt><FinInstnId><BICFI>VOSTUS33</BICFI></FinInstnId></InstgAgt>
+      <InstdAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></InstdAgt>
     </GrpHdr>
     <CdtTrfTxInf>
       <PmtId>
@@ -17,8 +17,8 @@
       </PmtId>
       <IntrBkSttlmAmt Ccy="USD">100000.00</IntrBkSttlmAmt>
       <IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt>
-      <Dbtr><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></Dbtr>
-      <Cdtr><FinInstnId><BICFI>VOSTUS33</BICFI></FinInstnId></Cdtr>
+      <Dbtr><FinInstnId><BICFI>VOSTUS33</BICFI></FinInstnId></Dbtr>
+      <Cdtr><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></Cdtr>
       <RmtInf><Ustrd>FICLIENT01 VOSTRO SYNTHETIC FIXTURE</Ustrd></RmtInf>
     </CdtTrfTxInf>
   </FICdtTrf>
