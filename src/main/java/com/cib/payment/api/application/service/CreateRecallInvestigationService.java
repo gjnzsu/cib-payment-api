@@ -49,6 +49,7 @@ public class CreateRecallInvestigationService {
     private final PaymentObservability observability;
     private final Clock clock;
     private final Object[] idempotencyLocks;
+    private final Object[] recallPaymentLocks;
 
     @Autowired
     public CreateRecallInvestigationService(
@@ -133,6 +134,7 @@ public class CreateRecallInvestigationService {
         this.observability = observability;
         this.clock = clock;
         this.idempotencyLocks = IntStream.range(0, 256).mapToObj(index -> new Object()).toArray();
+        this.recallPaymentLocks = IntStream.range(0, 256).mapToObj(index -> new Object()).toArray();
     }
 
     public String create(
@@ -169,40 +171,43 @@ public class CreateRecallInvestigationService {
                 return replayOrConflict(existing.get(), fingerprint, paymentId);
             }
 
-            if (recallInvestigationRepository.findByPaymentId(paymentId).isPresent()) {
-                throw new IdempotencyConflictException("Recall investigation already exists for FI payment");
+            synchronized (recallPaymentLock(authorizationContext.clientId(), paymentId)) {
+                if (recallInvestigationRepository.findByPaymentId(paymentId).isPresent()) {
+                    throw new IdempotencyConflictException("Recall investigation already exists for FI payment");
+                }
+
+                var outcome = simulator.investigate(authorizationContext, scenario);
+                var now = Instant.now(clock);
+                var record = toRecord(payment, recallRequest, outcome, authorizationContext, now);
+                var responseXml = renderer.render(record);
+
+                var idempotencyRecord = new IdempotencyRecord(
+                        authorizationContext.clientId(),
+                        idempotencyKey,
+                        fingerprint,
+                        new PaymentId(paymentId.value()),
+                        toPaymentStatus(outcome.status()),
+                        authorizationContext.correlationId(),
+                        now,
+                        now,
+                        responseXml,
+                        null);
+
+                var storedIdempotencyRecord = idempotencyRepository.saveIfAbsent(idempotencyRecord);
+                if (!storedIdempotencyRecord.equals(idempotencyRecord)) {
+                    return replayOrConflict(storedIdempotencyRecord, fingerprint, paymentId);
+                }
+
+                var storedRecall = recallInvestigationRepository.saveIfAbsent(record);
+                if (!storedRecall.equals(record)) {
+                    idempotencyRepository.deleteIfMatches(idempotencyRecord);
+                    throw new IdempotencyConflictException("Recall investigation already exists for FI payment");
+                }
+
+                observability.recallInvestigationCreated(record, authorizationContext);
+                observability.fiXmlPayloadHandled("camt.029", responseXml, authorizationContext.correlationId());
+                return responseXml;
             }
-
-            var outcome = simulator.investigate(authorizationContext, scenario);
-            var now = Instant.now(clock);
-            var record = toRecord(payment, recallRequest, outcome, authorizationContext, now);
-            var responseXml = renderer.render(record);
-
-            var idempotencyRecord = new IdempotencyRecord(
-                    authorizationContext.clientId(),
-                    idempotencyKey,
-                    fingerprint,
-                    new PaymentId(paymentId.value()),
-                    toPaymentStatus(outcome.status()),
-                    authorizationContext.correlationId(),
-                    now,
-                    now,
-                    responseXml,
-                    null);
-
-            var storedIdempotencyRecord = idempotencyRepository.saveIfAbsent(idempotencyRecord);
-            if (!storedIdempotencyRecord.equals(idempotencyRecord)) {
-                return replayOrConflict(storedIdempotencyRecord, fingerprint, paymentId);
-            }
-
-            var storedRecall = recallInvestigationRepository.saveIfAbsent(record);
-            if (!storedRecall.equals(record)) {
-                throw new IdempotencyConflictException("Recall investigation already exists for FI payment");
-            }
-
-            observability.recallInvestigationCreated(record, authorizationContext);
-            observability.fiXmlPayloadHandled("camt.029", responseXml, authorizationContext.correlationId());
-            return responseXml;
         }
     }
 
@@ -312,5 +317,10 @@ public class CreateRecallInvestigationService {
     private Object idempotencyLock(String clientId, String idempotencyKey) {
         var hash = Math.floorMod((clientId + ":" + idempotencyKey).hashCode(), idempotencyLocks.length);
         return idempotencyLocks[hash];
+    }
+
+    private Object recallPaymentLock(String clientId, FiPaymentId paymentId) {
+        var hash = Math.floorMod((clientId + ":" + paymentId.value()).hashCode(), recallPaymentLocks.length);
+        return recallPaymentLocks[hash];
     }
 }

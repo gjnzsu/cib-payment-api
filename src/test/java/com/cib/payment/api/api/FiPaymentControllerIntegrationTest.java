@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -516,7 +515,7 @@ class FiPaymentControllerIntegrationTest {
 
     @Test
     void generatedCorrelationIdAppearsInResponseHeaderAndJsonBodyWhenHeaderIsAbsent() throws Exception {
-        mockMvc.perform(post("/v1/fi-payments")
+        var response = mockMvc.perform(post("/v1/fi-payments")
                         .header("Authorization", bearer("fi-client-a", "fi-payments:create"))
                         .header("Idempotency-Key", "fi-api-generated-correlation")
                         .header("X-Mock-Scenario", "fi_payment_accepted")
@@ -524,8 +523,15 @@ class FiPaymentControllerIntegrationTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .content(fixture("pacs009-accepted-nostro.xml")))
                 .andExpect(status().isAccepted())
-                .andExpect(header().string("X-Correlation-ID", startsWith("")))
-                .andExpect(jsonPath("$.correlationId", notNullValue()));
+                .andExpect(header().exists("X-Correlation-ID"))
+                .andExpect(jsonPath("$.correlationId", notNullValue()))
+                .andReturn()
+                .getResponse();
+
+        var generatedCorrelationId = response.getHeader("X-Correlation-ID");
+        assertThat(generatedCorrelationId).isNotBlank();
+        assertThat(objectMapper.readTree(response.getContentAsString()).get("correlationId").asText())
+                .isEqualTo(generatedCorrelationId);
     }
 
     private JsonNode createFiPayment(

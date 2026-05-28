@@ -22,6 +22,11 @@ public class InMemoryIdempotencyRepository implements IdempotencyRepository {
         return existing == null ? record : existing;
     }
 
+    @Override
+    public boolean deleteIfMatches(IdempotencyRecord record) {
+        return records.remove(key(record.clientId(), record.idempotencyKey()), record);
+    }
+
     private String key(String clientId, String idempotencyKey) {
         return clientId + ":" + idempotencyKey;
     }

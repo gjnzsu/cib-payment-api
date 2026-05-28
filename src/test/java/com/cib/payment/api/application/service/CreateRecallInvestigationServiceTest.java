@@ -265,13 +265,14 @@ class CreateRecallInvestigationServiceTest {
         var payment = storePayment("fi-client-a", FiPaymentStatus.SETTLED);
         var existingRecall = existingRecallFor(payment);
         var recallRepository = new RaceConflictRecallInvestigationRepository(existingRecall);
+        var idempotencyRepository = new InMemoryIdempotencyRepository();
         var service = new CreateRecallInvestigationService(
                 new Camt056Parser(),
                 new DeterministicRecallInvestigationSimulator(),
                 new TestRecallInvestigationResponseRenderer(),
                 fiPaymentRepository,
                 recallRepository,
-                new InMemoryIdempotencyRepository(),
+                idempotencyRepository,
                 new RequestFingerprintService());
 
         assertThatThrownBy(() -> service.create(
@@ -284,6 +285,8 @@ class CreateRecallInvestigationServiceTest {
                 .isInstanceOf(IdempotencyConflictException.class)
                 .hasMessageContaining("Recall investigation already exists for FI payment");
 
+        assertThat(idempotencyRepository.find("fi-client-a", "idem-recall-race")).isEmpty();
+
         assertThatThrownBy(() -> service.create(
                         payment.paymentId().value().toString(),
                         readFixture("camt056-recall-accepted.xml"),
@@ -292,7 +295,7 @@ class CreateRecallInvestigationServiceTest {
                         "idem-recall-race",
                         "recall_accepted"))
                 .isInstanceOf(IdempotencyConflictException.class)
-                .hasMessageContaining("Idempotency record does not match the stored recall investigation");
+                .hasMessageContaining("Recall investigation already exists for FI payment");
     }
 
     private RecallInvestigationRecord existingRecallFor(FiPaymentRecord payment) {
@@ -402,6 +405,11 @@ class CreateRecallInvestigationServiceTest {
         @Override
         public IdempotencyRecord saveIfAbsent(IdempotencyRecord record) {
             throw new IllegalStateException("simulated idempotency save failure");
+        }
+
+        @Override
+        public boolean deleteIfMatches(IdempotencyRecord record) {
+            return false;
         }
     }
 

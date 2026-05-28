@@ -133,6 +133,11 @@ class CreateDomesticPaymentServiceConcurrencyTest {
             return existing == null ? record : existing;
         }
 
+        @Override
+        public boolean deleteIfMatches(IdempotencyRecord record) {
+            return records.remove(key(record.clientId(), record.idempotencyKey()), record);
+        }
+
         private int recordCount() {
             return records.size();
         }
