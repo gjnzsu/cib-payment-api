@@ -1,6 +1,9 @@
 package com.cib.payment.api.application.service;
 
 import com.cib.payment.api.api.dto.CreateDomesticPaymentRequest;
+import com.cib.payment.api.application.port.Camt056RecallRequestParser;
+import com.cib.payment.api.domain.model.FiPaymentCandidate;
+import com.cib.payment.api.domain.model.FiPaymentId;
 import com.cib.payment.api.domain.model.IsoPaymentCandidate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,6 +47,30 @@ public class RequestFingerprintService {
         var payload = new TreeMap<String, Object>();
         payload.put("clientId", clientId);
         payload.put("isoPaymentCandidate", candidate);
+        payload.put("context", new TreeMap<>(behaviorallyRelevantContext));
+        return sha256Hex(canonicalJson(payload));
+    }
+
+    public String fingerprint(
+            String clientId,
+            FiPaymentCandidate candidate,
+            Map<String, ?> behaviorallyRelevantContext) {
+        var payload = new TreeMap<String, Object>();
+        payload.put("clientId", clientId);
+        payload.put("fiPaymentCandidate", candidate);
+        payload.put("context", new TreeMap<>(behaviorallyRelevantContext));
+        return sha256Hex(canonicalJson(payload));
+    }
+
+    public String fingerprint(
+            String clientId,
+            FiPaymentId targetPaymentId,
+            Camt056RecallRequestParser.ParsedRecallRequest recallRequest,
+            Map<String, ?> behaviorallyRelevantContext) {
+        var payload = new TreeMap<String, Object>();
+        payload.put("clientId", clientId);
+        payload.put("targetFiPaymentId", targetPaymentId.value().toString());
+        payload.put("recallRequest", recallRequest);
         payload.put("context", new TreeMap<>(behaviorallyRelevantContext));
         return sha256Hex(canonicalJson(payload));
     }

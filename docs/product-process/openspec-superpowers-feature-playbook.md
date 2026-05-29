@@ -68,6 +68,8 @@ OpenSpec is the source of truth for product intent, behavior, design decisions, 
    - Validate the experience that proves the feature can be understood, exercised, and supported by its intended audience.
    - For API features, validate local docs, OpenAPI rendering, Postman collections, local tokens, mock scenarios, and common error flows.
    - For UI, workflow, CLI, data, or platform features, validate the equivalent user, developer, or operator experience: UI flows, CLI usage, configuration, docs, sample data, migration notes, and observable failure states.
+   - Mandatory: every manual testing artifact must describe each scenario's preconditions, variables or setup, expected status/result, key response fields or screen states, and common mistakes that can produce misleading failures.
+   - Mandatory: expected results must be traced back to an executable source of truth, such as automated tests, runtime mapping code, OpenAPI examples validated by tests, UI snapshots, CLI golden outputs, or a recorded manual run. Do not write expected results from intuition alone.
    - Treat broken or confusing support artifacts as implementation defects.
 
 11. **Commit, push, review, and merge**
@@ -164,6 +166,8 @@ Run an OpenSpec to Superpowers alignment review at three points:
 - [ ] No Superpowers task introduces new product behavior without an OpenSpec update.
 - [ ] Any implementation-discovered behavior is captured back into OpenSpec before completion.
 - [ ] Manual testing discoveries are fixed under existing tasks or added as new OpenSpec tasks.
+- [ ] Manual testing artifacts include scenario-by-scenario expected results, not only request names or setup instructions.
+- [ ] Expected results in documentation match executable behavior, including terminal states, pending states, error codes, reason codes, screen states, generated files, or CLI output where relevant.
 - [ ] Final verification commands and results are recorded before commit or PR.
 - [ ] Naming differences, artifact path changes, or scope adjustments are documented.
 - [ ] OpenSpec archive happens only after the alignment review passes.
@@ -174,6 +178,8 @@ Run an OpenSpec to Superpowers alignment review at three points:
 - If OpenSpec tasks are too vague for implementation, refine OpenSpec before coding.
 - If an implementation detail changes file names, artifact paths, or task grouping without changing behavior, document it as an implementation adjustment.
 - If manual testing reveals missing product behavior, add or update OpenSpec tasks before marking the work complete.
+- If manual testing requires guessing expected results, update the support artifact and add an artifact validation check where practical.
+- If expected results in docs disagree with executable behavior, first identify the source of truth. Then either fix the implementation or update the docs/tests so product intent, runtime behavior, and support artifacts agree.
 - If a future enhancement appears during delivery, create a future OpenSpec change instead of expanding the active scope silently.
 
 ## Recommended Commands
@@ -204,5 +210,7 @@ The first Domestic RTP Payment Service API journey confirmed these practices. Th
 - Superpowers TDD and verification prevented unproven completion claims.
 - Systematic debugging isolated a Postman inheritance issue from API behavior.
 - Manual experience testing was valuable enough to add hardening tasks and regression tests.
+- Manual test artifacts need explicit expected results, scenario preconditions, and common failure explanations; otherwise testers must infer whether the product or their setup is wrong.
+- Expected-result documentation must be verified against executable behavior. For example, a simulator branch can be correct while the external API result differs because of later lifecycle mapping or rendering rules.
 - The traceability matrix made it clear that implementation refinements did not become uncontrolled product drift.
 - Neutral artifact review before implementation planning exposed hidden product decisions while they were still cheap to fix, including message semantics, lifecycle eligibility, simulator outcome mapping, derived account context, and task granularity.

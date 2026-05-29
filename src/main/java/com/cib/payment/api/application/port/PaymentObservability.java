@@ -6,9 +6,11 @@ import com.cib.payment.api.domain.model.CorrelationId;
 import com.cib.payment.api.domain.model.IdempotencyRecord;
 import com.cib.payment.api.domain.model.InternalInterbankTransfer;
 import com.cib.payment.api.domain.model.IsoPaymentCandidate;
+import com.cib.payment.api.domain.model.FiPaymentRecord;
 import com.cib.payment.api.domain.model.PaymentRecord;
 import com.cib.payment.api.domain.model.PaymentReason;
 import com.cib.payment.api.domain.model.PaymentStatus;
+import com.cib.payment.api.domain.model.RecallInvestigationRecord;
 import java.time.Duration;
 import java.util.Optional;
 
@@ -36,6 +38,14 @@ public interface PaymentObservability {
     void hkSimulatorOutcome(String scenario, PaymentStatus status, Optional<PaymentReason> reason, CorrelationId correlationId);
 
     void pain002Generated(String paymentId, PaymentStatus status, CorrelationId correlationId);
+
+    void fiXmlPayloadHandled(String messageType, String rawXml, CorrelationId correlationId);
+
+    void fiPaymentAccepted(FiPaymentRecord record, AuthorizationContext authorizationContext);
+
+    void fiPaymentStatusLookup(FiPaymentRecord record, AuthorizationContext authorizationContext);
+
+    void recallInvestigationCreated(RecallInvestigationRecord record, AuthorizationContext authorizationContext);
 
     static PaymentObservability noop() {
         return new PaymentObservability() {
@@ -85,6 +95,20 @@ public interface PaymentObservability {
 
             @Override
             public void pain002Generated(String paymentId, PaymentStatus status, CorrelationId correlationId) {}
+
+            @Override
+            public void fiXmlPayloadHandled(String messageType, String rawXml, CorrelationId correlationId) {}
+
+            @Override
+            public void fiPaymentAccepted(FiPaymentRecord record, AuthorizationContext authorizationContext) {}
+
+            @Override
+            public void fiPaymentStatusLookup(FiPaymentRecord record, AuthorizationContext authorizationContext) {}
+
+            @Override
+            public void recallInvestigationCreated(
+                    RecallInvestigationRecord record,
+                    AuthorizationContext authorizationContext) {}
         };
     }
 }

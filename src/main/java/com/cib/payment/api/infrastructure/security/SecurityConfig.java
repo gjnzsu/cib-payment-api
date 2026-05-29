@@ -36,6 +36,12 @@ public class SecurityConfig {
                         .hasAuthority("SCOPE_payments:create")
                         .requestMatchers(HttpMethod.GET, "/v1/domestic-payments/*")
                         .hasAuthority("SCOPE_payments:read")
+                        .requestMatchers(HttpMethod.POST, "/v1/fi-payments/*/recall-requests")
+                        .hasAuthority("SCOPE_fi-payments:investigate")
+                        .requestMatchers(HttpMethod.POST, "/v1/fi-payments")
+                        .hasAuthority("SCOPE_fi-payments:create")
+                        .requestMatchers(HttpMethod.GET, "/v1/fi-payments/*")
+                        .hasAuthority("SCOPE_fi-payments:read")
                         .anyRequest()
                         .authenticated())
                 .exceptionHandling(exceptionHandling -> exceptionHandling

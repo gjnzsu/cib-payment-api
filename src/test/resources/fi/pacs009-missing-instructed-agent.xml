@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08">
+  <FICdtTrf>
+    <GrpHdr>
+      <MsgId>FI-MSG-20260528-MISSING-INSTRUCTED-AGENT</MsgId>
+      <CreDtTm>2026-05-28T08:20:00Z</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <SttlmInf><SttlmMtd>CLRG</SttlmMtd></SttlmInf>
+      <InstgAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></InstgAgt>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <InstrId>FICLIENT01-PACS009-MISSING-INSTRUCTED-AGENT</InstrId>
+        <EndToEndId>FI-E2E-20260528-0001</EndToEndId>
+        <TxId>FI-TX-20260528-MISSING-INSTRUCTED-AGENT</TxId>
+      </PmtId>
+      <IntrBkSttlmAmt Ccy="USD">100000.00</IntrBkSttlmAmt>
+      <IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt>
+      <Dbtr><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></Dbtr>
+      <Cdtr><FinInstnId><BICFI>CORRUS33</BICFI></FinInstnId></Cdtr>
+      <RmtInf><Ustrd>FICLIENT01 MISSING INSTDAGT SYNTHETIC FIXTURE</Ustrd></RmtInf>
+    </CdtTrfTxInf>
+  </FICdtTrf>
+</Document>

@@ -2,6 +2,8 @@ openapi: 3.0.3
 info:
   title: Domestic RTP Payment Service API
   version: 0.2.0
+  x-fi-simulator-limitation: no real SWIFT, CBPR+, correspondent banking, ledger, AML, sanctions, fraud, or settlement connectivity
+  x-fi-status-idempotency: FI status query does not require Idempotency-Key
   description: >
     ISO-native HK domestic realtime payment simulation API. Payment initiation
     accepts supported pain.001.001.09 XML and returns pain.002.001.10 XML.
@@ -152,6 +154,222 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /v1/fi-payments:
+    post:
+      operationId: CreateFiPayment
+      summary: Create a simulator-only FI correspondent payment
+      description: >
+        Accepts one supported pacs.009.001.08 XML FI-to-FI payment initiation
+        for the USD-only correspondent payment simulator profile. Requires the
+        fi-payments:create scope and Idempotency-Key. Returns 202 Accepted with
+        a JSON acknowledgement containing payment ID, lifecycle status,
+        correspondent settlement context, and correlation ID. X-Mock-Scenario is
+        optional local/test-only behavior and defaults to fi_payment_accepted.
+        Supported FI scenarios are fi_payment_accepted,
+        fi_payment_rejected_unsupported_correspondent, and
+        fi_payment_pending_correspondent_review. This FI behavior is
+        simulator-only with no real SWIFT, CBPR+, correspondent banking,
+        ledger, AML, sanctions, fraud, or settlement connectivity.
+      security:
+        - bearerAuth: []
+      x-required-scopes:
+        - fi-payments:create
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/FiMockScenario'
+      requestBody:
+        required: true
+        content:
+          application/pacs.009+xml:
+            schema:
+              type: string
+              format: xml
+              description: Supported ISO 20022 pacs.009.001.08 XML.
+            examples:
+              accepted:
+                summary: USD NOSTRO route accepted
+                value: |-
+                  <?xml version="1.0" encoding="UTF-8"?>
+                  <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08">
+                    <FICdtTrf>
+                      <GrpHdr>
+                        <MsgId>FI-MSG-20260528-ACCEPTED-NOSTRO</MsgId>
+                        <NbOfTxs>1</NbOfTxs>
+                        <InstgAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></InstgAgt>
+                        <InstdAgt><FinInstnId><BICFI>CORRUS33</BICFI></FinInstnId></InstdAgt>
+                      </GrpHdr>
+                      <CdtTrfTxInf>
+                        <PmtId><InstrId>FICLIENT01-PACS009-ACCEPTED-NOSTRO</InstrId><EndToEndId>FI-E2E-20260528-0001</EndToEndId></PmtId>
+                        <IntrBkSttlmAmt Ccy="USD">100000.00</IntrBkSttlmAmt>
+                        <IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt>
+                        <RmtInf><Ustrd>FICLIENT01 NOSTRO SYNTHETIC FIXTURE</Ustrd></RmtInf>
+                      </CdtTrfTxInf>
+                    </FICdtTrf>
+                  </Document>
+      responses:
+        '202':
+          description: FI payment accepted by the simulator for asynchronous status inspection.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FiPaymentAcknowledgementResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/IdempotencyConflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/fi-payments/{paymentId}:
+    get:
+      operationId: GetFiPaymentStatus
+      summary: Get FI payment status as JSON
+      description: >
+        Returns JSON FI payment lifecycle status for the authenticated FI
+        client that owns the payment. Requires fi-payments:read. FI status
+        query does not require Idempotency-Key. The response includes FI
+        parties, USD settlement currency, simulator-derived correspondent
+        settlement context, latest recall/investigation summary when present,
+        reason details, links, and correlation ID.
+      security:
+        - bearerAuth: []
+      x-required-scopes:
+        - fi-payments:read
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          description: FI payment ID returned by CreateFiPayment.
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Current FI payment status response.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FiPaymentStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/fi-payments/{paymentId}/recall-requests:
+    post:
+      operationId: CreateFiRecallInvestigation
+      summary: Submit an FI camt.056 recall or investigation request
+      description: >
+        Accepts one supported camt.056.001.08 XML recall/cancellation request
+        for an existing FI payment owned by the authenticated FI client.
+        Requires fi-payments:investigate and Idempotency-Key. Returns 202
+        Accepted with a deterministic camt.029.001.09 XML resolution. Supported
+        local/test-only X-Mock-Scenario values are recall_accepted,
+        recall_rejected, and investigation_pending; the default is
+        recall_accepted. Recall/investigation records are linked to the
+        original payment's simulator-derived NOSTRO, VOSTRO, or LORO
+        correspondent context. Account roles are routing and investigation
+        context only and not production ledger accounting.
+      security:
+        - bearerAuth: []
+      x-required-scopes:
+        - fi-payments:investigate
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          description: FI payment ID being recalled or investigated.
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/FiRecallMockScenario'
+      requestBody:
+        required: true
+        content:
+          application/camt.056+xml:
+            schema:
+              type: string
+              format: xml
+              description: Supported ISO 20022 camt.056.001.08 XML.
+            examples:
+              recallAccepted:
+                summary: Recall request for original FI payment
+                value: |-
+                  <?xml version="1.0" encoding="UTF-8"?>
+                  <Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.056.001.08">
+                    <FIToFIPmtCxlReq>
+                      <Assgnmt><Id>FICLIENT01-CAMT056-RECALL-ACCEPTED</Id><Assgnr><Agt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></Agt></Assgnr></Assgnmt>
+                      <CtrlData><NbOfTxs>1</NbOfTxs></CtrlData>
+                      <Undrlyg><TxInf><CxlId>FICLIENT01-CANCEL-ACCEPTED</CxlId><Case><Id>FICLIENT01-CASE-ACCEPTED</Id></Case><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId><CxlRsnInf><Rsn><Cd>DUPL</Cd></Rsn><AddtlInf>FICLIENT01 RECALL ACCEPTED</AddtlInf></CxlRsnInf></TxInf></Undrlyg>
+                    </FIToFIPmtCxlReq>
+                  </Document>
+      responses:
+        '202':
+          description: Supported camt.029.001.09 recall or investigation resolution.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/camt.029+xml:
+              schema:
+                type: string
+                format: xml
+              examples:
+                accepted:
+                  summary: Recall accepted
+                  value: |-
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.029.001.09">
+                      <RsltnOfInvstgtn><CxlDtls><TxInfAndSts><CxlStsId>FI-INV-20260528-0001</CxlStsId><OrgnlInstrId>FI-INSTR-20260528-0001</OrgnlInstrId><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId><TxCxlSts>ACCP</TxCxlSts></TxInfAndSts></CxlDtls></RsltnOfInvstgtn>
+                    </Document>
+                rejected:
+                  summary: Recall rejected
+                  value: |-
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.029.001.09">
+                      <RsltnOfInvstgtn><CxlDtls><TxInfAndSts><CxlStsId>FI-INV-20260528-0002</CxlStsId><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId><TxCxlSts>RJCR</TxCxlSts></TxInfAndSts></CxlDtls></RsltnOfInvstgtn>
+                    </Document>
+                pending:
+                  summary: Investigation pending
+                  value: |-
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.029.001.09">
+                      <RsltnOfInvstgtn><CxlDtls><TxInfAndSts><CxlStsId>FI-INV-20260528-0003</CxlStsId><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId><TxCxlSts>PDCR</TxCxlSts></TxInfAndSts></CxlDtls></RsltnOfInvstgtn>
+                    </Document>
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/IdempotencyConflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   securitySchemes:
     bearerAuth:
@@ -193,6 +411,34 @@ components:
           - pending
           - timeout
           - internal_failure
+    FiMockScenario:
+      name: X-Mock-Scenario
+      in: header
+      required: false
+      description: >
+        Optional local/test-only FI payment simulator scenario selector. Not
+        part of production payment semantics. Omit for the default accepted
+        scenario.
+      schema:
+        type: string
+        enum:
+          - fi_payment_accepted
+          - fi_payment_rejected_unsupported_correspondent
+          - fi_payment_pending_correspondent_review
+    FiRecallMockScenario:
+      name: X-Mock-Scenario
+      in: header
+      required: false
+      description: >
+        Optional local/test-only FI recall/investigation simulator scenario
+        selector. Not part of production payment semantics. Omit for the
+        default accepted scenario.
+      schema:
+        type: string
+        enum:
+          - recall_accepted
+          - recall_rejected
+          - investigation_pending
   headers:
     CorrelationId:
       description: Correlation ID used for request tracing.
@@ -270,6 +516,144 @@ components:
         - message
       properties:
         field:
+          type: string
+        message:
+          type: string
+    FiPaymentAcknowledgementResponse:
+      type: object
+      required:
+        - paymentId
+        - status
+        - correspondentSettlementContext
+        - correlationId
+        - statusLink
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [SETTLED, REJECTED, PROCESSING]
+        correspondentSettlementContext:
+          $ref: '#/components/schemas/CorrespondentSettlementContext'
+        correlationId:
+          type: string
+        reason:
+          $ref: '#/components/schemas/PaymentReason'
+        statusLink:
+          type: string
+          example: /v1/fi-payments/550e8400-e29b-41d4-a716-446655440000
+    FiPaymentStatusResponse:
+      type: object
+      required:
+        - paymentId
+        - status
+        - messageId
+        - instructionId
+        - originalPaymentReference
+        - instructingAgentBic
+        - instructedAgentBic
+        - settlementCurrency
+        - correspondentSettlementContext
+        - correlationId
+        - links
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [SETTLED, REJECTED, PROCESSING]
+        messageId:
+          type: string
+        instructionId:
+          type: string
+        originalPaymentReference:
+          type: string
+        instructingAgentBic:
+          type: string
+        instructedAgentBic:
+          type: string
+        settlementCurrency:
+          type: string
+          enum: [USD]
+          description: USD-only simulator profile.
+        correspondentSettlementContext:
+          $ref: '#/components/schemas/CorrespondentSettlementContext'
+        recallInvestigation:
+          $ref: '#/components/schemas/RecallInvestigationSummary'
+        reason:
+          $ref: '#/components/schemas/PaymentReason'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        correlationId:
+          type: string
+        links:
+          type: object
+          properties:
+            self:
+              type: string
+    CorrespondentSettlementContext:
+      type: object
+      description: >
+        Simulator-derived correspondent context. NOSTRO, VOSTRO, and LORO are
+        routing/investigation context only; no real ledger, balance, posting,
+        reconciliation, or settlement accounting is performed.
+      required:
+        - instructingAgentBic
+        - instructedAgentBic
+        - settlementCurrency
+        - accountRelationshipRole
+        - maskedSimulatedAccountReference
+      properties:
+        instructingAgentBic:
+          type: string
+        instructedAgentBic:
+          type: string
+        correspondentOrIntermediaryBic:
+          type: string
+        settlementCurrency:
+          type: string
+          enum: [USD]
+        accountRelationshipRole:
+          type: string
+          enum: [NOSTRO, VOSTRO, LORO]
+        maskedSimulatedAccountReference:
+          type: string
+          example: SIM-USD-NOSTRO-****0001
+    RecallInvestigationSummary:
+      type: object
+      properties:
+        investigationId:
+          type: string
+          format: uuid
+        recallMessageId:
+          type: string
+        caseId:
+          type: string
+        originalPaymentReference:
+          type: string
+        status:
+          type: string
+          enum: [ACCEPTED, REJECTED, PENDING]
+        reasonCode:
+          type: string
+        reasonMessage:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    PaymentReason:
+      type: object
+      properties:
+        code:
           type: string
         message:
           type: string

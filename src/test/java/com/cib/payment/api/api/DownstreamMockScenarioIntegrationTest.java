@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.xpath;
 
 import com.cib.payment.api.testsupport.JwtTestSupport;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,7 @@ class DownstreamMockScenarioIntegrationTest {
     private static final Map<String, String> NS = Map.of("iso", PAIN_002_NAMESPACE);
 
     private final MockMvc mockMvc;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     DownstreamMockScenarioIntegrationTest(MockMvc mockMvc) {
@@ -108,26 +110,26 @@ class DownstreamMockScenarioIntegrationTest {
 
 
     @Test
-    void idempotencyReplayIgnoresMockScenarioHeaderChanges() throws Exception {
-        var first = mockMvc.perform(post("/v1/domestic-payments")
+    void idempotencyConflictIncludesMockScenarioHeaderChanges() throws Exception {
+        mockMvc.perform(post("/v1/domestic-payments")
                         .header("Authorization", bearer("payments:create"))
                         .header("Idempotency-Key", "scenario-header-key")
                         .header("X-Mock-Scenario", "success")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(fixture("idempotency-request.json")))
-                .andExpect(status().isAccepted())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                        .contentType("application/xml")
+                        .accept("application/pain.002+xml")
+                        .content(fixture("iso/pain001-success.xml")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("application/pain.002+xml"));
 
         mockMvc.perform(post("/v1/domestic-payments")
                         .header("Authorization", bearer("payments:create"))
                         .header("Idempotency-Key", "scenario-header-key")
                         .header("X-Mock-Scenario", "timeout")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(fixture("idempotency-request.json")))
-                .andExpect(status().isAccepted())
-                .andExpect(result -> assertThat(result.getResponse().getContentAsString()).isEqualTo(first));
+                        .contentType("text/xml")
+                        .accept("application/pain.002+xml")
+                        .content(fixture("iso/pain001-success.xml").replaceAll(">\\s+<", "><")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code", equalTo("IDEMPOTENCY_CONFLICT")));
     }
 
     private String createPayment(String idempotencyKey, String scenario, String requestBody) throws Exception {
@@ -146,7 +148,10 @@ class DownstreamMockScenarioIntegrationTest {
     }
 
     private String fixture(String fixtureName) throws Exception {
-        return new ClassPathResource("fixtures/domestic-payments/" + fixtureName)
+        var resourcePath = fixtureName.endsWith(".xml")
+                ? fixtureName
+                : "fixtures/domestic-payments/" + fixtureName;
+        return new ClassPathResource(resourcePath)
                 .getContentAsString(StandardCharsets.UTF_8);
     }
 

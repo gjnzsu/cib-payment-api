@@ -30,15 +30,45 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{jwtToken}}"},
-              {"key": "Idempotency-Key", "value": "{{idempotencyKey}}"},
-              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
-              {"key": "X-Mock-Scenario", "value": "{{mockScenario}}"},
-              {"key": "Content-Type", "value": "application/pain.001+xml"},
-              {"key": "Accept", "value": "application/pain.002+xml"}
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "{{mockScenario}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pain.001+xml"
+              },
+              {
+                "key": "Accept",
+                "value": "application/pain.002+xml"
+              }
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\">\n  <CstmrCdtTrfInitn>\n    <GrpHdr><MsgId>MSG-20260524-0001</MsgId><CreDtTm>2026-05-24T10:00:00+08:00</CreDtTm><NbOfTxs>1</NbOfTxs></GrpHdr>\n    <PmtInf>\n      <PmtInfId>PMT-20260524-SUCCESS</PmtInfId><PmtMtd>TRF</PmtMtd>\n      <Dbtr><Nm>Acme Treasury HK</Nm></Dbtr>\n      <DbtrAcct><Id><Othr><Id>000111222333</Id></Othr></Id></DbtrAcct>\n      <DbtrAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></DbtrAgt>\n      <CdtTrfTxInf>\n        <PmtId><InstrId>INSTR-20260524-0001</InstrId><EndToEndId>INV-2026-0001</EndToEndId></PmtId>\n        <Amt><InstdAmt Ccy=\"HKD\">1250.50</InstdAmt></Amt>\n        <CdtrAgt><FinInstnId><BICFI>SUPPHKHH</BICFI></FinInstnId></CdtrAgt>\n        <Cdtr><Nm>Supplier HK Limited</Nm></Cdtr>\n        <CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct>\n        <RmtInf><Ustrd>Invoice INV-2026-0001 supplier settlement</Ustrd><Strd><CdtrRefInf><Ref>SCREF-2026-0001</Ref></CdtrRefInf></Strd></RmtInf>\n      </CdtTrfTxInf>\n    </PmtInf>\n  </CstmrCdtTrfInitn>\n</Document>"},
-            "url": {"raw": "{{baseUrl}}/v1/domestic-payments", "host": ["{{baseUrl}}"], "path": ["v1", "domestic-payments"]}
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\">\n  <CstmrCdtTrfInitn>\n    <GrpHdr><MsgId>MSG-20260524-0001</MsgId><CreDtTm>2026-05-24T10:00:00+08:00</CreDtTm><NbOfTxs>1</NbOfTxs></GrpHdr>\n    <PmtInf>\n      <PmtInfId>PMT-20260524-SUCCESS</PmtInfId><PmtMtd>TRF</PmtMtd>\n      <Dbtr><Nm>Acme Treasury HK</Nm></Dbtr>\n      <DbtrAcct><Id><Othr><Id>000111222333</Id></Othr></Id></DbtrAcct>\n      <DbtrAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></DbtrAgt>\n      <CdtTrfTxInf>\n        <PmtId><InstrId>INSTR-20260524-0001</InstrId><EndToEndId>INV-2026-0001</EndToEndId></PmtId>\n        <Amt><InstdAmt Ccy=\"HKD\">1250.50</InstdAmt></Amt>\n        <CdtrAgt><FinInstnId><BICFI>SUPPHKHH</BICFI></FinInstnId></CdtrAgt>\n        <Cdtr><Nm>Supplier HK Limited</Nm></Cdtr>\n        <CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct>\n        <RmtInf><Ustrd>Invoice INV-2026-0001 supplier settlement</Ustrd><Strd><CdtrRefInf><Ref>SCREF-2026-0001</Ref></CdtrRefInf></Strd></RmtInf>\n      </CdtTrfTxInf>\n    </PmtInf>\n  </CstmrCdtTrfInitn>\n</Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/domestic-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "domestic-payments"
+              ]
+            }
           },
           "response": [
             {
@@ -46,7 +76,12 @@
               "status": "OK",
               "code": 200,
               "_postman_previewlanguage": "xml",
-              "header": [{"key": "Content-Type", "value": "application/pain.002+xml"}],
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/pain.002+xml"
+                }
+              ],
               "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.002.001.10\"><CstmrPmtStsRpt><OrgnlPmtInfAndSts><TxInfAndSts><OrgnlEndToEndId>INV-2026-0001</OrgnlEndToEndId><TxSts>ACSC</TxSts></TxInfAndSts></OrgnlPmtInfAndSts></CstmrPmtStsRpt></Document>"
             }
           ],
@@ -73,11 +108,30 @@
           "request": {
             "method": "GET",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{jwtToken}}"},
-              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
-              {"key": "Accept", "value": "application/pain.002+xml"}
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/pain.002+xml"
+              }
             ],
-            "url": {"raw": "{{baseUrl}}/v1/domestic-payments/{{paymentId}}", "host": ["{{baseUrl}}"], "path": ["v1", "domestic-payments", "{{paymentId}}"]}
+            "url": {
+              "raw": "{{baseUrl}}/v1/domestic-payments/{{paymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "domestic-payments",
+                "{{paymentId}}"
+              ]
+            }
           },
           "response": [
             {
@@ -99,31 +153,104 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{jwtToken}}"},
-              {"key": "Idempotency-Key", "value": "postman-rejection-{{$guid}}"},
-              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
-              {"key": "X-Mock-Scenario", "value": "rejection"},
-              {"key": "Content-Type", "value": "application/pain.001+xml"}
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "postman-rejection-{{$guid}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "rejection"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pain.001+xml"
+              }
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-0002</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-REJECTION</PmtInfId><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-0002</InstrId><EndToEndId>INV-2026-0002</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"HKD\">42.00</InstdAmt></Amt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"},
-            "url": {"raw": "{{baseUrl}}/v1/domestic-payments", "host": ["{{baseUrl}}"], "path": ["v1", "domestic-payments"]}
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-0002</MsgId><CreDtTm>2026-05-24T10:00:00+08:00</CreDtTm><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-REJECTION</PmtInfId><PmtMtd>TRF</PmtMtd><Dbtr><Nm>Acme Treasury HK</Nm></Dbtr><DbtrAcct><Id><Othr><Id>000111222333</Id></Othr></Id></DbtrAcct><DbtrAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></DbtrAgt><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-0002</InstrId><EndToEndId>INV-2026-0002</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"HKD\">42.00</InstdAmt></Amt><CdtrAgt><FinInstnId><BICFI>SUPPHKHH</BICFI></FinInstnId></CdtrAgt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct><RmtInf><Ustrd>Rejection simulator scenario</Ustrd></RmtInf></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/domestic-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "domestic-payments"
+              ]
+            }
           },
-          "response": [{"name": "200 OK - RJCT Scenario", "status": "OK", "code": 200, "_postman_previewlanguage": "xml", "body": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.002.001.10\"><CstmrPmtStsRpt><OrgnlPmtInfAndSts><TxInfAndSts><TxSts>RJCT</TxSts></TxInfAndSts></OrgnlPmtInfAndSts></CstmrPmtStsRpt></Document>"}],
-          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('ISO status is RJCT', function () { pm.expect(pm.response.text()).to.include('<TxSts>RJCT</TxSts>'); });", "pm.sendRequest({url: pm.environment.get('baseUrl') + '/actuator/health', method: 'GET'}, function () {});"]}}]
+          "response": [
+            {
+              "name": "200 OK - RJCT Scenario",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "xml",
+              "body": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.002.001.10\"><CstmrPmtStsRpt><OrgnlPmtInfAndSts><TxInfAndSts><TxSts>RJCT</TxSts></TxInfAndSts></OrgnlPmtInfAndSts></CstmrPmtStsRpt></Document>"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('ISO status is RJCT', function () { pm.expect(pm.response.text()).to.include('<TxSts>RJCT</TxSts>'); });",
+                  "pm.sendRequest({url: pm.environment.get('baseUrl') + '/actuator/health', method: 'GET'}, function () {});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Create Payment - Suspicious Proxy Or Account",
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{jwtToken}}"},
-              {"key": "Idempotency-Key", "value": "postman-suspicious-{{$guid}}"},
-              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
-              {"key": "X-Mock-Scenario", "value": "suspicious_proxy_or_account"},
-              {"key": "Content-Type", "value": "application/pain.001+xml"}
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "postman-suspicious-{{$guid}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "suspicious_proxy_or_account"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pain.001+xml"
+              }
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-0003</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-SUSPICIOUS</PmtInfId><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-0003</InstrId><EndToEndId>INV-2026-0003</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"HKD\">43.00</InstdAmt></Amt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"},
-            "url": {"raw": "{{baseUrl}}/v1/domestic-payments", "host": ["{{baseUrl}}"], "path": ["v1", "domestic-payments"]}
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-0003</MsgId><CreDtTm>2026-05-24T10:00:00+08:00</CreDtTm><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-SUSPICIOUS</PmtInfId><PmtMtd>TRF</PmtMtd><Dbtr><Nm>Acme Treasury HK</Nm></Dbtr><DbtrAcct><Id><Othr><Id>000111222333</Id></Othr></Id></DbtrAcct><DbtrAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></DbtrAgt><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-0003</InstrId><EndToEndId>INV-2026-0003</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"HKD\">43.00</InstdAmt></Amt><CdtrAgt><FinInstnId><BICFI>SUPPHKHH</BICFI></FinInstnId></CdtrAgt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct><RmtInf><Ustrd>Suspicious proxy or account simulator scenario</Ustrd></RmtInf></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/domestic-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "domestic-payments"
+              ]
+            }
           }
         },
         {
@@ -131,14 +258,41 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{jwtToken}}"},
-              {"key": "Idempotency-Key", "value": "postman-pending-{{$guid}}"},
-              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
-              {"key": "X-Mock-Scenario", "value": "pending"},
-              {"key": "Content-Type", "value": "application/pain.001+xml"}
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "postman-pending-{{$guid}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "pending"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pain.001+xml"
+              }
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-0004</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-PENDING</PmtInfId><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-0004</InstrId><EndToEndId>INV-2026-0004</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"HKD\">44.00</InstdAmt></Amt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"},
-            "url": {"raw": "{{baseUrl}}/v1/domestic-payments", "host": ["{{baseUrl}}"], "path": ["v1", "domestic-payments"]}
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-0004</MsgId><CreDtTm>2026-05-24T10:00:00+08:00</CreDtTm><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-PENDING</PmtInfId><PmtMtd>TRF</PmtMtd><Dbtr><Nm>Acme Treasury HK</Nm></Dbtr><DbtrAcct><Id><Othr><Id>000111222333</Id></Othr></Id></DbtrAcct><DbtrAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></DbtrAgt><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-0004</InstrId><EndToEndId>INV-2026-0004</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"HKD\">44.00</InstdAmt></Amt><CdtrAgt><FinInstnId><BICFI>SUPPHKHH</BICFI></FinInstnId></CdtrAgt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct><RmtInf><Ustrd>Pending simulator scenario</Ustrd></RmtInf></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/domestic-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "domestic-payments"
+              ]
+            }
           }
         },
         {
@@ -146,33 +300,113 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{jwtToken}}"},
-              {"key": "Idempotency-Key", "value": "postman-timeout-{{$guid}}"},
-              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
-              {"key": "X-Mock-Scenario", "value": "timeout"},
-              {"key": "Content-Type", "value": "application/pain.001+xml"}
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "postman-timeout-{{$guid}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "timeout"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pain.001+xml"
+              }
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-0005</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-TIMEOUT</PmtInfId><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-0005</InstrId><EndToEndId>INV-2026-0005</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"HKD\">45.00</InstdAmt></Amt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"},
-            "url": {"raw": "{{baseUrl}}/v1/domestic-payments", "host": ["{{baseUrl}}"], "path": ["v1", "domestic-payments"]}
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-0005</MsgId><CreDtTm>2026-05-24T10:00:00+08:00</CreDtTm><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-TIMEOUT</PmtInfId><PmtMtd>TRF</PmtMtd><Dbtr><Nm>Acme Treasury HK</Nm></Dbtr><DbtrAcct><Id><Othr><Id>000111222333</Id></Othr></Id></DbtrAcct><DbtrAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></DbtrAgt><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-0005</InstrId><EndToEndId>INV-2026-0005</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"HKD\">45.00</InstdAmt></Amt><CdtrAgt><FinInstnId><BICFI>SUPPHKHH</BICFI></FinInstnId></CdtrAgt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct><RmtInf><Ustrd>Timeout simulator scenario</Ustrd></RmtInf></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/domestic-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "domestic-payments"
+              ]
+            }
           },
-          "response": [{"name": "200 OK - PDNG Timeout Scenario", "status": "OK", "code": 200, "_postman_previewlanguage": "xml", "body": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.002.001.10\"><CstmrPmtStsRpt><OrgnlPmtInfAndSts><TxInfAndSts><TxSts>PDNG</TxSts></TxInfAndSts></OrgnlPmtInfAndSts></CstmrPmtStsRpt></Document>"}],
-          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('ISO status is PDNG', function () { pm.expect(pm.response.text()).to.include('<TxSts>PDNG</TxSts>'); });"]}}]
+          "response": [
+            {
+              "name": "200 OK - PDNG Timeout Scenario",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "xml",
+              "body": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.002.001.10\"><CstmrPmtStsRpt><OrgnlPmtInfAndSts><TxInfAndSts><TxSts>PDNG</TxSts></TxInfAndSts></OrgnlPmtInfAndSts></CstmrPmtStsRpt></Document>"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('ISO status is PDNG', function () { pm.expect(pm.response.text()).to.include('<TxSts>PDNG</TxSts>'); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Create Payment - Internal Failure",
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{jwtToken}}"},
-              {"key": "Idempotency-Key", "value": "postman-internal-failure-{{$guid}}"},
-              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
-              {"key": "X-Mock-Scenario", "value": "internal_failure"},
-              {"key": "Content-Type", "value": "application/pain.001+xml"}
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "postman-internal-failure-{{$guid}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "internal_failure"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pain.001+xml"
+              }
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-0006</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-INTERNAL</PmtInfId><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-0006</InstrId><EndToEndId>INV-2026-0006</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"HKD\">46.00</InstdAmt></Amt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"},
-            "url": {"raw": "{{baseUrl}}/v1/domestic-payments", "host": ["{{baseUrl}}"], "path": ["v1", "domestic-payments"]}
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-0006</MsgId><CreDtTm>2026-05-24T10:00:00+08:00</CreDtTm><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-INTERNAL</PmtInfId><PmtMtd>TRF</PmtMtd><Dbtr><Nm>Acme Treasury HK</Nm></Dbtr><DbtrAcct><Id><Othr><Id>000111222333</Id></Othr></Id></DbtrAcct><DbtrAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></DbtrAgt><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-0006</InstrId><EndToEndId>INV-2026-0006</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"HKD\">46.00</InstdAmt></Amt><CdtrAgt><FinInstnId><BICFI>SUPPHKHH</BICFI></FinInstnId></CdtrAgt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct><RmtInf><Ustrd>Internal failure simulator scenario</Ustrd></RmtInf></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/domestic-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "domestic-payments"
+              ]
+            }
           },
-          "response": [{"name": "200 OK - PDNG Internal Failure Scenario", "status": "OK", "code": 200, "_postman_previewlanguage": "xml", "body": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.002.001.10\"><CstmrPmtStsRpt><OrgnlPmtInfAndSts><TxInfAndSts><TxSts>PDNG</TxSts></TxInfAndSts></OrgnlPmtInfAndSts></CstmrPmtStsRpt></Document>"}]
+          "response": [
+            {
+              "name": "200 OK - RJCT Internal Failure Scenario",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "xml",
+              "body": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.002.001.10\"><CstmrPmtStsRpt><OrgnlPmtInfAndSts><TxInfAndSts><TxSts>RJCT</TxSts><StsRsnInf><Rsn><Cd>MS03</Cd></Rsn></StsRsnInf></TxInfAndSts></OrgnlPmtInfAndSts></CstmrPmtStsRpt></Document>"
+            }
+          ]
         }
       ]
     },
@@ -184,32 +418,122 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{jwtToken}}"},
-              {"key": "Idempotency-Key", "value": "postman-malformed-{{$guid}}"},
-              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
-              {"key": "Content-Type", "value": "application/pain.001+xml"}
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "postman-malformed-{{$guid}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pain.001+xml"
+              }
             ],
-            "body": {"mode": "raw", "raw": "<Document><broken></Document>"},
-            "url": {"raw": "{{baseUrl}}/v1/domestic-payments", "host": ["{{baseUrl}}"], "path": ["v1", "domestic-payments"]}
+            "body": {
+              "mode": "raw",
+              "raw": "<Document><broken></Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/domestic-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "domestic-payments"
+              ]
+            }
           },
-          "response": [{"name": "400 Bad Request - Validation", "status": "Bad Request", "code": 400, "_postman_previewlanguage": "json", "body": "{\"code\":\"VALIDATION_ERROR\",\"message\":\"Request validation failed\",\"status\":400,\"correlationId\":\"postman-local-correlation-001\"}"}],
-          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('malformed XML returns validation error', function () {", "  pm.response.to.have.status(400);", "  const body = pm.response.json();", "  pm.expect(body.code).to.eql('VALIDATION_ERROR');", "});"]}}]
+          "response": [
+            {
+              "name": "400 Bad Request - Validation",
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\"code\":\"VALIDATION_ERROR\",\"message\":\"Request validation failed\",\"status\":400,\"correlationId\":\"postman-local-correlation-001\"}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('malformed XML returns validation error', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.code).to.eql('VALIDATION_ERROR');",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Create Payment - Non-HKD Profile Failure",
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{jwtToken}}"},
-              {"key": "Idempotency-Key", "value": "postman-non-hkd-{{$guid}}"},
-              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
-              {"key": "Content-Type", "value": "application/pain.001+xml"}
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "postman-non-hkd-{{$guid}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pain.001+xml"
+              }
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-NONHKD</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-NONHKD</PmtInfId><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-NONHKD</InstrId><EndToEndId>INV-2026-NONHKD</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"USD\">50.00</InstdAmt></Amt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"},
-            "url": {"raw": "{{baseUrl}}/v1/domestic-payments", "host": ["{{baseUrl}}"], "path": ["v1", "domestic-payments"]}
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-NONHKD</MsgId><CreDtTm>2026-05-24T10:00:00+08:00</CreDtTm><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-NONHKD</PmtInfId><PmtMtd>TRF</PmtMtd><Dbtr><Nm>Acme Treasury HK</Nm></Dbtr><DbtrAcct><Id><Othr><Id>000111222333</Id></Othr></Id></DbtrAcct><DbtrAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></DbtrAgt><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-NONHKD</InstrId><EndToEndId>INV-2026-NONHKD</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"USD\">50.00</InstdAmt></Amt><CdtrAgt><FinInstnId><BICFI>SUPPHKHH</BICFI></FinInstnId></CdtrAgt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct><RmtInf><Ustrd>Non-HKD profile failure scenario</Ustrd></RmtInf></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/domestic-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "domestic-payments"
+              ]
+            }
           },
-          "response": [{"name": "422 Unprocessable Entity - HK Profile", "status": "Unprocessable Entity", "code": 422, "_postman_previewlanguage": "json", "body": "{\"code\":\"SEMANTIC_ERROR\",\"message\":\"Payment instruction is semantically invalid\",\"status\":422,\"correlationId\":\"postman-local-correlation-001\"}"}],
-          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('non-HKD profile failure returns semantic error', function () {", "  pm.response.to.have.status(422);", "});"]}}]
+          "response": [
+            {
+              "name": "422 Unprocessable Entity - HK Profile",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "body": "{\"code\":\"SEMANTIC_PAYMENT_ERROR\",\"message\":\"Payment instruction is not supported\",\"status\":422,\"correlationId\":\"postman-local-correlation-001\",\"details\":[]}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('non-HKD profile failure returns semantic error', function () {",
+                  "  pm.response.to.have.status(422);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Create Payment - Replay",
@@ -217,50 +541,222 @@
             "description": "Run after Create Payment - Success with the same Idempotency-Key and same normalized pain.001 semantics. The API returns the original pain.002.",
             "method": "POST",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{jwtToken}}"},
-              {"key": "Idempotency-Key", "value": "{{idempotencyKey}}"},
-              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
-              {"key": "X-Mock-Scenario", "value": "{{mockScenario}}"},
-              {"key": "Content-Type", "value": "application/pain.001+xml"}
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "{{mockScenario}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pain.001+xml"
+              }
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-0001</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-SUCCESS</PmtInfId><Dbtr><Nm>Acme Treasury HK</Nm></Dbtr><DbtrAcct><Id><Othr><Id>000111222333</Id></Othr></Id></DbtrAcct><DbtrAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></DbtrAgt><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-0001</InstrId><EndToEndId>INV-2026-0001</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"HKD\">1250.50</InstdAmt></Amt><CdtrAgt><FinInstnId><BICFI>SUPPHKHH</BICFI></FinInstnId></CdtrAgt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct><RmtInf><Ustrd>Invoice INV-2026-0001 supplier settlement</Ustrd><Strd><CdtrRefInf><Ref>SCREF-2026-0001</Ref></CdtrRefInf></Strd></RmtInf></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"},
-            "url": {"raw": "{{baseUrl}}/v1/domestic-payments", "host": ["{{baseUrl}}"], "path": ["v1", "domestic-payments"]}
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-0001</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-SUCCESS</PmtInfId><Dbtr><Nm>Acme Treasury HK</Nm></Dbtr><DbtrAcct><Id><Othr><Id>000111222333</Id></Othr></Id></DbtrAcct><DbtrAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></DbtrAgt><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-0001</InstrId><EndToEndId>INV-2026-0001</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"HKD\">1250.50</InstdAmt></Amt><CdtrAgt><FinInstnId><BICFI>SUPPHKHH</BICFI></FinInstnId></CdtrAgt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct><RmtInf><Ustrd>Invoice INV-2026-0001 supplier settlement</Ustrd><Strd><CdtrRefInf><Ref>SCREF-2026-0001</Ref></CdtrRefInf></Strd></RmtInf></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/domestic-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "domestic-payments"
+              ]
+            }
           },
-          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('idempotent replay returns the original pain.002', function () {", "  pm.response.to.have.status(200);", "  pm.expect(pm.response.text()).to.include('pain.002.001.10');", "});"]}}]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('idempotent replay returns the original pain.002', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.text()).to.include('pain.002.001.10');",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Create Payment - Authentication Failure",
-          "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "invalid-local-test-token", "type": "string"}]},
+          "auth": {
+            "type": "bearer",
+            "bearer": [
+              {
+                "key": "token",
+                "value": "invalid-local-test-token",
+                "type": "string"
+              }
+            ]
+          },
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Authorization", "value": "Bearer invalid-local-test-token"},
-              {"key": "Idempotency-Key", "value": "postman-authentication-failure-{{$guid}}"},
-              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
-              {"key": "Content-Type", "value": "application/pain.001+xml"}
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid-local-test-token"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "postman-authentication-failure-{{$guid}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pain.001+xml"
+              }
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"/>"},
-            "url": {"raw": "{{baseUrl}}/v1/domestic-payments", "host": ["{{baseUrl}}"], "path": ["v1", "domestic-payments"]}
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"/>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/domestic-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "domestic-payments"
+              ]
+            }
           },
-          "response": [{"name": "401 Unauthorized - Authentication", "status": "Unauthorized", "code": 401, "_postman_previewlanguage": "json", "body": "{\"code\":\"UNAUTHORIZED\",\"message\":\"Authentication is required or invalid\",\"status\":401,\"correlationId\":\"postman-local-correlation-001\"}"}],
-          "event": [{"listen": "prerequest", "script": {"type": "text/javascript", "exec": ["pm.request.headers.upsert({key: 'Authorization', value: 'Bearer invalid-local-test-token'});"]}}, {"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('authentication failure returns unauthorized', function () { pm.response.to.have.status(401); });"]}}]
+          "response": [
+            {
+              "name": "401 Unauthorized - Authentication",
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "body": "{\"code\":\"UNAUTHORIZED\",\"message\":\"Authentication is required or invalid\",\"status\":401,\"correlationId\":\"postman-local-correlation-001\"}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.request.headers.upsert({key: 'Authorization', value: 'Bearer invalid-local-test-token'});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('authentication failure returns unauthorized', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Create Payment - Authorization Failure",
-          "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{readOnlyJwtToken}}", "type": "string"}]},
+          "auth": {
+            "type": "bearer",
+            "bearer": [
+              {
+                "key": "token",
+                "value": "{{readOnlyJwtToken}}",
+                "type": "string"
+              }
+            ]
+          },
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{readOnlyJwtToken}}"},
-              {"key": "Idempotency-Key", "value": "postman-authorization-failure-{{$guid}}"},
-              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
-              {"key": "Content-Type", "value": "application/pain.001+xml"}
+              {
+                "key": "Authorization",
+                "value": "Bearer {{readOnlyJwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "postman-authorization-failure-{{$guid}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pain.001+xml"
+              }
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"/>"},
-            "url": {"raw": "{{baseUrl}}/v1/domestic-payments", "host": ["{{baseUrl}}"], "path": ["v1", "domestic-payments"]}
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"/>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/domestic-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "domestic-payments"
+              ]
+            }
           },
-          "response": [{"name": "403 Forbidden - Authorization", "status": "Forbidden", "code": 403, "_postman_previewlanguage": "json", "body": "{\"code\":\"FORBIDDEN\",\"message\":\"Authenticated client lacks the required scope\",\"status\":403,\"correlationId\":\"postman-local-correlation-001\"}"}],
-          "event": [{"listen": "prerequest", "script": {"type": "text/javascript", "exec": ["const readOnlyJwtToken = pm.environment.get('readOnlyJwtToken');", "if (!readOnlyJwtToken || readOnlyJwtToken.includes('replace-with-local-jwt')) {", "  throw new Error('Set readOnlyJwtToken to a JWT generated with only payments:read before running this request.');", "}", "const payload = JSON.parse(atob(readOnlyJwtToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));", "const scope = payload.scope || '';", "if (scope.includes('payments:create')) {", "  throw new Error('readOnlyJwtToken must not include payments:create. Regenerate it with only payments:read.');", "}", "if (!scope.includes('payments:read')) {", "  throw new Error('readOnlyJwtToken must include payments:read.');", "}", "pm.request.headers.upsert({key: 'Authorization', value: 'Bearer ' + readOnlyJwtToken});"]}}, {"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('authorization failure returns forbidden', function () { pm.response.to.have.status(403); });"]}}]
+          "response": [
+            {
+              "name": "403 Forbidden - Authorization",
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "body": "{\"code\":\"FORBIDDEN\",\"message\":\"Authenticated client lacks the required scope\",\"status\":403,\"correlationId\":\"postman-local-correlation-001\"}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const readOnlyJwtToken = pm.environment.get('readOnlyJwtToken');",
+                  "if (!readOnlyJwtToken || readOnlyJwtToken.includes('replace-with-local-jwt')) {",
+                  "  throw new Error('Set readOnlyJwtToken to a JWT generated with only payments:read before running this request.');",
+                  "}",
+                  "const payload = JSON.parse(atob(readOnlyJwtToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));",
+                  "const scope = payload.scope || '';",
+                  "if (scope.includes('payments:create')) {",
+                  "  throw new Error('readOnlyJwtToken must not include payments:create. Regenerate it with only payments:read.');",
+                  "}",
+                  "if (!scope.includes('payments:read')) {",
+                  "  throw new Error('readOnlyJwtToken must include payments:read.');",
+                  "}",
+                  "pm.request.headers.upsert({key: 'Authorization', value: 'Bearer ' + readOnlyJwtToken});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('authorization failure returns forbidden', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Create Payment - Idempotency Conflict Setup",
@@ -268,16 +764,58 @@
             "description": "Run this request first to create the original payment for idempotency conflict testing. Then run Create Payment - Idempotency Conflict.",
             "method": "POST",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{jwtToken}}"},
-              {"key": "Idempotency-Key", "value": "{{conflictIdempotencyKey}}"},
-              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
-              {"key": "Content-Type", "value": "application/pain.001+xml"}
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{conflictIdempotencyKey}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pain.001+xml"
+              }
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-CONFLICT-A</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-CONFLICT-A</PmtInfId><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-CONFLICT-A</InstrId><EndToEndId>INV-2026-CONFLICT-A</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"HKD\">60.00</InstdAmt></Amt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"},
-            "url": {"raw": "{{baseUrl}}/v1/domestic-payments", "host": ["{{baseUrl}}"], "path": ["v1", "domestic-payments"]}
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-CONFLICT-SETUP</MsgId><CreDtTm>2026-05-24T10:00:00+08:00</CreDtTm><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-CONFLICT-SETUP</PmtInfId><PmtMtd>TRF</PmtMtd><Dbtr><Nm>Acme Treasury HK</Nm></Dbtr><DbtrAcct><Id><Othr><Id>000111222333</Id></Othr></Id></DbtrAcct><DbtrAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></DbtrAgt><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-CONFLICT-SETUP</InstrId><EndToEndId>INV-2026-CONFLICT-SETUP</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"HKD\">51.00</InstdAmt></Amt><CdtrAgt><FinInstnId><BICFI>SUPPHKHH</BICFI></FinInstnId></CdtrAgt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct><RmtInf><Ustrd>Idempotency conflict setup</Ustrd></RmtInf></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/domestic-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "domestic-payments"
+              ]
+            }
           },
-          "event": [{"listen": "prerequest", "script": {"type": "text/javascript", "exec": ["pm.environment.set('conflictIdempotencyKey', 'postman-conflict-' + pm.variables.replaceIn('{{$guid}}'));"]}}],
-          "response": [{"name": "200 OK - Idempotency Conflict Setup", "status": "OK", "code": 200, "_postman_previewlanguage": "xml", "body": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.002.001.10\"><CstmrPmtStsRpt><OrgnlPmtInfAndSts><TxInfAndSts><TxSts>ACSC</TxSts></TxInfAndSts></OrgnlPmtInfAndSts></CstmrPmtStsRpt></Document>"}]
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('conflictIdempotencyKey', 'postman-conflict-' + pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "200 OK - Idempotency Conflict Setup",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "xml",
+              "body": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.002.001.10\"><CstmrPmtStsRpt><OrgnlPmtInfAndSts><TxInfAndSts><TxSts>ACSC</TxSts></TxInfAndSts></OrgnlPmtInfAndSts></CstmrPmtStsRpt></Document>"
+            }
+          ]
         },
         {
           "name": "Create Payment - Idempotency Conflict",
@@ -285,16 +823,748 @@
             "description": "Run Create Payment - Idempotency Conflict Setup first. This request then reuses the same conflictIdempotencyKey with different normalized payment semantics to assert 409 Conflict.",
             "method": "POST",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{jwtToken}}"},
-              {"key": "Idempotency-Key", "value": "{{conflictIdempotencyKey}}"},
-              {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
-              {"key": "Content-Type", "value": "application/pain.001+xml"}
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{conflictIdempotencyKey}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pain.001+xml"
+              }
             ],
-            "body": {"mode": "raw", "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-CONFLICT-B</MsgId><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-CONFLICT-B</PmtInfId><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-CONFLICT-B</InstrId><EndToEndId>INV-2026-CONFLICT-B</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"HKD\">61.00</InstdAmt></Amt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"},
-            "url": {"raw": "{{baseUrl}}/v1/domestic-payments", "host": ["{{baseUrl}}"], "path": ["v1", "domestic-payments"]}
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-20260524-CONFLICT-DIFFERENT</MsgId><CreDtTm>2026-05-24T10:00:00+08:00</CreDtTm><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-20260524-CONFLICT-DIFFERENT</PmtInfId><PmtMtd>TRF</PmtMtd><Dbtr><Nm>Acme Treasury HK</Nm></Dbtr><DbtrAcct><Id><Othr><Id>000111222333</Id></Othr></Id></DbtrAcct><DbtrAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></DbtrAgt><CdtTrfTxInf><PmtId><InstrId>INSTR-20260524-CONFLICT-DIFFERENT</InstrId><EndToEndId>INV-2026-CONFLICT-DIFFERENT</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"HKD\">52.00</InstdAmt></Amt><CdtrAgt><FinInstnId><BICFI>SUPPHKHH</BICFI></FinInstnId></CdtrAgt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct><RmtInf><Ustrd>Idempotency conflict different semantics</Ustrd></RmtInf></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/domestic-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "domestic-payments"
+              ]
+            }
           },
-          "response": [{"name": "409 Conflict - Idempotency", "status": "Conflict", "code": 409, "_postman_previewlanguage": "json", "body": "{\"code\":\"IDEMPOTENCY_CONFLICT\",\"message\":\"Idempotency key was reused with a different request body\",\"status\":409,\"correlationId\":\"postman-local-correlation-001\"}"}],
-          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('idempotency conflict returns conflict', function () {", "  pm.response.to.have.status(409);", "  const body = pm.response.json();", "  pm.expect(body.code).to.eql('IDEMPOTENCY_CONFLICT');", "});"]}}]
+          "response": [
+            {
+              "name": "409 Conflict - Idempotency",
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "body": "{\"code\":\"IDEMPOTENCY_CONFLICT\",\"message\":\"Idempotency key was reused with a different request body\",\"status\":409,\"correlationId\":\"postman-local-correlation-001\"}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('idempotency conflict returns conflict', function () {",
+                  "  pm.response.to.have.status(409);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.code).to.eql('IDEMPOTENCY_CONFLICT');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "FI Correspondent Payment Scenarios",
+      "item": [
+        {
+          "name": "Create FI Payment - Accepted",
+          "request": {
+            "description": "CreateFiPayment using the supported USD-only pacs.009.001.08 simulator profile. FI scenarios: fi_payment_accepted, fi_payment_rejected_unsupported_correspondent, fi_payment_pending_correspondent_review. Account roles include NOSTRO, VOSTRO, and LORO.",
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{fiJwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{fiIdempotencyKey}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "{{fiMockScenario}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pacs.009+xml"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FICdtTrf><GrpHdr><MsgId>FI-MSG-20260528-ACCEPTED-NOSTRO</MsgId><NbOfTxs>1</NbOfTxs><InstgAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></InstgAgt><InstdAgt><FinInstnId><BICFI>CORRUS33</BICFI></FinInstnId></InstdAgt></GrpHdr><CdtTrfTxInf><PmtId><InstrId>FICLIENT01-PACS009-ACCEPTED-NOSTRO</InstrId><EndToEndId>FI-E2E-20260528-0001</EndToEndId></PmtId><IntrBkSttlmAmt Ccy=\"USD\">100000.00</IntrBkSttlmAmt><IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt><RmtInf><Ustrd>FICLIENT01 NOSTRO SYNTHETIC FIXTURE</Ustrd></RmtInf></CdtTrfTxInf></FICdtTrf></Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/fi-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "fi-payments"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "202 Accepted - FI Payment SETTLED",
+              "status": "Accepted",
+              "code": 202,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\"paymentId\":\"550e8400-e29b-41d4-a716-446655440000\",\"status\":\"SETTLED\",\"correspondentSettlementContext\":{\"instructingAgentBic\":\"CIBBHKHH\",\"instructedAgentBic\":\"CORRUS33\",\"correspondentOrIntermediaryBic\":\"CORRUS33\",\"settlementCurrency\":\"USD\",\"accountRelationshipRole\":\"NOSTRO\",\"maskedSimulatedAccountReference\":\"SIM-USD-NOSTRO-****0001\"},\"correlationId\":\"postman-local-correlation-001\",\"statusLink\":\"/v1/fi-payments/550e8400-e29b-41d4-a716-446655440000\"}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('FI payment acknowledgement contains JSON status and correlation', function () {",
+                  "  pm.response.to.have.status(202);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.be.oneOf(['SETTLED', 'REJECTED', 'PROCESSING']);",
+                  "  pm.expect(body.correlationId).to.exist;",
+                  "  if (body.paymentId) { pm.environment.set('fiPaymentId', body.paymentId); }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get FI Payment Status",
+          "request": {
+            "description": "GetFiPaymentStatus returns JSON and intentionally has no Idempotency-Key header.",
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{fiJwtToken}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/fi-payments/{{fiPaymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "fi-payments",
+                "{{fiPaymentId}}"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - FI Status SETTLED",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\"paymentId\":\"550e8400-e29b-41d4-a716-446655440000\",\"status\":\"SETTLED\",\"messageId\":\"FI-MSG-20260528-ACCEPTED-NOSTRO\",\"instructionId\":\"FICLIENT01-PACS009-ACCEPTED-NOSTRO\",\"originalPaymentReference\":\"FI-E2E-20260528-0001\",\"instructingAgentBic\":\"CIBBHKHH\",\"instructedAgentBic\":\"CORRUS33\",\"settlementCurrency\":\"USD\",\"correspondentSettlementContext\":{\"instructingAgentBic\":\"CIBBHKHH\",\"instructedAgentBic\":\"CORRUS33\",\"correspondentOrIntermediaryBic\":\"CORRUS33\",\"settlementCurrency\":\"USD\",\"accountRelationshipRole\":\"NOSTRO\",\"maskedSimulatedAccountReference\":\"SIM-USD-NOSTRO-****0001\"},\"correlationId\":\"postman-local-correlation-001\",\"links\":{\"self\":\"/v1/fi-payments/550e8400-e29b-41d4-a716-446655440000\"}}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('FI status query returns JSON without Idempotency-Key', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().correspondentSettlementContext).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create FI Recall - Accepted",
+          "request": {
+            "description": "CreateFiRecallInvestigation recall_accepted scenario using camt.056.001.08 and returning camt.029.001.09. This request requires a fresh FI payment because the runtime stores one recall or investigation record per FI payment; do not run another recall scenario against the same payment ID.",
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{fiInvestigateToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{fiRecallIdempotencyKey}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "{{fiRecallScenario}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/camt.056+xml"
+              },
+              {
+                "key": "Accept",
+                "value": "application/camt.029+xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.056.001.08\"><FIToFIPmtCxlReq><Assgnmt><Id>FICLIENT01-CAMT056-RECALL-ACCEPTED</Id></Assgnmt><Undrlyg><TxInf><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId><CxlRsnInf><Rsn><Cd>DUPL</Cd></Rsn></CxlRsnInf></TxInf></Undrlyg></FIToFIPmtCxlReq></Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/fi-payments/{{fiPaymentId}}/recall-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "fi-payments",
+                "{{fiPaymentId}}",
+                "recall-requests"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "202 Accepted - camt.029 Recall Accepted",
+              "status": "Accepted",
+              "code": 202,
+              "_postman_previewlanguage": "xml",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/camt.029+xml"
+                }
+              ],
+              "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.029.001.09\"><RsltnOfInvstgtn><CxlDtls><TxInfAndSts><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId><CxlStsId>FICLIENT01-CANCEL-ACCEPTED</CxlStsId><TxCxlSts>ACCP</TxCxlSts></TxInfAndSts></CxlDtls></RsltnOfInvstgtn></Document>"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('FI recall response is camt.029', function () {",
+                  "  pm.response.to.have.status(202);",
+                  "  pm.expect(pm.response.text()).to.include('camt.029.001.09');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create FI Recall - Rejected",
+          "request": {
+            "description": "Create a fresh FI payment before running this rejected recall scenario. The runtime stores one recall or investigation record per FI payment, so do not run this after another recall scenario against the same {{fiPaymentId}}.",
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{fiInvestigateToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "postman-fi-recall-rejected-{{$guid}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "recall_rejected"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/camt.056+xml"
+              },
+              {
+                "key": "Accept",
+                "value": "application/camt.029+xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.056.001.08\"><FIToFIPmtCxlReq><Assgnmt><Id>FICLIENT01-CAMT056-RECALL-REJECTED</Id></Assgnmt><Undrlyg><TxInf><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId><CxlRsnInf><Rsn><Cd>CUST</Cd></Rsn><AddtlInf>FICLIENT01 RECALL REJECTED</AddtlInf></CxlRsnInf></TxInf></Undrlyg></FIToFIPmtCxlReq></Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/fi-payments/{{fiPaymentId}}/recall-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "fi-payments",
+                "{{fiPaymentId}}",
+                "recall-requests"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "202 Accepted - camt.029 Recall Rejected",
+              "status": "Accepted",
+              "code": 202,
+              "_postman_previewlanguage": "xml",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/camt.029+xml"
+                }
+              ],
+              "body": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.029.001.09\"><RsltnOfInvstgtn><Sts><Conf>RJCR</Conf></Sts><CxlDtls><TxInfAndSts><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId><CxlStsId>FICLIENT01-CANCEL-REJECTED</CxlStsId><TxCxlSts>RJCR</TxCxlSts><CxlStsRsnInf><Rsn><Cd>NOAS</Cd></Rsn><AddtlInf>FICLIENT01 CANCEL REJECTED</AddtlInf></CxlStsRsnInf></TxInfAndSts></CxlDtls></RsltnOfInvstgtn></Document>"
+            }
+          ]
+        },
+        {
+          "name": "Create FI Recall - Investigation Pending",
+          "request": {
+            "description": "Create a fresh FI payment before running this pending investigation scenario. The runtime stores one recall or investigation record per FI payment, so do not run this after another recall scenario against the same {{fiPaymentId}}.",
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{fiInvestigateToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "postman-fi-investigation-pending-{{$guid}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "investigation_pending"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/camt.056+xml"
+              },
+              {
+                "key": "Accept",
+                "value": "application/camt.029+xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.056.001.08\"><FIToFIPmtCxlReq><Assgnmt><Id>FICLIENT01-CAMT056-INVESTIGATION-PENDING</Id></Assgnmt><Undrlyg><TxInf><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId><CxlRsnInf><Rsn><Cd>TECH</Cd></Rsn><AddtlInf>FICLIENT01 INVESTIGATION PENDING</AddtlInf></CxlRsnInf></TxInf></Undrlyg></FIToFIPmtCxlReq></Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/fi-payments/{{fiPaymentId}}/recall-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "fi-payments",
+                "{{fiPaymentId}}",
+                "recall-requests"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "202 Accepted - camt.029 Investigation Pending",
+              "status": "Accepted",
+              "code": 202,
+              "_postman_previewlanguage": "xml",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/camt.029+xml"
+                }
+              ],
+              "body": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.029.001.09\"><RsltnOfInvstgtn><Sts><Conf>PDCR</Conf></Sts><CxlDtls><TxInfAndSts><OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId><CxlStsId>FICLIENT01-CANCEL-PENDING</CxlStsId><TxCxlSts>PDCR</TxCxlSts><CxlStsRsnInf><Rsn><Cd>IPAY</Cd></Rsn><AddtlInf>FICLIENT01 CANCEL PENDING</AddtlInf></CxlStsRsnInf></TxInfAndSts></CxlDtls></RsltnOfInvstgtn></Document>"
+            }
+          ]
+        },
+        {
+          "name": "Create FI Payment - Replay",
+          "request": {
+            "description": "Run after Create FI Payment - Accepted with the same fiIdempotencyKey and same normalized pacs.009 semantics.",
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{fiJwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{fiIdempotencyKey}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "{{fiMockScenario}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pacs.009+xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FICdtTrf><GrpHdr><MsgId>FI-MSG-20260528-ACCEPTED-NOSTRO</MsgId><NbOfTxs>1</NbOfTxs><InstgAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></InstgAgt><InstdAgt><FinInstnId><BICFI>CORRUS33</BICFI></FinInstnId></InstdAgt></GrpHdr><CdtTrfTxInf><PmtId><InstrId>FICLIENT01-PACS009-ACCEPTED-NOSTRO</InstrId><EndToEndId>FI-E2E-20260528-0001</EndToEndId></PmtId><IntrBkSttlmAmt Ccy=\"USD\">100000.00</IntrBkSttlmAmt><IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt><RmtInf><Ustrd>FICLIENT01 NOSTRO SYNTHETIC FIXTURE</Ustrd></RmtInf></CdtTrfTxInf></FICdtTrf></Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/fi-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "fi-payments"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('FI idempotent replay returns the original acknowledgement', function () {",
+                  "  pm.response.to.have.status(202);",
+                  "  pm.expect(pm.response.json().paymentId).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create FI Payment - Idempotency Conflict Setup",
+          "request": {
+            "description": "Run first for FI idempotency conflict testing.",
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{fiJwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{fiConflictIdempotencyKey}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pacs.009+xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FICdtTrf><GrpHdr><MsgId>FI-MSG-20260528-ACCEPTED-NOSTRO</MsgId><NbOfTxs>1</NbOfTxs><InstgAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></InstgAgt><InstdAgt><FinInstnId><BICFI>CORRUS33</BICFI></FinInstnId></InstdAgt></GrpHdr><CdtTrfTxInf><PmtId><InstrId>FICLIENT01-PACS009-ACCEPTED-NOSTRO</InstrId><EndToEndId>FI-E2E-20260528-0001</EndToEndId></PmtId><IntrBkSttlmAmt Ccy=\"USD\">100000.00</IntrBkSttlmAmt><IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt><RmtInf><Ustrd>FICLIENT01 NOSTRO SYNTHETIC FIXTURE</Ustrd></RmtInf></CdtTrfTxInf></FICdtTrf></Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/fi-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "fi-payments"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create FI Payment - Idempotency Conflict",
+          "request": {
+            "description": "Run after the FI conflict setup; this reuses the key with different FI semantics.",
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{fiJwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{fiConflictIdempotencyKey}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pacs.009+xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FICdtTrf><GrpHdr><MsgId>FI-MSG-20260528-CONFLICT</MsgId><NbOfTxs>1</NbOfTxs><InstgAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></InstgAgt><InstdAgt><FinInstnId><BICFI>CORRUS33</BICFI></FinInstnId></InstdAgt></GrpHdr><CdtTrfTxInf><PmtId><InstrId>FICLIENT01-PACS009-CONFLICT</InstrId><EndToEndId>FI-E2E-20260528-CONFLICT</EndToEndId></PmtId><IntrBkSttlmAmt Ccy=\"USD\">101000.00</IntrBkSttlmAmt><IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt><RmtInf><Ustrd>FICLIENT01 NOSTRO CONFLICT FIXTURE</Ustrd></RmtInf></CdtTrfTxInf></FICdtTrf></Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/fi-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "fi-payments"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "409 Conflict - FI Idempotency",
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "body": "{\"code\":\"IDEMPOTENCY_CONFLICT\",\"message\":\"Idempotency key was reused with different FI payment semantics\",\"status\":409,\"correlationId\":\"postman-local-correlation-001\"}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('FI idempotency conflict returns conflict', function () {",
+                  "  pm.response.to.have.status(409);",
+                  "  pm.expect(pm.response.json().code).to.eql('IDEMPOTENCY_CONFLICT');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create FI Payment - Authentication Failure",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid-local-test-token"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "postman-fi-auth-failure-{{$guid}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pacs.009+xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"/>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/fi-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "fi-payments"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "401 Unauthorized - FI Authentication",
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "body": "{\"code\":\"UNAUTHORIZED\",\"message\":\"Authentication is required or invalid\",\"status\":401,\"correlationId\":\"postman-local-correlation-001\"}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('FI authentication failure returns unauthorized', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create FI Payment - Scope Failure",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{fiReadOnlyJwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "postman-fi-scope-failure-{{$guid}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pacs.009+xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"/>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/fi-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "fi-payments"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "403 Forbidden - FI Scope",
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "body": "{\"code\":\"FORBIDDEN\",\"message\":\"Authenticated client lacks the required scope\",\"status\":403,\"correlationId\":\"postman-local-correlation-001\"}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('FI scope failure returns forbidden', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create FI Payment - Validation Failure",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{fiJwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "postman-fi-validation-{{$guid}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pacs.009+xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FICdtTrf><GrpHdr><MsgId>FI-MSG-20260528-NONUSD</MsgId><NbOfTxs>1</NbOfTxs><InstgAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></InstgAgt><InstdAgt><FinInstnId><BICFI>CORRUS33</BICFI></FinInstnId></InstdAgt></GrpHdr><CdtTrfTxInf><PmtId><InstrId>FICLIENT01-PACS009-NONUSD</InstrId><EndToEndId>FI-E2E-20260528-NONUSD</EndToEndId></PmtId><IntrBkSttlmAmt Ccy=\"EUR\">100000.00</IntrBkSttlmAmt><IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt><RmtInf><Ustrd>FICLIENT01 NON-USD VALIDATION FIXTURE</Ustrd></RmtInf></CdtTrfTxInf></FICdtTrf></Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/fi-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "fi-payments"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "400 Bad Request - FI Validation",
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\"code\":\"VALIDATION_ERROR\",\"message\":\"Request validation failed\",\"status\":400,\"correlationId\":\"postman-local-correlation-001\"}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('FI validation failure returns validation error', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().code).to.eql('VALIDATION_ERROR');",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     }

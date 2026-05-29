@@ -35,4 +35,19 @@ class LocalJwtTokenGeneratorTest {
 
         assertThat(jwt.getClaimAsString("scope")).isEqualTo("payments:create payments:read");
     }
+
+    @Test
+    void commandFriendlyScopesSupportFiPaymentEntitlements() {
+        var token = LocalJwtTokenGenerator.generateFromArgs(
+                new String[] {"fi-client-a", "fi-payments:create,fi-payments:read,fi-payments:investigate", "3600"},
+                Instant.now());
+
+        var decoder = new LocalJwtDecoderConfig()
+                .localJwtDecoder("bank-auth-server", "domestic-payment-api");
+        var jwt = decoder.decode(token);
+
+        assertThat(jwt.getSubject()).isEqualTo("fi-client-a");
+        assertThat(jwt.getClaimAsString("scope"))
+                .isEqualTo("fi-payments:create fi-payments:read fi-payments:investigate");
+    }
 }

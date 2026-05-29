@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Document [
+  <!ENTITY fixture SYSTEM "file:///tmp/fi-pacs009-fixture.txt">
+]>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08">
+  <FICdtTrf>
+    <GrpHdr>
+      <MsgId>FI-MSG-20260528-UNSAFE</MsgId>
+      <CreDtTm>2026-05-28T08:25:00Z</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <SttlmInf><SttlmMtd>CLRG</SttlmMtd></SttlmInf>
+      <InstgAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></InstgAgt>
+      <InstdAgt><FinInstnId><BICFI>CORRUS33</BICFI></FinInstnId></InstdAgt>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <InstrId>FICLIENT01-PACS009-UNSAFE</InstrId>
+        <EndToEndId>FI-E2E-20260528-0001</EndToEndId>
+        <TxId>&fixture;</TxId>
+      </PmtId>
+      <IntrBkSttlmAmt Ccy="USD">100000.00</IntrBkSttlmAmt>
+      <IntrBkSttlmDt>2026-05-28</IntrBkSttlmDt>
+      <Dbtr><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></Dbtr>
+      <Cdtr><FinInstnId><BICFI>CORRUS33</BICFI></FinInstnId></Cdtr>
+      <RmtInf><Ustrd>FICLIENT01 UNSAFE SYNTHETIC FIXTURE</Ustrd></RmtInf>
+    </CdtTrfTxInf>
+  </FICdtTrf>
+</Document>

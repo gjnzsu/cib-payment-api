@@ -7,4 +7,6 @@ public interface IdempotencyRepository {
     Optional<IdempotencyRecord> find(String clientId, String idempotencyKey);
 
     IdempotencyRecord saveIfAbsent(IdempotencyRecord record);
+
+    boolean deleteIfMatches(IdempotencyRecord record);
 }

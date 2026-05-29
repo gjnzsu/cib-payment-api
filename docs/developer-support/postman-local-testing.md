@@ -47,6 +47,15 @@ Set these environment variables before running secured API requests:
 - `conflictIdempotencyKey`: fixed key used when exercising idempotency conflict behavior.
 - `paymentId`: captured from a successful creation response and used by status query.
 - `mockScenario`: local/test-only downstream scenario selector.
+- `fiJwtToken`: JWT bearer token with `fi-payments:create fi-payments:read fi-payments:investigate`.
+- `fiReadOnlyJwtToken`: JWT bearer token with `fi-payments:read` only, used for FI scope failure testing.
+- `fiInvestigateToken`: JWT bearer token with `fi-payments:investigate`, used for recall/investigation requests.
+- `fiIdempotencyKey`: idempotency key for normal FI payment creation calls.
+- `fiRecallIdempotencyKey`: idempotency key for FI `camt.056` recall/investigation calls.
+- `fiConflictIdempotencyKey`: fixed key used for FI idempotency conflict testing.
+- `fiPaymentId`: captured from a successful FI payment acknowledgement and used by FI status and recall requests.
+- `fiMockScenario`: local/test-only FI payment simulator scenario selector, normally `fi_payment_accepted`.
+- `fiRecallScenario`: local/test-only FI recall/investigation simulator selector, normally `recall_accepted`.
 
 JWTs must match the API's configured issuer, audience, signature validation, and required claims. For local testing, generate Postman-compatible tokens with the local-only helper:
 
@@ -61,6 +70,26 @@ mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructur
 ```
 
 The helper prints the JWT to standard output. Paste the first token into `jwtToken` and the second token into `readOnlyJwtToken`.
+
+For FI correspondent payment flows, generate local tokens with FI-specific scopes:
+
+```powershell
+mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructure.security.LocalJwtTokenGenerator" "-Dexec.args=fi-client-a fi-payments:create,fi-payments:read,fi-payments:investigate 3600"
+```
+
+For the FI scope failure request, generate a read-only token:
+
+```powershell
+mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructure.security.LocalJwtTokenGenerator" "-Dexec.args=fi-client-a fi-payments:read 3600"
+```
+
+For recall/investigation-only testing, generate an investigation token:
+
+```powershell
+mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructure.security.LocalJwtTokenGenerator" "-Dexec.args=fi-client-a fi-payments:investigate 3600"
+```
+
+Paste these values into `fiJwtToken`, `fiReadOnlyJwtToken`, and `fiInvestigateToken` respectively. FI tokens still use the local `domestic-payment-api` audience; the scopes distinguish FI create, FI read, and FI investigation entitlements.
 
 Generated local tokens use:
 
@@ -95,7 +124,7 @@ Allowed values:
 - `suspicious_proxy_or_account`: simulator returns `RJCT` for a suspicious beneficiary account or FPS proxy scenario.
 - `pending`: simulator returns `PDNG` for normal processing.
 - `timeout`: simulator returns `PDNG` with timeout/operational intervention reason details.
-- `internal_failure`: simulator returns `PDNG` with internal failure reason details.
+- `internal_failure`: simulator returns `RJCT` with internal failure reason details.
 
 The payment creation endpoint returns `200 OK` with `pain.002.001.10` after request processing. Run `Get Payment Status` after creation to retrieve the latest engine-owned `pain.002` report.
 
@@ -108,6 +137,81 @@ kubectl scale deployment domestic-rtp-payment-api --replicas=1
 Durable shared persistence is the future production path for multi-replica deployments.
 
 The dedicated mock scenario requests assert ISO status values in the returned XML. Some requests also use `pm.sendRequest` for lightweight local helper checks.
+
+## FI Correspondent Payment Flow
+
+The FI Postman folder exercises the simulator-only correspondent payment API:
+
+- `POST /v1/fi-payments` accepts supported `application/pacs.009+xml` XML and returns a JSON acknowledgement.
+- `GET /v1/fi-payments/{paymentId}` returns JSON status and does not require `Idempotency-Key`.
+- `POST /v1/fi-payments/{paymentId}/recall-requests` accepts supported `application/camt.056+xml` XML and returns `application/camt.029+xml`.
+
+The supported FI payment profile is USD-only. The simulator derives correspondent account context from the route profile and returns `NOSTRO`, `VOSTRO`, or `LORO` with a masked simulated account reference. These account roles are routing and investigation context only: there is no real ledger, no real settlement, no balance check, no debit or credit posting, no reconciliation, and no SWIFT or CBPR+ connectivity.
+
+Allowed FI payment `X-Mock-Scenario` values:
+
+- `fi_payment_accepted`: simulator records `SETTLED`.
+- `fi_payment_rejected_unsupported_correspondent`: simulator records `REJECTED`.
+- `fi_payment_pending_correspondent_review`: simulator records `PROCESSING`.
+
+Allowed FI recall/investigation `X-Mock-Scenario` values:
+
+- `recall_accepted`: simulator returns accepted `camt.029`.
+- `recall_rejected`: simulator returns rejected `camt.029`.
+- `investigation_pending`: simulator returns pending investigation `camt.029`.
+
+The MVP stores one recall or investigation record per FI payment. Each 202 recall outcome scenario therefore needs a fresh FI payment. Do not run the accepted, rejected, and pending recall requests sequentially against the same fiPaymentId; create a new FI payment and use its captured `fiPaymentId` before each recall outcome scenario.
+
+Suggested FI flow:
+
+1. Run `Create FI Payment - Accepted`.
+2. Confirm the response is `202 Accepted`, JSON, and contains `SETTLED`, `correlationId`, and `correspondentSettlementContext`.
+3. Run `Get FI Payment Status`.
+4. Run one FI recall outcome request, such as `Create FI Recall - Accepted`.
+5. For `Create FI Recall - Rejected` or `Create FI Recall - Investigation Pending`, first run `Create FI Payment - Accepted` again with a new `fiIdempotencyKey`, confirm Postman captured the fresh `fiPaymentId`, and then run exactly one recall outcome request for that payment.
+6. Run FI replay, FI idempotency conflict, FI authentication failure, FI scope failure, and FI validation failure scenarios.
+
+## Domestic Postman Expected Results
+
+Use this table as the manual testing checklist for the domestic ISO payment workflow. The simulator scenario requests must include known HK clearing participants in the XML: `DbtrAgt` uses `CIBBHKHH` and `CdtrAgt` uses `SUPPHKHH`.
+
+| Postman request | Preconditions and variables | Expected result |
+| --- | --- | --- |
+| `Create Payment - Success` | `jwtToken` has `payments:create`. Use a fresh `idempotencyKey` when you want a new payment. `mockScenario=success` or omit the mock scenario header. | HTTP `200`, `application/pain.002+xml`, and XML contains `<TxSts>ACSC</TxSts>`. Postman stores `AcctSvcrRef` into `paymentId`. |
+| `Create Payment - Rejection` | Request uses `X-Mock-Scenario=rejection`. | HTTP `200`, `application/pain.002+xml`, and XML contains `<TxSts>RJCT</TxSts>` with clearing rejection reason details. |
+| `Create Payment - Suspicious Proxy Or Account` | Request uses `X-Mock-Scenario=suspicious_proxy_or_account`. | HTTP `200`, `application/pain.002+xml`, and XML contains `<TxSts>RJCT</TxSts>` with suspicious beneficiary reason details. |
+| `Create Payment - Pending` | Request uses `X-Mock-Scenario=pending`. | HTTP `200`, `application/pain.002+xml`, and XML contains `<TxSts>PDNG</TxSts>`. |
+| `Create Payment - Timeout` | Request uses `X-Mock-Scenario=timeout`. | HTTP `200`, `application/pain.002+xml`, and XML contains `<TxSts>PDNG</TxSts>` with timeout/operational intervention reason details. |
+| `Create Payment - Internal Failure` | Request uses `X-Mock-Scenario=internal_failure`. | HTTP `200`, `application/pain.002+xml`, and XML contains `<TxSts>RJCT</TxSts>` with reason code `MS03` and internal failure reason details. |
+| `Create Payment - Non-HKD Profile Failure` | Request sends a non-HKD `InstdAmt` currency. | HTTP `422`, JSON error body, `code=SEMANTIC_PAYMENT_ERROR`, and no `pain.002` is generated. |
+| `Create Payment - Malformed XML` | Request sends intentionally invalid XML. | HTTP `400`, JSON error body, `code=VALIDATION_ERROR`, and no payment is created. |
+| `Create Payment - Authentication Failure` | Request sends an intentionally invalid bearer token. | HTTP `401`, JSON error body, `code=UNAUTHORIZED`, and `correlationId`. |
+| `Create Payment - Authorization Failure` | `readOnlyJwtToken` has `payments:read` only and does not include `payments:create`. | HTTP `403`, JSON error body, `code=FORBIDDEN`, and `correlationId`. |
+| `Create Payment - Replay` | Run after `Create Payment - Success` with the same `idempotencyKey`, same normalized `pain.001` business payload, and same mock scenario. | HTTP `200`; response body replays the original `pain.002`. |
+| `Create Payment - Idempotency Conflict Setup` then `Create Payment - Idempotency Conflict` | Run setup first. The conflict request reuses `conflictIdempotencyKey` with different domestic payment business semantics. | Setup returns HTTP `200`. Conflict returns HTTP `409`, JSON error body, `code=IDEMPOTENCY_CONFLICT`, and the current `correlationId`. |
+
+If a dedicated domestic scenario such as pending returns `<TxSts>RJCT</TxSts>` with `HK_UNKNOWN_PARTICIPANT`, re-import the latest collection and reopen the request from the collection tree. Older open Postman tabs can keep stale XML bodies that do not include `DbtrAgt` or `CdtrAgt`.
+
+## FI Postman Expected Results
+
+Use this table as the manual testing checklist for the FI correspondent workflow. If a response differs from the expected result, first check that the environment variables match the preconditions in the table.
+
+| Postman request | Preconditions and variables | Expected result |
+| --- | --- | --- |
+| `Create FI Payment - Accepted` | `fiJwtToken` has `fi-payments:create`. Use a fresh `fiIdempotencyKey` when you want a new `fiPaymentId`. `fiMockScenario=fi_payment_accepted` or omit the mock scenario header. | HTTP `202`, JSON body, `status=SETTLED`, non-empty `paymentId`, `correlationId`, `statusLink=/v1/fi-payments/{paymentId}`, and `correspondentSettlementContext.accountRelationshipRole=NOSTRO`. Postman stores `paymentId` into `fiPaymentId`. |
+| `Get FI Payment Status` | Run after a successful FI create. `fiJwtToken` or another token has `fi-payments:read`. `fiPaymentId` points to the created payment. | HTTP `200`, JSON body, same `paymentId`, lifecycle `status`, FI identifiers, FI parties, USD settlement currency, correspondent context, and `links.self=/v1/fi-payments/{paymentId}`. |
+| `Create FI Recall - Accepted` | Run against a fresh `fiPaymentId` with no previous recall. `fiInvestigateToken` has `fi-payments:investigate`. Use a fresh `fiRecallIdempotencyKey`. `fiRecallScenario=recall_accepted` or omit the mock scenario header. | HTTP `202`, `application/camt.029+xml`, and XML contains `<Conf>CNCL</Conf>`. In this simulator profile, `CNCL` means the recall/cancellation request was accepted and the cancellation is confirmed. XML also contains `CorrelationId` and `FiPaymentId`. |
+| `Create FI Recall - Rejected` | First create a new FI payment with a new `fiIdempotencyKey`. Use that new `fiPaymentId`, a fresh `fiRecallIdempotencyKey`, and `fiRecallScenario=recall_rejected`. | HTTP `202`, `application/camt.029+xml`, and XML contains `<Conf>RJCR</Conf>`. `RJCR` means the recall/cancellation request was rejected by the correspondent simulator. |
+| `Create FI Recall - Investigation Pending` | First create a new FI payment with a new `fiIdempotencyKey`. Use that new `fiPaymentId`, a fresh `fiRecallIdempotencyKey`, and `fiRecallScenario=investigation_pending`. | HTTP `202`, `application/camt.029+xml`, and XML contains `<Conf>PDCR</Conf>`. `PDCR` means the recall/investigation remains pending correspondent response. |
+| `Create FI Payment - Replay` | Run after `Create FI Payment - Accepted` with the same `fiIdempotencyKey`, same normalized `pacs.009` business payload, and same FI mock scenario. | HTTP `202`; response body replays the original FI acknowledgement, including the original `paymentId` and body `correlationId`. The response header uses the current request correlation ID. |
+| `Create FI Payment - Idempotency Conflict Setup` then `Create FI Payment - Idempotency Conflict` | Run setup first. The conflict request reuses `fiConflictIdempotencyKey` with different FI payment business semantics. | Setup returns HTTP `202`. Conflict returns HTTP `409`, JSON error body, `code=IDEMPOTENCY_CONFLICT`, and the current `correlationId`. |
+| `Create FI Payment - Authentication Failure` | Request sends an intentionally invalid bearer token. | HTTP `401`, JSON error body, `code=UNAUTHORIZED`, and `correlationId`. |
+| `Create FI Payment - Scope Failure` | `fiReadOnlyJwtToken` has `fi-payments:read` only and does not include `fi-payments:create`. | HTTP `403`, JSON error body, `code=FORBIDDEN`, and `correlationId`. |
+| `Create FI Payment - Validation Failure` | Request sends unsupported or incomplete `pacs.009` XML. | HTTP `400`, JSON error body, `code=VALIDATION_ERROR`, and no FI payment is created. |
+
+For FI recall tests, `Idempotency-Key` and `Correlation-ID` have different purposes. Change `fiIdempotencyKey` to create a new FI payment, and change `fiRecallIdempotencyKey` to create a new recall request. Reusing the same `correlationId` is allowed because it is only a tracing value, but using a unique value per scenario makes logs easier to inspect.
+
+`baas-api-sandbox` integration remains a future scenario-pack integration, not part of this runtime change. This repository owns the payment capability simulator and local developer artifacts; a later sandbox scenario pack can call or describe these FI flows after the contract stabilizes.
 
 ## Suggested Manual Flow
 

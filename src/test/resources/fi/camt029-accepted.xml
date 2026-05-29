@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.029.001.09">
+  <RsltnOfInvstgtn>
+    <Assgnmt>
+      <Id>FICLIENT01-CAMT029-ACCEPTED</Id>
+      <Assgnr><Agt><FinInstnId><BICFI>CORRUS33</BICFI></FinInstnId></Agt></Assgnr>
+      <Assgne><Agt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></Agt></Assgne>
+      <CreDtTm>2026-05-28T10:00:00Z</CreDtTm>
+    </Assgnmt>
+    <Sts><Conf>CNCL</Conf></Sts>
+    <CxlDtls>
+      <TxInfAndSts>
+        <OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId>
+        <CxlStsId>FICLIENT01-CANCEL-ACCEPTED</CxlStsId>
+        <CxlStsRsnInf><Rsn><Cd>AC01</Cd></Rsn><AddtlInf>FICLIENT01 CANCEL ACCEPTED</AddtlInf></CxlStsRsnInf>
+      </TxInfAndSts>
+    </CxlDtls>
+  </RsltnOfInvstgtn>
+</Document>

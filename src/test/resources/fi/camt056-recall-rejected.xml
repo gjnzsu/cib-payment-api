@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.056.001.08">
+  <FIToFIPmtCxlReq>
+    <Assgnmt>
+      <Id>FICLIENT01-CAMT056-RECALL-REJECTED</Id>
+      <Assgnr><Agt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></Agt></Assgnr>
+      <Assgne><Agt><FinInstnId><BICFI>LOROUS33</BICFI></FinInstnId></Agt></Assgne>
+      <CreDtTm>2026-05-28T09:05:00Z</CreDtTm>
+    </Assgnmt>
+    <Undrlyg>
+      <TxInf>
+        <OrgnlEndToEndId>FI-E2E-20260528-0001</OrgnlEndToEndId>
+        <OrgnlIntrBkSttlmAmt Ccy="USD">100000.00</OrgnlIntrBkSttlmAmt>
+        <CxlRsnInf><Rsn><Cd>CUST</Cd></Rsn><AddtlInf>FICLIENT01 RECALL REJECTED</AddtlInf></CxlRsnInf>
+      </TxInf>
+    </Undrlyg>
+  </FIToFIPmtCxlReq>
+</Document>

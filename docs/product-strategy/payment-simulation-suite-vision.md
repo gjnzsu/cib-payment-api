@@ -160,6 +160,8 @@ Examples:
 
 This is fast, low-risk, and strong enough for product interviews and roadmap discussion.
 
+For the FI correspondent RFI workflow, `baas-api-sandbox` remains a future scenario-pack integration, not part of this runtime change. The current runtime change stays inside `cib-payment-api`: FI payment endpoints, simulator outcomes, OpenAPI, Postman, and developer support artifacts.
+
 ### Option B: Sandbox Proxy / Orchestration
 
 This is a useful medium-term technical demonstration.
@@ -295,7 +297,10 @@ The skill should assist product validation. It should not replace payment SMEs, 
 - Define FI/correspondent payment enhancement scope for `cib-payment-api`.
 - Model nostro, vostro, and loro account roles.
 - Add a product-level RFI and recall lifecycle using `camt.056` and `camt.029`.
+- Improve external-facing API error diagnostics so partner platform developers can distinguish XML format failures, supported-profile validation failures, semantic payment constraints, authorization failures, idempotency conflicts, and recall eligibility issues without needing internal clarification.
 - Define scenario packs that can later be surfaced in `baas-api-sandbox`.
+
+The error diagnostics enhancement should preserve stable JSON error envelopes and avoid exposing raw XML, account identifiers, bearer tokens, or sensitive payloads. The product goal is to make negative-path integration self-explanatory through safe `details` entries, aligned OpenAPI examples, Postman expected results, and artifact validation tests.
 
 ### Later
 
