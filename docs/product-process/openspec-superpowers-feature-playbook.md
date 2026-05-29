@@ -70,6 +70,7 @@ OpenSpec is the source of truth for product intent, behavior, design decisions, 
    - For UI, workflow, CLI, data, or platform features, validate the equivalent user, developer, or operator experience: UI flows, CLI usage, configuration, docs, sample data, migration notes, and observable failure states.
    - Mandatory: every manual testing artifact must describe each scenario's preconditions, variables or setup, expected status/result, key response fields or screen states, and common mistakes that can produce misleading failures.
    - Mandatory: expected results must be traced back to an executable source of truth, such as automated tests, runtime mapping code, OpenAPI examples validated by tests, UI snapshots, CLI golden outputs, or a recorded manual run. Do not write expected results from intuition alone.
+   - Mandatory: update the root `README.md` when the feature changes the repository's visible purpose, entry points, local setup, user/developer workflows, or primary artifact map. Treat it as the repository front door, not optional deep documentation.
    - Treat broken or confusing support artifacts as implementation defects.
 
 11. **Commit, push, review, and merge**
@@ -168,6 +169,7 @@ Run an OpenSpec to Superpowers alignment review at three points:
 - [ ] Manual testing discoveries are fixed under existing tasks or added as new OpenSpec tasks.
 - [ ] Manual testing artifacts include scenario-by-scenario expected results, not only request names or setup instructions.
 - [ ] Expected results in documentation match executable behavior, including terminal states, pending states, error codes, reason codes, screen states, generated files, or CLI output where relevant.
+- [ ] The root `README.md` accurately describes the current product surface, key entry points, local setup, and links to deeper artifacts for the changed capability.
 - [ ] Final verification commands and results are recorded before commit or PR.
 - [ ] Naming differences, artifact path changes, or scope adjustments are documented.
 - [ ] OpenSpec archive happens only after the alignment review passes.
@@ -180,6 +182,7 @@ Run an OpenSpec to Superpowers alignment review at three points:
 - If manual testing reveals missing product behavior, add or update OpenSpec tasks before marking the work complete.
 - If manual testing requires guessing expected results, update the support artifact and add an artifact validation check where practical.
 - If expected results in docs disagree with executable behavior, first identify the source of truth. Then either fix the implementation or update the docs/tests so product intent, runtime behavior, and support artifacts agree.
+- If a feature changes how a newcomer should understand or run the repository, update the root README in the same change. Deep docs are not a substitute for a current front door.
 - If a future enhancement appears during delivery, create a future OpenSpec change instead of expanding the active scope silently.
 
 ## Recommended Commands
@@ -212,5 +215,6 @@ The first Domestic RTP Payment Service API journey confirmed these practices. Th
 - Manual experience testing was valuable enough to add hardening tasks and regression tests.
 - Manual test artifacts need explicit expected results, scenario preconditions, and common failure explanations; otherwise testers must infer whether the product or their setup is wrong.
 - Expected-result documentation must be verified against executable behavior. For example, a simulator branch can be correct while the external API result differs because of later lifecycle mapping or rendering rules.
+- The root README must stay aligned with the current product surface; otherwise users may never discover the deeper OpenAPI, Postman, developer support, or strategy documents.
 - The traceability matrix made it clear that implementation refinements did not become uncontrolled product drift.
 - Neutral artifact review before implementation planning exposed hidden product decisions while they were still cheap to fix, including message semantics, lifecycle eligibility, simulator outcome mapping, derived account context, and task granularity.

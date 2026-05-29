@@ -33,6 +33,7 @@ import org.springframework.core.io.ClassPathResource;
 class PostmanArtifactValidationTest {
     private static final Path COLLECTION = Path.of("postman", "domestic-rtp-payment-api.postman_collection.json");
     private static final Path ENVIRONMENT = Path.of("postman", "domestic-rtp-payment-api.local.postman_environment.json");
+    private static final Path README = Path.of("README.md");
     private static final Path DOCS = Path.of("docs", "developer-support", "postman-local-testing.md");
     private static final String ORIGINAL_FI_REFERENCE = "FI-E2E-20260528-0001";
     private static final Set<String> SUPPORTED_FI_RECALL_REASONS = Set.of("DUPL", "CUST", "AM09", "FRAD", "TECH");
@@ -390,6 +391,22 @@ class PostmanArtifactValidationTest {
         assertThat(docs).contains("no real ledger", "no real settlement");
         assertThat(docs).contains("baas-api-sandbox", "future scenario-pack integration", "not part of this runtime change");
         assertThat(strategy).contains("baas-api-sandbox", "future scenario-pack integration", "not part of this runtime change");
+    }
+
+    @Test
+    void rootReadmeActsAsCurrentProductEntryPoint() throws Exception {
+        var readme = Files.readString(README, StandardCharsets.UTF_8);
+
+        assertThat(readme).contains("CIB Payment API Simulation Suite");
+        assertThat(readme).contains("/v1/domestic-payments", "/v1/fi-payments");
+        assertThat(readme).contains("/v1/fi-payments/{paymentId}/recall-requests");
+        assertThat(readme).contains("pain.001.001.09", "pain.002.001.10");
+        assertThat(readme).contains("pacs.009.001.08", "camt.056.001.08", "camt.029.001.09");
+        assertThat(readme).contains("NOSTRO", "VOSTRO", "LORO");
+        assertThat(readme).contains("fi-payments:create", "fi-payments:read", "fi-payments:investigate");
+        assertThat(readme).contains("docs/developer-support/postman-local-testing.md");
+        assertThat(readme).contains("docs/product-strategy/payment-simulation-suite-vision.md");
+        assertThat(readme).contains("2026-05-29-add-fi-correspondent-rfi-workflow");
     }
 
     private void assertDomesticScenarioOutcome(

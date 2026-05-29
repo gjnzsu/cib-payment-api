@@ -1,13 +1,38 @@
-# Domestic RTP Payment Service API
+# CIB Payment API Simulation Suite
 
-Spring Boot MVP for a domestic real-time payment service API.
+Spring Boot payment simulation API for domestic ISO payment initiation and FI correspondent payment workflows.
 
-The service will expose:
+The suite currently exposes:
 
 - `POST /v1/domestic-payments`
 - `GET /v1/domestic-payments/{paymentId}`
+- `POST /v1/fi-payments`
+- `GET /v1/fi-payments/{paymentId}`
+- `POST /v1/fi-payments/{paymentId}/recall-requests`
 
-The implementation follows the OpenSpec change in `openspec/changes/archive/2026-05-11-add-domestic-rtp-payment-service-api`.
+The implementation follows these archived OpenSpec changes:
+
+- `openspec/changes/archive/2026-05-11-add-domestic-rtp-payment-service-api`
+- `openspec/changes/archive/2026-05-29-add-fi-correspondent-rfi-workflow`
+
+## Capabilities
+
+### Domestic ISO Payment Simulation
+
+- Accepts one ISO 20022 `pain.001.001.09` domestic HKD payment initiation per request.
+- Returns ISO 20022 `pain.002.001.10` status reports.
+- Supports deterministic local simulator scenarios for `ACSC`, `RJCT`, and `PDNG` outcomes.
+- Exercises authentication, authorization, idempotency replay/conflict, correlation ID propagation, and JSON error envelopes.
+
+### FI Correspondent Payment Simulation
+
+- Accepts one supported USD `pacs.009.001.08` FI-to-FI payment initiation per request.
+- Returns JSON FI payment acknowledgements and JSON FI payment status responses.
+- Derives simulator-only correspondent settlement context, including `NOSTRO`, `VOSTRO`, or `LORO` account relationship role and a masked simulated account reference.
+- Supports `camt.056.001.08` recall/investigation requests and returns deterministic `camt.029.001.09` resolution XML.
+- Includes deterministic local simulator scenarios for accepted FI payment, unsupported correspondent rejection, correspondent review pending, recall accepted, recall rejected, and investigation pending.
+
+This is a local simulation product. It does not provide real FPS/HKICL, SWIFT, CBPR+, correspondent banking, ledger, AML, sanctions, fraud, settlement, balance, or reconciliation connectivity.
 
 ## Local Development
 
@@ -48,17 +73,24 @@ postman/domestic-rtp-payment-api.postman_collection.json
 postman/domestic-rtp-payment-api.local.postman_environment.json
 ```
 
-Import both files into Postman, select the local environment, then set `jwtToken` to a locally valid JWT before calling secured payment endpoints. The collection contains ISO XML `pain.001.001.09` requests, `pain.002.001.10` examples, deterministic simulator scenarios, replay/conflict checks, and status query. Detailed local testing guidance is in `docs/developer-support/postman-local-testing.md`.
+Import both files into Postman, select the local environment, then set local JWT variables before calling secured endpoints. The collection contains domestic ISO XML scenarios, FI `pacs.009` scenarios, FI `camt.056` to `camt.029` recall/investigation scenarios, deterministic simulator outcomes, replay/conflict checks, auth/scope failure checks, and status queries. Detailed local testing guidance is in `docs/developer-support/postman-local-testing.md`.
 
-Generate a local Postman token:
+Generate a local domestic Postman token:
 
 ```powershell
 mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructure.security.LocalJwtTokenGenerator" "-Dexec.args=client-a payments:create,payments:read 3600"
 ```
 
+Generate a local FI Postman token:
+
+```powershell
+mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructure.security.LocalJwtTokenGenerator" "-Dexec.args=fi-client-a fi-payments:create,fi-payments:read,fi-payments:investigate 3600"
+```
+
 ## Product Process
 
 The reusable OpenSpec and Superpowers workflow for future feature development is documented in `docs/product-process/openspec-superpowers-feature-playbook.md`.
+The product direction for the payment simulation suite is documented in `docs/product-strategy/payment-simulation-suite-vision.md`.
 
 ## GKE Exposure
 
@@ -106,6 +138,7 @@ The `HTTPRoute` forwards these path prefixes to the `domestic-rtp-payment-api` s
 
 ```text
 /v1/domestic-payments
+/v1/fi-payments
 /swagger-ui
 /swagger-ui.html
 /openapi
