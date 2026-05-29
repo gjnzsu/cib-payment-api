@@ -2,9 +2,17 @@ package com.cib.payment.api.developer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.cib.payment.api.application.port.HkClearingSettlementOutcome;
 import com.cib.payment.api.application.service.FiPaymentAdmissionService;
+import com.cib.payment.api.application.service.IsoPaymentAdmissionService;
+import com.cib.payment.api.domain.model.AuthorizationContext;
+import com.cib.payment.api.domain.model.CorrelationId;
+import com.cib.payment.api.domain.model.InternalInterbankTransfer;
+import com.cib.payment.api.domain.model.PaymentId;
 import com.cib.payment.api.infrastructure.iso.Camt056Parser;
+import com.cib.payment.api.infrastructure.iso.Pain001Parser;
 import com.cib.payment.api.infrastructure.iso.Pacs009Parser;
+import com.cib.payment.api.infrastructure.simulator.DeterministicHkClearingSettlementSimulator;
 import com.cib.payment.api.infrastructure.simulator.FiCorrespondentRouteProfile;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,10 +20,13 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 
@@ -28,6 +39,10 @@ class PostmanArtifactValidationTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+    private final Pain001Parser pain001Parser = new Pain001Parser();
+    private final IsoPaymentAdmissionService isoPaymentAdmissionService = new IsoPaymentAdmissionService(pain001Parser);
+    private final DeterministicHkClearingSettlementSimulator hkSimulator =
+            new DeterministicHkClearingSettlementSimulator();
     private final Pacs009Parser pacs009Parser = new Pacs009Parser();
     private final FiPaymentAdmissionService fiPaymentAdmissionService = new FiPaymentAdmissionService(pacs009Parser);
     private final FiCorrespondentRouteProfile routeProfile = new FiCorrespondentRouteProfile();
@@ -80,7 +95,7 @@ class PostmanArtifactValidationTest {
                 "409 Conflict - Idempotency",
                 "200 OK - RJCT Scenario",
                 "200 OK - PDNG Timeout Scenario",
-                "200 OK - PDNG Internal Failure Scenario");
+                "200 OK - RJCT Internal Failure Scenario");
 
         assertThat(serialized).contains(
                 "ISO status is RJCT",
@@ -149,7 +164,8 @@ class PostmanArtifactValidationTest {
                 "PDCR",
                 "NOAS",
                 "IPAY");
-        assertThat(serialized).contains("VALIDATION_ERROR", "IDEMPOTENCY_CONFLICT", "UNAUTHORIZED", "FORBIDDEN");
+        assertThat(serialized).contains(
+                "VALIDATION_ERROR", "SEMANTIC_PAYMENT_ERROR", "IDEMPOTENCY_CONFLICT", "UNAUTHORIZED", "FORBIDDEN");
         assertThat(serialized).contains("X-Correlation-ID");
 
         assertThat(requestNames(collection)).contains(
@@ -307,6 +323,28 @@ class PostmanArtifactValidationTest {
     }
 
     @Test
+    void domesticPostmanScenarioBodiesUseKnownParticipantsAndExerciseRequestedSimulatorOutcomes() throws Exception {
+        var collection = objectMapper.readTree(Files.readString(COLLECTION, StandardCharsets.UTF_8));
+
+        assertDomesticScenarioOutcome(collection, "Create Payment - Success", "success",
+                HkClearingSettlementOutcome.Status.SETTLED);
+        assertDomesticScenarioOutcome(collection, "Create Payment - Rejection", "rejection",
+                HkClearingSettlementOutcome.Status.REJECTED);
+        assertDomesticScenarioOutcome(collection, "Create Payment - Suspicious Proxy Or Account",
+                "suspicious_proxy_or_account", HkClearingSettlementOutcome.Status.REJECTED);
+        assertDomesticScenarioOutcome(collection, "Create Payment - Pending", "pending",
+                HkClearingSettlementOutcome.Status.PENDING);
+        assertDomesticScenarioOutcome(collection, "Create Payment - Timeout", "timeout",
+                HkClearingSettlementOutcome.Status.TIMEOUT);
+        assertDomesticScenarioOutcome(collection, "Create Payment - Internal Failure", "internal_failure",
+                HkClearingSettlementOutcome.Status.INTERNAL_FAILURE);
+        assertDomesticScenarioOutcome(collection, "Create Payment - Idempotency Conflict Setup", "success",
+                HkClearingSettlementOutcome.Status.SETTLED);
+        assertDomesticScenarioOutcome(collection, "Create Payment - Idempotency Conflict", "success",
+                HkClearingSettlementOutcome.Status.SETTLED);
+    }
+
+    @Test
     void fiPostmanRecallBodiesIncludeSupportedReasonAndMatchOriginalReference() throws Exception {
         var collection = objectMapper.readTree(Files.readString(COLLECTION, StandardCharsets.UTF_8));
 
@@ -354,6 +392,33 @@ class PostmanArtifactValidationTest {
         assertThat(strategy).contains("baas-api-sandbox", "future scenario-pack integration", "not part of this runtime change");
     }
 
+    private void assertDomesticScenarioOutcome(
+            JsonNode collection,
+            String requestName,
+            String scenario,
+            HkClearingSettlementOutcome.Status expectedStatus) {
+        var candidate = isoPaymentAdmissionService.admit(requestBody(collection, requestName), "application/pain.001+xml");
+        assertThat(candidate.debtor().bankCode()).as(requestName + " debtor participant").isEqualTo("CIBBHKHH");
+        assertThat(candidate.beneficiary().participantIdentifier())
+                .as(requestName + " creditor participant")
+                .isEqualTo("SUPPHKHH");
+
+        var transfer = new InternalInterbankTransfer(
+                "pacs008-artifact-" + requestName.replace(' ', '-').toLowerCase(),
+                new PaymentId(UUID.fromString("11111111-1111-1111-1111-111111111111")),
+                candidate.debtor(),
+                candidate.beneficiary(),
+                candidate.amount(),
+                candidate.endToEndId(),
+                candidate.instructionId(),
+                candidate.paymentReference(),
+                candidate.debtor().bankCode(),
+                candidate.beneficiary().participantIdentifier(),
+                new CorrelationId("corr-postman-artifact"));
+
+        var outcome = hkSimulator.process(transfer, authorizationContext(), scenario);
+        assertThat(outcome.status()).as(requestName + " simulator outcome").isEqualTo(expectedStatus);
+    }
 
     private Set<String> requestNames(JsonNode node) {
         var names = new HashSet<String>();
@@ -453,6 +518,18 @@ class PostmanArtifactValidationTest {
         assertThat(context.path("settlementCurrency").asText()).isEqualTo("USD");
         assertThat(context.path("accountRelationshipRole").asText()).isEqualTo("NOSTRO");
         assertThat(context.path("maskedSimulatedAccountReference").asText()).isEqualTo("SIM-USD-NOSTRO-****0001");
+    }
+
+    private AuthorizationContext authorizationContext() {
+        return new AuthorizationContext(
+                "client-a",
+                "client-a",
+                Set.of("payments:create", "payments:read"),
+                null,
+                Map.of(),
+                Instant.parse("2026-05-24T00:00:00Z"),
+                null,
+                new CorrelationId("corr-auth"));
     }
 
     private void collectNames(JsonNode items, Set<String> names) {

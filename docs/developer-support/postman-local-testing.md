@@ -124,7 +124,7 @@ Allowed values:
 - `suspicious_proxy_or_account`: simulator returns `RJCT` for a suspicious beneficiary account or FPS proxy scenario.
 - `pending`: simulator returns `PDNG` for normal processing.
 - `timeout`: simulator returns `PDNG` with timeout/operational intervention reason details.
-- `internal_failure`: simulator returns `PDNG` with internal failure reason details.
+- `internal_failure`: simulator returns `RJCT` with internal failure reason details.
 
 The payment creation endpoint returns `200 OK` with `pain.002.001.10` after request processing. Run `Get Payment Status` after creation to retrieve the latest engine-owned `pain.002` report.
 
@@ -170,6 +170,27 @@ Suggested FI flow:
 4. Run one FI recall outcome request, such as `Create FI Recall - Accepted`.
 5. For `Create FI Recall - Rejected` or `Create FI Recall - Investigation Pending`, first run `Create FI Payment - Accepted` again with a new `fiIdempotencyKey`, confirm Postman captured the fresh `fiPaymentId`, and then run exactly one recall outcome request for that payment.
 6. Run FI replay, FI idempotency conflict, FI authentication failure, FI scope failure, and FI validation failure scenarios.
+
+## Domestic Postman Expected Results
+
+Use this table as the manual testing checklist for the domestic ISO payment workflow. The simulator scenario requests must include known HK clearing participants in the XML: `DbtrAgt` uses `CIBBHKHH` and `CdtrAgt` uses `SUPPHKHH`.
+
+| Postman request | Preconditions and variables | Expected result |
+| --- | --- | --- |
+| `Create Payment - Success` | `jwtToken` has `payments:create`. Use a fresh `idempotencyKey` when you want a new payment. `mockScenario=success` or omit the mock scenario header. | HTTP `200`, `application/pain.002+xml`, and XML contains `<TxSts>ACSC</TxSts>`. Postman stores `AcctSvcrRef` into `paymentId`. |
+| `Create Payment - Rejection` | Request uses `X-Mock-Scenario=rejection`. | HTTP `200`, `application/pain.002+xml`, and XML contains `<TxSts>RJCT</TxSts>` with clearing rejection reason details. |
+| `Create Payment - Suspicious Proxy Or Account` | Request uses `X-Mock-Scenario=suspicious_proxy_or_account`. | HTTP `200`, `application/pain.002+xml`, and XML contains `<TxSts>RJCT</TxSts>` with suspicious beneficiary reason details. |
+| `Create Payment - Pending` | Request uses `X-Mock-Scenario=pending`. | HTTP `200`, `application/pain.002+xml`, and XML contains `<TxSts>PDNG</TxSts>`. |
+| `Create Payment - Timeout` | Request uses `X-Mock-Scenario=timeout`. | HTTP `200`, `application/pain.002+xml`, and XML contains `<TxSts>PDNG</TxSts>` with timeout/operational intervention reason details. |
+| `Create Payment - Internal Failure` | Request uses `X-Mock-Scenario=internal_failure`. | HTTP `200`, `application/pain.002+xml`, and XML contains `<TxSts>RJCT</TxSts>` with reason code `MS03` and internal failure reason details. |
+| `Create Payment - Non-HKD Profile Failure` | Request sends a non-HKD `InstdAmt` currency. | HTTP `422`, JSON error body, `code=SEMANTIC_PAYMENT_ERROR`, and no `pain.002` is generated. |
+| `Create Payment - Malformed XML` | Request sends intentionally invalid XML. | HTTP `400`, JSON error body, `code=VALIDATION_ERROR`, and no payment is created. |
+| `Create Payment - Authentication Failure` | Request sends an intentionally invalid bearer token. | HTTP `401`, JSON error body, `code=UNAUTHORIZED`, and `correlationId`. |
+| `Create Payment - Authorization Failure` | `readOnlyJwtToken` has `payments:read` only and does not include `payments:create`. | HTTP `403`, JSON error body, `code=FORBIDDEN`, and `correlationId`. |
+| `Create Payment - Replay` | Run after `Create Payment - Success` with the same `idempotencyKey`, same normalized `pain.001` business payload, and same mock scenario. | HTTP `200`; response body replays the original `pain.002`. |
+| `Create Payment - Idempotency Conflict Setup` then `Create Payment - Idempotency Conflict` | Run setup first. The conflict request reuses `conflictIdempotencyKey` with different domestic payment business semantics. | Setup returns HTTP `200`. Conflict returns HTTP `409`, JSON error body, `code=IDEMPOTENCY_CONFLICT`, and the current `correlationId`. |
+
+If a dedicated domestic scenario such as pending returns `<TxSts>RJCT</TxSts>` with `HK_UNKNOWN_PARTICIPANT`, re-import the latest collection and reopen the request from the collection tree. Older open Postman tabs can keep stale XML bodies that do not include `DbtrAgt` or `CdtrAgt`.
 
 ## FI Postman Expected Results
 
