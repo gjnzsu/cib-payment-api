@@ -171,6 +171,25 @@ Suggested FI flow:
 5. For `Create FI Recall - Rejected` or `Create FI Recall - Investigation Pending`, first run `Create FI Payment - Accepted` again with a new `fiIdempotencyKey`, confirm Postman captured the fresh `fiPaymentId`, and then run exactly one recall outcome request for that payment.
 6. Run FI replay, FI idempotency conflict, FI authentication failure, FI scope failure, and FI validation failure scenarios.
 
+## FI Postman Expected Results
+
+Use this table as the manual testing checklist for the FI correspondent workflow. If a response differs from the expected result, first check that the environment variables match the preconditions in the table.
+
+| Postman request | Preconditions and variables | Expected result |
+| --- | --- | --- |
+| `Create FI Payment - Accepted` | `fiJwtToken` has `fi-payments:create`. Use a fresh `fiIdempotencyKey` when you want a new `fiPaymentId`. `fiMockScenario=fi_payment_accepted` or omit the mock scenario header. | HTTP `202`, JSON body, `status=SETTLED`, non-empty `paymentId`, `correlationId`, `statusLink=/v1/fi-payments/{paymentId}`, and `correspondentSettlementContext.accountRelationshipRole=NOSTRO`. Postman stores `paymentId` into `fiPaymentId`. |
+| `Get FI Payment Status` | Run after a successful FI create. `fiJwtToken` or another token has `fi-payments:read`. `fiPaymentId` points to the created payment. | HTTP `200`, JSON body, same `paymentId`, lifecycle `status`, FI identifiers, FI parties, USD settlement currency, correspondent context, and `links.self=/v1/fi-payments/{paymentId}`. |
+| `Create FI Recall - Accepted` | Run against a fresh `fiPaymentId` with no previous recall. `fiInvestigateToken` has `fi-payments:investigate`. Use a fresh `fiRecallIdempotencyKey`. `fiRecallScenario=recall_accepted` or omit the mock scenario header. | HTTP `202`, `application/camt.029+xml`, and XML contains `<Conf>CNCL</Conf>`. In this simulator profile, `CNCL` means the recall/cancellation request was accepted and the cancellation is confirmed. XML also contains `CorrelationId` and `FiPaymentId`. |
+| `Create FI Recall - Rejected` | First create a new FI payment with a new `fiIdempotencyKey`. Use that new `fiPaymentId`, a fresh `fiRecallIdempotencyKey`, and `fiRecallScenario=recall_rejected`. | HTTP `202`, `application/camt.029+xml`, and XML contains `<Conf>RJCR</Conf>`. `RJCR` means the recall/cancellation request was rejected by the correspondent simulator. |
+| `Create FI Recall - Investigation Pending` | First create a new FI payment with a new `fiIdempotencyKey`. Use that new `fiPaymentId`, a fresh `fiRecallIdempotencyKey`, and `fiRecallScenario=investigation_pending`. | HTTP `202`, `application/camt.029+xml`, and XML contains `<Conf>PDCR</Conf>`. `PDCR` means the recall/investigation remains pending correspondent response. |
+| `Create FI Payment - Replay` | Run after `Create FI Payment - Accepted` with the same `fiIdempotencyKey`, same normalized `pacs.009` business payload, and same FI mock scenario. | HTTP `202`; response body replays the original FI acknowledgement, including the original `paymentId` and body `correlationId`. The response header uses the current request correlation ID. |
+| `Create FI Payment - Idempotency Conflict Setup` then `Create FI Payment - Idempotency Conflict` | Run setup first. The conflict request reuses `fiConflictIdempotencyKey` with different FI payment business semantics. | Setup returns HTTP `202`. Conflict returns HTTP `409`, JSON error body, `code=IDEMPOTENCY_CONFLICT`, and the current `correlationId`. |
+| `Create FI Payment - Authentication Failure` | Request sends an intentionally invalid bearer token. | HTTP `401`, JSON error body, `code=UNAUTHORIZED`, and `correlationId`. |
+| `Create FI Payment - Scope Failure` | `fiReadOnlyJwtToken` has `fi-payments:read` only and does not include `fi-payments:create`. | HTTP `403`, JSON error body, `code=FORBIDDEN`, and `correlationId`. |
+| `Create FI Payment - Validation Failure` | Request sends unsupported or incomplete `pacs.009` XML. | HTTP `400`, JSON error body, `code=VALIDATION_ERROR`, and no FI payment is created. |
+
+For FI recall tests, `Idempotency-Key` and `Correlation-ID` have different purposes. Change `fiIdempotencyKey` to create a new FI payment, and change `fiRecallIdempotencyKey` to create a new recall request. Reusing the same `correlationId` is allowed because it is only a tracing value, but using a unique value per scenario makes logs easier to inspect.
+
 `baas-api-sandbox` integration remains a future scenario-pack integration, not part of this runtime change. This repository owns the payment capability simulator and local developer artifacts; a later sandbox scenario pack can call or describe these FI flows after the contract stabilizes.
 
 ## Suggested Manual Flow
