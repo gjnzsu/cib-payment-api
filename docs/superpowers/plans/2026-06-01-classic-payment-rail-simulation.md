@@ -220,7 +220,7 @@ Expected: pass.
 - Test: `src/test/java/com/cib/payment/api/api/AchBatchControllerIntegrationTest.java`
 - Test: `src/test/java/com/cib/payment/api/application/service/CreateAchBatchServiceTest.java`
 
-- [ ] **Step 1: Write ACH service/integration tests**
+- [x] **Step 1: Write ACH service/integration tests**
 
 Cover:
 - `POST /v1/ach-batches` returns `202 Accepted`.
@@ -232,11 +232,11 @@ Cover:
 - correlation ID appears in response body/header and stored record.
 - `ach_direct_credit_partially_returned` returns batch and entry statuses.
 
-- [ ] **Step 2: Implement create/status services**
+- [x] **Step 2: Implement create/status services**
 
 Follow `CreateFiPaymentService` for idempotency replay using stored original response JSON. Include `mockScenario` in fingerprint context so scenario changes conflict for the same key. Store accepted response JSON in `IdempotencyRecord` for replay.
 
-- [ ] **Step 3: Implement controller**
+- [x] **Step 3: Implement controller**
 
 Controller maps:
 - `POST /v1/ach-batches`
@@ -244,7 +244,7 @@ Controller maps:
 
 Use `AuthorizationContextService.from(jwt, servletRequest)`, `X-Mock-Scenario`, and `Idempotency-Key`.
 
-- [ ] **Step 4: Run ACH tests**
+- [x] **Step 4: Run ACH tests**
 
 ```powershell
 mvn -Dtest=AchBatchControllerIntegrationTest,CreateAchBatchServiceTest test

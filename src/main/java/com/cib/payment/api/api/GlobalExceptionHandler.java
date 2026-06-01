@@ -3,6 +3,7 @@ package com.cib.payment.api.api;
 import com.cib.payment.api.api.dto.ErrorResponse;
 import com.cib.payment.api.api.dto.ValidationErrorDetailResponse;
 import com.cib.payment.api.application.exception.AuthorizationScopeException;
+import com.cib.payment.api.application.exception.DetailedValidationFailureException;
 import com.cib.payment.api.application.exception.DownstreamProcessingException;
 import com.cib.payment.api.application.exception.IdempotencyConflictException;
 import com.cib.payment.api.application.exception.PaymentNotFoundException;
@@ -35,6 +36,17 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
         var details = exception.getBindingResult().getFieldErrors().stream()
                 .map(this::toDetail)
+                .toList();
+        observability.validationFailure("VALIDATION_ERROR", correlation(request));
+        return error(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Request validation failed", request, details);
+    }
+
+    @ExceptionHandler(DetailedValidationFailureException.class)
+    ResponseEntity<ErrorResponse> handleDetailedValidationFailure(
+            DetailedValidationFailureException exception,
+            HttpServletRequest request) {
+        var details = exception.details().stream()
+                .map(detail -> new ValidationErrorDetailResponse(detail.field(), detail.message()))
                 .toList();
         observability.validationFailure("VALIDATION_ERROR", correlation(request));
         return error(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Request validation failed", request, details);
