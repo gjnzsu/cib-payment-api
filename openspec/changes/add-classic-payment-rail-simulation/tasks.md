@@ -17,11 +17,11 @@
 ## 3. RTGS Implementation
 
 - [x] 3.1 Add RTGS API DTOs for payment creation, corporate fields, FI fields, acknowledgement, status, links, related capability guidance, and reason responses.
-- [ ] 3.2 Implement RTGS request validation for supported client segments, corporate required fields, FI required agent identifiers, USD-only currency, no hard high-value amount threshold, and unsupported runtime semantics.
+- [x] 3.2 Implement RTGS request validation for supported client segments, corporate required fields, FI required agent identifiers, USD-only currency, no hard high-value amount threshold, and unsupported runtime semantics.
 - [x] 3.3 Implement deterministic RTGS simulator outcomes for settled, queued for liquidity, and rejected scenarios.
-- [ ] 3.4 Implement RTGS create service with authorization context, idempotency evaluation, simulator invocation, persistence, observability, settlement finality, and response mapping.
-- [ ] 3.5 Implement RTGS status query service with owner-only lookup and response mapping.
-- [ ] 3.6 Add RTGS controller routes for `POST /v1/rtgs-payments` and `GET /v1/rtgs-payments/{paymentId}`.
+- [x] 3.4 Implement RTGS create service with authorization context, idempotency evaluation, simulator invocation, persistence, observability, settlement finality, and response mapping.
+- [x] 3.5 Implement RTGS status query service with owner-only lookup and response mapping.
+- [x] 3.6 Add RTGS controller routes for `POST /v1/rtgs-payments` and `GET /v1/rtgs-payments/{paymentId}`.
 
 ## 4. Shared Controls
 

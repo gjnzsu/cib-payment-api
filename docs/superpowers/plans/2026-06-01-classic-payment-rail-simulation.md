@@ -348,7 +348,7 @@ Expected: pass.
 - Test: `src/test/java/com/cib/payment/api/api/RtgsPaymentControllerIntegrationTest.java`
 - Test: `src/test/java/com/cib/payment/api/application/service/CreateRtgsPaymentServiceTest.java`
 
-- [ ] **Step 1: Write RTGS service/integration tests**
+- [x] **Step 1: Write RTGS service/integration tests**
 
 Cover:
 - corporate settled request.
@@ -361,11 +361,11 @@ Cover:
 - response includes `settlementFinality`.
 - FI RTGS does not create FI correspondent payment or invoke FI correspondent simulator.
 
-- [ ] **Step 2: Implement services**
+- [x] **Step 2: Implement services**
 
 Follow ACH idempotency pattern. Include `mockScenario` in fingerprint context. Add related capability guidance for FI responses only if it stays static and does not imply runtime handoff.
 
-- [ ] **Step 3: Implement controller**
+- [x] **Step 3: Implement controller**
 
 Map:
 - `POST /v1/rtgs-payments`
@@ -373,7 +373,7 @@ Map:
 
 Return JSON. Creation should return `202 Accepted`.
 
-- [ ] **Step 4: Run RTGS tests**
+- [x] **Step 4: Run RTGS tests**
 
 ```powershell
 mvn -Dtest=RtgsPaymentControllerIntegrationTest,CreateRtgsPaymentServiceTest test
