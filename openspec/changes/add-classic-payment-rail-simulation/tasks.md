@@ -7,7 +7,7 @@
 
 ## 2. ACH Direct Credit Implementation
 
-- [ ] 2.1 Add ACH API DTOs for batch creation, entry creation, batch acknowledgement, batch status, entry status, links, and reason responses.
+- [x] 2.1 Add ACH API DTOs for batch creation, entry creation, batch acknowledgement, batch status, entry status, links, and reason responses.
 - [ ] 2.2 Implement ACH batch admission and validation for JSON Direct Credit batches, required batch fields, required entry fields, duplicate entry references, USD-only currency, derived totals, and unsupported Direct Debit semantics.
 - [x] 2.3 Implement deterministic ACH simulator outcomes for accepted, settled, settlement pending, partially returned, and rejected scenarios.
 - [ ] 2.4 Implement ACH create service with authorization context, idempotency evaluation, simulator invocation, persistence, observability, and response mapping.

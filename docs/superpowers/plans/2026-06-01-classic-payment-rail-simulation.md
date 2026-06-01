@@ -181,7 +181,7 @@ Expected: pass.
 - Create ACH DTOs in `src/main/java/com/cib/payment/api/api/dto/`
 - Test: `src/test/java/com/cib/payment/api/api/dto/CreateAchBatchRequestValidationTest.java`
 
-- [ ] **Step 1: Write request validation tests**
+- [x] **Step 1: Write request validation tests**
 
 Cover:
 - valid Direct Credit batch passes.
@@ -191,7 +191,7 @@ Cover:
 - non-USD entry amount fails.
 - debit/unsupported payment type fails if a type field is included.
 
-- [ ] **Step 2: Implement DTO records**
+- [x] **Step 2: Implement DTO records**
 
 Use `@JsonIgnoreProperties(ignoreUnknown = false)`, `@Valid`, `@NotNull`, and `@NotBlank` consistently with existing DTOs. Reuse `MoneyRequest` and `AccountReferenceRequest`.
 
@@ -203,7 +203,7 @@ Suggested DTO names:
 - `AchBatchEntryStatusResponse`
 - `AchBatchLinksResponse` or reuse `PaymentLinksResponse`
 
-- [ ] **Step 3: Run validation tests**
+- [x] **Step 3: Run validation tests**
 
 ```powershell
 mvn -Dtest=CreateAchBatchRequestValidationTest test
