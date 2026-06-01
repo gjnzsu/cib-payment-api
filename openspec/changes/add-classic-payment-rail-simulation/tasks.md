@@ -16,7 +16,7 @@
 
 ## 3. RTGS Implementation
 
-- [ ] 3.1 Add RTGS API DTOs for payment creation, corporate fields, FI fields, acknowledgement, status, links, related capability guidance, and reason responses.
+- [x] 3.1 Add RTGS API DTOs for payment creation, corporate fields, FI fields, acknowledgement, status, links, related capability guidance, and reason responses.
 - [ ] 3.2 Implement RTGS request validation for supported client segments, corporate required fields, FI required agent identifiers, USD-only currency, no hard high-value amount threshold, and unsupported runtime semantics.
 - [x] 3.3 Implement deterministic RTGS simulator outcomes for settled, queued for liquidity, and rejected scenarios.
 - [ ] 3.4 Implement RTGS create service with authorization context, idempotency evaluation, simulator invocation, persistence, observability, settlement finality, and response mapping.

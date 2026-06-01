@@ -312,7 +312,7 @@ Expected: pass.
 - Create RTGS DTOs under `src/main/java/com/cib/payment/api/api/dto/`
 - Test: `src/test/java/com/cib/payment/api/api/dto/CreateRtgsPaymentRequestValidationTest.java`
 
-- [ ] **Step 1: Write request validation tests**
+- [x] **Step 1: Write request validation tests**
 
 Cover:
 - corporate request requires debtor and creditor account references.
@@ -321,7 +321,7 @@ Cover:
 - non-USD amount fails.
 - valid positive USD amount is not rejected for being below a high-value threshold.
 
-- [ ] **Step 2: Implement DTO records**
+- [x] **Step 2: Implement DTO records**
 
 Suggested DTOs:
 - `CreateRtgsPaymentRequest`
@@ -331,7 +331,7 @@ Suggested DTOs:
 
 Use a single request DTO with nullable segment-specific fields and service-level validation for segment rules.
 
-- [ ] **Step 3: Run validation tests**
+- [x] **Step 3: Run validation tests**
 
 ```powershell
 mvn -Dtest=CreateRtgsPaymentRequestValidationTest test
