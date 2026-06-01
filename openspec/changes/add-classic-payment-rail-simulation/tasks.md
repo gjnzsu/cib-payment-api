@@ -1,8 +1,8 @@
 ## 1. Domain And Ports
 
 - [x] 1.1 Add ACH domain records, identifiers, statuses, entry summaries, and reason value objects.
-- [ ] 1.2 Add RTGS domain records, identifiers, statuses, settlement finality, client segment, and reason value objects.
-- [ ] 1.3 Add application ports for ACH batch repository, RTGS payment repository, ACH simulator, and RTGS simulator.
+- [x] 1.2 Add RTGS domain records, identifiers, statuses, settlement finality, client segment, and reason value objects.
+- [x] 1.3 Add application ports for ACH batch repository, RTGS payment repository, ACH simulator, and RTGS simulator.
 - [ ] 1.4 Add in-memory ACH and RTGS repositories separate from existing RTP and FI status stores.
 
 ## 2. ACH Direct Credit Implementation

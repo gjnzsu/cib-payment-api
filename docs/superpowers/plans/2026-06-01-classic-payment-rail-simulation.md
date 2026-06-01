@@ -258,18 +258,18 @@ Expected: pass.
 - Create RTGS domain and port files listed above.
 - Test: `src/test/java/com/cib/payment/api/domain/model/RtgsDomainModelTest.java`
 
-- [ ] **Step 1: Write RTGS domain tests**
+- [x] **Step 1: Write RTGS domain tests**
 
 Cover:
 - statuses `ACCEPTED_FOR_SETTLEMENT`, `QUEUED_FOR_LIQUIDITY`, `SETTLED`, `REJECTED`.
 - segments `CORPORATE`, `FI`.
 - `settlementFinality` is true only for settled outcome records.
 
-- [ ] **Step 2: Add RTGS domain types and ports**
+- [x] **Step 2: Add RTGS domain types and ports**
 
 Use `PaymentReason`, `Money`, `AccountReference`, `CorrelationId`. Keep FI BICs as strings or a small `FiParty` reuse where it fits without coupling RTGS to correspondent settlement context.
 
-- [ ] **Step 3: Run RTGS domain tests**
+- [x] **Step 3: Run RTGS domain tests**
 
 ```powershell
 mvn -Dtest=RtgsDomainModelTest test
