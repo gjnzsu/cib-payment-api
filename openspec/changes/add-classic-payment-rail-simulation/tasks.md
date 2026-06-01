@@ -3,7 +3,7 @@
 - [x] 1.1 Add ACH domain records, identifiers, statuses, entry summaries, and reason value objects.
 - [x] 1.2 Add RTGS domain records, identifiers, statuses, settlement finality, client segment, and reason value objects.
 - [x] 1.3 Add application ports for ACH batch repository, RTGS payment repository, ACH simulator, and RTGS simulator.
-- [ ] 1.4 Add in-memory ACH and RTGS repositories separate from existing RTP and FI status stores.
+- [x] 1.4 Add in-memory ACH and RTGS repositories separate from existing RTP and FI status stores.
 
 ## 2. ACH Direct Credit Implementation
 
@@ -18,7 +18,7 @@
 
 - [ ] 3.1 Add RTGS API DTOs for payment creation, corporate fields, FI fields, acknowledgement, status, links, related capability guidance, and reason responses.
 - [ ] 3.2 Implement RTGS request validation for supported client segments, corporate required fields, FI required agent identifiers, USD-only currency, no hard high-value amount threshold, and unsupported runtime semantics.
-- [ ] 3.3 Implement deterministic RTGS simulator outcomes for settled, queued for liquidity, and rejected scenarios.
+- [x] 3.3 Implement deterministic RTGS simulator outcomes for settled, queued for liquidity, and rejected scenarios.
 - [ ] 3.4 Implement RTGS create service with authorization context, idempotency evaluation, simulator invocation, persistence, observability, settlement finality, and response mapping.
 - [ ] 3.5 Implement RTGS status query service with owner-only lookup and response mapping.
 - [ ] 3.6 Add RTGS controller routes for `POST /v1/rtgs-payments` and `GET /v1/rtgs-payments/{paymentId}`.

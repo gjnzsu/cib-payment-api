@@ -285,7 +285,7 @@ Expected: pass.
 - Test: `src/test/java/com/cib/payment/api/infrastructure/simulator/DeterministicRtgsPaymentSimulatorTest.java`
 - Test: `src/test/java/com/cib/payment/api/infrastructure/persistence/RtgsInMemoryRepositoryTest.java`
 
-- [ ] **Step 1: Write simulator and repository tests**
+- [x] **Step 1: Write simulator and repository tests**
 
 Cover:
 - `rtgs_settled` maps to `SETTLED` and `settlementFinality=true`.
@@ -294,11 +294,11 @@ Cover:
 - Unknown scenario throws `ValidationFailureException`.
 - Repository stores and finds by payment ID.
 
-- [ ] **Step 2: Implement simulator and repository**
+- [x] **Step 2: Implement simulator and repository**
 
 Keep outcomes deterministic. Do not calculate real liquidity or queue ordering.
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
 ```powershell
 mvn -Dtest=DeterministicRtgsPaymentSimulatorTest,RtgsInMemoryRepositoryTest test
