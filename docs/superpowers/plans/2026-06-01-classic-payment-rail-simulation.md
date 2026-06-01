@@ -152,7 +152,7 @@ Expected: pass.
 - Test: `src/test/java/com/cib/payment/api/infrastructure/simulator/DeterministicAchDirectCreditSimulatorTest.java`
 - Test: `src/test/java/com/cib/payment/api/infrastructure/persistence/AchInMemoryRepositoryTest.java`
 
-- [ ] **Step 1: Write simulator and repository tests**
+- [x] **Step 1: Write simulator and repository tests**
 
 Cover:
 - `ach_direct_credit_accepted` maps batch to `ACCEPTED_FOR_CLEARING`, entries to `ACCEPTED`.
@@ -163,11 +163,11 @@ Cover:
 - Unknown scenario throws `ValidationFailureException`.
 - Repository owner lookup preserves records and returns empty for unknown IDs.
 
-- [ ] **Step 2: Implement repository and simulator**
+- [x] **Step 2: Implement repository and simulator**
 
 Use `ConcurrentHashMap<AchBatchId, AchBatchRecord>` in repository. Keep scenario mapping deterministic and independent of real dates/calendars.
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
 ```powershell
 mvn -Dtest=DeterministicAchDirectCreditSimulatorTest,AchInMemoryRepositoryTest test
