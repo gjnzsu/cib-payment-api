@@ -9,6 +9,7 @@ import com.cib.payment.api.api.dto.RtgsPaymentResponse;
 import com.cib.payment.api.application.exception.IdempotencyConflictException;
 import com.cib.payment.api.application.exception.ValidationFailureException;
 import com.cib.payment.api.application.port.IdempotencyRepository;
+import com.cib.payment.api.application.port.PaymentObservability;
 import com.cib.payment.api.application.port.RtgsPaymentOutcome;
 import com.cib.payment.api.application.port.RtgsPaymentRepository;
 import com.cib.payment.api.application.port.RtgsPaymentSimulator;
@@ -44,6 +45,7 @@ public class CreateRtgsPaymentService {
     private final IdempotencyRepository idempotencyRepository;
     private final RequestFingerprintService fingerprintService;
     private final RtgsPaymentSimulator simulator;
+    private final PaymentObservability observability;
     private final ObjectMapper objectMapper;
     private final Clock clock;
     private final Object[] idempotencyLocks;
@@ -53,8 +55,23 @@ public class CreateRtgsPaymentService {
             RtgsPaymentRepository rtgsPaymentRepository,
             IdempotencyRepository idempotencyRepository,
             RequestFingerprintService fingerprintService,
+            RtgsPaymentSimulator simulator,
+            PaymentObservability observability) {
+        this(rtgsPaymentRepository, idempotencyRepository, fingerprintService, simulator, observability, Clock.systemUTC());
+    }
+
+    CreateRtgsPaymentService(
+            RtgsPaymentRepository rtgsPaymentRepository,
+            IdempotencyRepository idempotencyRepository,
+            RequestFingerprintService fingerprintService,
             RtgsPaymentSimulator simulator) {
-        this(rtgsPaymentRepository, idempotencyRepository, fingerprintService, simulator, Clock.systemUTC());
+        this(
+                rtgsPaymentRepository,
+                idempotencyRepository,
+                fingerprintService,
+                simulator,
+                PaymentObservability.noop(),
+                Clock.systemUTC());
     }
 
     CreateRtgsPaymentService(
@@ -63,10 +80,27 @@ public class CreateRtgsPaymentService {
             RequestFingerprintService fingerprintService,
             RtgsPaymentSimulator simulator,
             Clock clock) {
+        this(
+                rtgsPaymentRepository,
+                idempotencyRepository,
+                fingerprintService,
+                simulator,
+                PaymentObservability.noop(),
+                clock);
+    }
+
+    CreateRtgsPaymentService(
+            RtgsPaymentRepository rtgsPaymentRepository,
+            IdempotencyRepository idempotencyRepository,
+            RequestFingerprintService fingerprintService,
+            RtgsPaymentSimulator simulator,
+            PaymentObservability observability,
+            Clock clock) {
         this.rtgsPaymentRepository = rtgsPaymentRepository;
         this.idempotencyRepository = idempotencyRepository;
         this.fingerprintService = fingerprintService;
         this.simulator = simulator;
+        this.observability = observability;
         this.objectMapper = new ObjectMapper().findAndRegisterModules();
         this.clock = clock;
         this.idempotencyLocks = IntStream.range(0, 256).mapToObj(index -> new Object()).toArray();
@@ -117,6 +151,7 @@ public class CreateRtgsPaymentService {
             }
 
             rtgsPaymentRepository.save(completedRecord);
+            observability.rtgsPaymentAccepted(completedRecord, authorizationContext);
             return response;
         }
     }

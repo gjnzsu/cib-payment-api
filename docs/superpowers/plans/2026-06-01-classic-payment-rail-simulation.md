@@ -418,18 +418,18 @@ Expected: pass.
 - Modify logging/observability code only where ACH/RTGS events are added.
 - Tests: `src/test/java/com/cib/payment/api/api/AchSensitiveLoggingIntegrationTest.java`, `src/test/java/com/cib/payment/api/api/RtgsSensitiveLoggingIntegrationTest.java`
 
-- [ ] **Step 1: Write sensitive logging tests**
+- [x] **Step 1: Write sensitive logging tests**
 
 Cover:
 - ACH receiver and settlement account numbers do not appear in logs.
 - RTGS debtor and creditor account numbers do not appear in logs.
 - bearer token and raw JSON payload are not logged.
 
-- [ ] **Step 2: Implement masking/omission**
+- [x] **Step 2: Implement masking/omission**
 
 Reuse `AccountNumberMasker` where possible. Prefer structured event fields over raw payload logging.
 
-- [ ] **Step 3: Run logging tests**
+- [x] **Step 3: Run logging tests**
 
 ```powershell
 mvn -Dtest=AchSensitiveLoggingIntegrationTest,RtgsSensitiveLoggingIntegrationTest test

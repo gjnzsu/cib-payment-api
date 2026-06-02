@@ -1,6 +1,7 @@
 package com.cib.payment.api.application.port;
 
 import com.cib.payment.api.api.dto.CreateDomesticPaymentRequest;
+import com.cib.payment.api.domain.model.AchBatchRecord;
 import com.cib.payment.api.domain.model.AuthorizationContext;
 import com.cib.payment.api.domain.model.CorrelationId;
 import com.cib.payment.api.domain.model.IdempotencyRecord;
@@ -11,6 +12,7 @@ import com.cib.payment.api.domain.model.PaymentRecord;
 import com.cib.payment.api.domain.model.PaymentReason;
 import com.cib.payment.api.domain.model.PaymentStatus;
 import com.cib.payment.api.domain.model.RecallInvestigationRecord;
+import com.cib.payment.api.domain.model.RtgsPaymentRecord;
 import java.time.Duration;
 import java.util.Optional;
 
@@ -46,6 +48,10 @@ public interface PaymentObservability {
     void fiPaymentStatusLookup(FiPaymentRecord record, AuthorizationContext authorizationContext);
 
     void recallInvestigationCreated(RecallInvestigationRecord record, AuthorizationContext authorizationContext);
+
+    void achBatchAccepted(AchBatchRecord record, AuthorizationContext authorizationContext);
+
+    void rtgsPaymentAccepted(RtgsPaymentRecord record, AuthorizationContext authorizationContext);
 
     static PaymentObservability noop() {
         return new PaymentObservability() {
@@ -109,6 +115,12 @@ public interface PaymentObservability {
             public void recallInvestigationCreated(
                     RecallInvestigationRecord record,
                     AuthorizationContext authorizationContext) {}
+
+            @Override
+            public void achBatchAccepted(AchBatchRecord record, AuthorizationContext authorizationContext) {}
+
+            @Override
+            public void rtgsPaymentAccepted(RtgsPaymentRecord record, AuthorizationContext authorizationContext) {}
         };
     }
 }

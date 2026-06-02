@@ -4,6 +4,7 @@ import com.cib.payment.api.api.dto.CreateDomesticPaymentRequest;
 import com.cib.payment.api.application.port.PaymentObservability;
 import com.cib.payment.api.domain.model.AuthorizationContext;
 import com.cib.payment.api.domain.model.CorrelationId;
+import com.cib.payment.api.domain.model.AchBatchRecord;
 import com.cib.payment.api.domain.model.FiPaymentRecord;
 import com.cib.payment.api.domain.model.IdempotencyRecord;
 import com.cib.payment.api.domain.model.InternalInterbankTransfer;
@@ -12,6 +13,7 @@ import com.cib.payment.api.domain.model.PaymentRecord;
 import com.cib.payment.api.domain.model.PaymentReason;
 import com.cib.payment.api.domain.model.PaymentStatus;
 import com.cib.payment.api.domain.model.RecallInvestigationRecord;
+import com.cib.payment.api.domain.model.RtgsPaymentRecord;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
 import java.util.Optional;
@@ -216,5 +218,41 @@ public class MicrometerPaymentObservability implements PaymentObservability {
                 record.status().name(),
                 AccountNumberMasker.maskSensitive(record.originalPaymentReference()),
                 AccountNumberMasker.maskSensitive(record.settlementContext().maskedSimulatedAccountReference()));
+    }
+
+    @Override
+    public void achBatchAccepted(AchBatchRecord record, AuthorizationContext authorizationContext) {
+        meterRegistry.counter("payment.ach.accepted", "status", record.status().name()).increment();
+        log.info(
+                "ach_batch_accepted correlationId={} clientId={} batchId={} status={} settlementAccount={} receiverAccounts={} currency={}",
+                record.correlationId().value(),
+                authorizationContext.clientId(),
+                record.batchId().value(),
+                record.status().name(),
+                AccountNumberMasker.maskSensitive(record.settlementAccount().accountNumber()),
+                record.entries().stream()
+                        .map(entry -> AccountNumberMasker.maskSensitive(entry.receiverAccount().accountNumber()))
+                        .toList(),
+                record.totalAmount().currency());
+    }
+
+    @Override
+    public void rtgsPaymentAccepted(RtgsPaymentRecord record, AuthorizationContext authorizationContext) {
+        meterRegistry.counter("payment.rtgs.accepted", "status", record.status().name()).increment();
+        log.info(
+                "rtgs_payment_accepted correlationId={} clientId={} paymentId={} clientSegment={} status={} settlementFinality={} debtorAccount={} creditorAccount={} currency={}",
+                record.correlationId().value(),
+                authorizationContext.clientId(),
+                record.paymentId().value(),
+                record.clientSegment().name(),
+                record.status().name(),
+                record.settlementFinality(),
+                record.debtorAccount()
+                        .map(account -> AccountNumberMasker.maskSensitive(account.accountNumber()))
+                        .orElse(""),
+                record.creditorAccount()
+                        .map(account -> AccountNumberMasker.maskSensitive(account.accountNumber()))
+                        .orElse(""),
+                record.settlementAmount().currency());
     }
 }

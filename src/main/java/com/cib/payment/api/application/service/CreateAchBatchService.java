@@ -15,6 +15,7 @@ import com.cib.payment.api.application.port.AchBatchRepository;
 import com.cib.payment.api.application.port.AchDirectCreditOutcome;
 import com.cib.payment.api.application.port.AchDirectCreditSimulator;
 import com.cib.payment.api.application.port.IdempotencyRepository;
+import com.cib.payment.api.application.port.PaymentObservability;
 import com.cib.payment.api.domain.model.AccountReference;
 import com.cib.payment.api.domain.model.AchBatchEntry;
 import com.cib.payment.api.domain.model.AchBatchId;
@@ -52,6 +53,7 @@ public class CreateAchBatchService {
     private final IdempotencyRepository idempotencyRepository;
     private final RequestFingerprintService fingerprintService;
     private final AchDirectCreditSimulator simulator;
+    private final PaymentObservability observability;
     private final ObjectMapper objectMapper;
     private final Clock clock;
     private final Object[] idempotencyLocks;
@@ -61,8 +63,23 @@ public class CreateAchBatchService {
             AchBatchRepository achBatchRepository,
             IdempotencyRepository idempotencyRepository,
             RequestFingerprintService fingerprintService,
+            AchDirectCreditSimulator simulator,
+            PaymentObservability observability) {
+        this(achBatchRepository, idempotencyRepository, fingerprintService, simulator, observability, Clock.systemUTC());
+    }
+
+    CreateAchBatchService(
+            AchBatchRepository achBatchRepository,
+            IdempotencyRepository idempotencyRepository,
+            RequestFingerprintService fingerprintService,
             AchDirectCreditSimulator simulator) {
-        this(achBatchRepository, idempotencyRepository, fingerprintService, simulator, Clock.systemUTC());
+        this(
+                achBatchRepository,
+                idempotencyRepository,
+                fingerprintService,
+                simulator,
+                PaymentObservability.noop(),
+                Clock.systemUTC());
     }
 
     CreateAchBatchService(
@@ -71,10 +88,27 @@ public class CreateAchBatchService {
             RequestFingerprintService fingerprintService,
             AchDirectCreditSimulator simulator,
             Clock clock) {
+        this(
+                achBatchRepository,
+                idempotencyRepository,
+                fingerprintService,
+                simulator,
+                PaymentObservability.noop(),
+                clock);
+    }
+
+    CreateAchBatchService(
+            AchBatchRepository achBatchRepository,
+            IdempotencyRepository idempotencyRepository,
+            RequestFingerprintService fingerprintService,
+            AchDirectCreditSimulator simulator,
+            PaymentObservability observability,
+            Clock clock) {
         this.achBatchRepository = achBatchRepository;
         this.idempotencyRepository = idempotencyRepository;
         this.fingerprintService = fingerprintService;
         this.simulator = simulator;
+        this.observability = observability;
         this.objectMapper = new ObjectMapper().findAndRegisterModules();
         this.clock = clock;
         this.idempotencyLocks = IntStream.range(0, 256).mapToObj(index -> new Object()).toArray();
@@ -125,6 +159,7 @@ public class CreateAchBatchService {
             }
 
             achBatchRepository.save(completedRecord);
+            observability.achBatchAccepted(completedRecord, authorizationContext);
             return response;
         }
     }
