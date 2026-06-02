@@ -388,7 +388,7 @@ Expected: pass.
 - Modify `PaymentObservability.java` and `MicrometerPaymentObservability.java` only if new observability methods are needed.
 - Tests: existing security/auth/error/correlation packages plus ACH/RTGS integration tests.
 
-- [ ] **Step 1: Add scope tests**
+- [x] **Step 1: Add scope tests**
 
 Cover missing and valid scopes for all four new operations:
 - `ach-batches:create`
@@ -396,7 +396,7 @@ Cover missing and valid scopes for all four new operations:
 - `rtgs-payments:create`
 - `rtgs-payments:read`
 
-- [ ] **Step 2: Wire security and consistent errors**
+- [x] **Step 2: Wire security and consistent errors**
 
 Use existing exception types:
 - `ValidationFailureException`
@@ -404,7 +404,7 @@ Use existing exception types:
 - `PaymentNotFoundException` or new rail-specific not-found exception only if needed.
 - `IdempotencyConflictException`
 
-- [ ] **Step 3: Run auth/error/correlation tests**
+- [x] **Step 3: Run auth/error/correlation tests**
 
 ```powershell
 mvn -Dtest=SecurityIntegrationTest,CorrelationAndErrorHandlingTest,AchBatchControllerIntegrationTest,RtgsPaymentControllerIntegrationTest test

@@ -25,11 +25,11 @@
 
 ## 4. Shared Controls
 
-- [ ] 4.1 Add JWT scope enforcement for `ach-batches:create`, `ach-batches:read`, `rtgs-payments:create`, and `rtgs-payments:read`.
-- [ ] 4.2 Require `Idempotency-Key` for ACH and RTGS create operations and allow status queries without idempotency keys.
-- [ ] 4.3 Implement ACH and RTGS idempotent replay and conflict behavior using operation/resource-specific fingerprints.
-- [ ] 4.4 Propagate correlation IDs through ACH and RTGS responses, records, idempotency entries, simulator calls, logs, and errors.
-- [ ] 4.5 Ensure ACH and RTGS validation, auth, not-found, and idempotency conflict errors use the consistent JSON error envelope.
+- [x] 4.1 Add JWT scope enforcement for `ach-batches:create`, `ach-batches:read`, `rtgs-payments:create`, and `rtgs-payments:read`.
+- [x] 4.2 Require `Idempotency-Key` for ACH and RTGS create operations and allow status queries without idempotency keys.
+- [x] 4.3 Implement ACH and RTGS idempotent replay and conflict behavior using operation/resource-specific fingerprints.
+- [x] 4.4 Propagate correlation IDs through ACH and RTGS responses, records, idempotency entries, simulator calls, logs, and errors.
+- [x] 4.5 Ensure ACH and RTGS validation, auth, not-found, and idempotency conflict errors use the consistent JSON error envelope.
 - [ ] 4.6 Mask or omit ACH and RTGS account identifiers, sensitive request values, and bearer tokens at logging and diagnostics boundaries.
 
 ## 5. OpenAPI And Developer Artifacts
@@ -45,7 +45,7 @@
 
 - [ ] 6.1 Add ACH unit and integration tests for validation, deterministic outcomes, idempotency replay/conflict, owner-only status query, correlation propagation, and entry-level status summaries.
 - [ ] 6.2 Add RTGS unit and integration tests for corporate settled, FI settled, FI queued for liquidity, rejected, validation, idempotency replay/conflict, owner-only status query, and settlement finality.
-- [ ] 6.3 Add scope authorization tests for ACH and RTGS create/read operations.
+- [x] 6.3 Add scope authorization tests for ACH and RTGS create/read operations.
 - [ ] 6.4 Add sensitive logging tests or assertions for ACH and RTGS account identifiers and raw sensitive payload handling.
 - [ ] 6.5 Extend OpenAPI contract tests to verify ACH and RTGS paths, schemas, scopes, examples, and error responses.
 - [ ] 6.6 Extend Postman artifact validation tests to verify scenario requests, expected statuses, required headers, environment variables, and alignment with simulator mappings.

@@ -128,6 +128,153 @@ class SecurityIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void achCreateRequiresRailSpecificScopeBeforePayloadValidation() throws Exception {
+        mockMvc.perform(post("/v1/ach-batches")
+                        .header("Authorization", "Bearer " + JwtTestSupport.tokenWithScopes("client-a", "payments:create"))
+                        .header("X-Correlation-ID", "security-ach-create-403")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{"))
+                .andExpect(status().isForbidden())
+                .andExpect(header().string("X-Correlation-ID", "security-ach-create-403"))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.correlationId").value("security-ach-create-403"));
+    }
+
+    @Test
+    void achCreateWithRailSpecificScopeReachesIdempotencyValidation() throws Exception {
+        mockMvc.perform(post("/v1/ach-batches")
+                        .header("Authorization", "Bearer " + JwtTestSupport.tokenWithScopes("client-a", "ach-batches:create"))
+                        .header("X-Correlation-ID", "security-ach-create-valid-scope")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validAchBatchJson()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.correlationId").value("security-ach-create-valid-scope"));
+    }
+
+    @Test
+    void achReadRequiresRailSpecificScope() throws Exception {
+        mockMvc.perform(get("/v1/ach-batches/550e8400-e29b-41d4-a716-446655440000")
+                        .header("Authorization", "Bearer " + JwtTestSupport.tokenWithScopes("client-a", "payments:read"))
+                        .header("X-Correlation-ID", "security-ach-read-403"))
+                .andExpect(status().isForbidden())
+                .andExpect(header().string("X-Correlation-ID", "security-ach-read-403"))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+    }
+
+    @Test
+    void achReadWithRailSpecificScopeReachesStatusLookupWithoutIdempotencyKey() throws Exception {
+        mockMvc.perform(get("/v1/ach-batches/550e8400-e29b-41d4-a716-446655440000")
+                        .header("Authorization", "Bearer " + JwtTestSupport.tokenWithScopes("client-a", "ach-batches:read"))
+                        .header("X-Correlation-ID", "security-ach-read-valid-scope"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("PAYMENT_NOT_FOUND"))
+                .andExpect(jsonPath("$.correlationId").value("security-ach-read-valid-scope"));
+    }
+
+    @Test
+    void rtgsCreateRequiresRailSpecificScopeBeforePayloadValidation() throws Exception {
+        mockMvc.perform(post("/v1/rtgs-payments")
+                        .header("Authorization", "Bearer " + JwtTestSupport.tokenWithScopes("client-a", "payments:create"))
+                        .header("X-Correlation-ID", "security-rtgs-create-403")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{"))
+                .andExpect(status().isForbidden())
+                .andExpect(header().string("X-Correlation-ID", "security-rtgs-create-403"))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.correlationId").value("security-rtgs-create-403"));
+    }
+
+    @Test
+    void rtgsCreateWithRailSpecificScopeReachesIdempotencyValidation() throws Exception {
+        mockMvc.perform(post("/v1/rtgs-payments")
+                        .header("Authorization", "Bearer " + JwtTestSupport.tokenWithScopes("client-a", "rtgs-payments:create"))
+                        .header("X-Correlation-ID", "security-rtgs-create-valid-scope")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validRtgsPaymentJson()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.correlationId").value("security-rtgs-create-valid-scope"));
+    }
+
+    @Test
+    void rtgsReadRequiresRailSpecificScope() throws Exception {
+        mockMvc.perform(get("/v1/rtgs-payments/550e8400-e29b-41d4-a716-446655440000")
+                        .header("Authorization", "Bearer " + JwtTestSupport.tokenWithScopes("client-a", "payments:read"))
+                        .header("X-Correlation-ID", "security-rtgs-read-403"))
+                .andExpect(status().isForbidden())
+                .andExpect(header().string("X-Correlation-ID", "security-rtgs-read-403"))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+    }
+
+    @Test
+    void rtgsReadWithRailSpecificScopeReachesStatusLookupWithoutIdempotencyKey() throws Exception {
+        mockMvc.perform(get("/v1/rtgs-payments/550e8400-e29b-41d4-a716-446655440000")
+                        .header("Authorization", "Bearer " + JwtTestSupport.tokenWithScopes("client-a", "rtgs-payments:read"))
+                        .header("X-Correlation-ID", "security-rtgs-read-valid-scope"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("PAYMENT_NOT_FOUND"))
+                .andExpect(jsonPath("$.correlationId").value("security-rtgs-read-valid-scope"));
+    }
+
+    private String validAchBatchJson() {
+        return """
+                {
+                  "batchReference": "ACH-SECURITY-0001",
+                  "originatorName": "CIB Payroll Services",
+                  "effectiveEntryDate": "2026-06-02",
+                  "settlementAccount": {
+                    "bankCode": "021000021",
+                    "accountNumber": "123456789",
+                    "accountName": "CIB Operating"
+                  },
+                  "entries": [
+                    {
+                      "entryReference": "ACH-SECURITY-ENTRY-0001",
+                      "receiverName": "Receiver One",
+                      "receiverAccount": {
+                        "bankCode": "111000025",
+                        "accountNumber": "987654321",
+                        "accountName": "Receiver One"
+                      },
+                      "amount": {
+                        "currency": "USD",
+                        "value": "125.40"
+                      },
+                      "purpose": "PAYROLL"
+                    }
+                  ]
+                }
+                """;
+    }
+
+    private String validRtgsPaymentJson() {
+        return """
+                {
+                  "paymentReference": "RTGS-SECURITY-0001",
+                  "clientSegment": "CORPORATE",
+                  "debtorAccount": {
+                    "bankCode": "CITIUS33",
+                    "accountNumber": "123456789",
+                    "accountName": "Acme Operating"
+                  },
+                  "creditorAccount": {
+                    "bankCode": "BOFAUS3N",
+                    "accountNumber": "987654321",
+                    "accountName": "Beta Supplier"
+                  },
+                  "amount": {
+                    "currency": "USD",
+                    "value": "1250.50"
+                  },
+                  "requestedSettlementDate": "2026-06-05",
+                  "settlementPriority": "URGENT",
+                  "purpose": "Treasury transfer"
+                }
+                """;
+    }
+
     static class JwtTestConfiguration {
         @Bean
         JwtDecoder jwtDecoder() {
