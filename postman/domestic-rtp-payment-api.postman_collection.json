@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "5c58fd8a-0d39-40d3-b9e8-6e07df0d3e2f",
     "name": "Domestic RTP Payment Service API",
-    "description": "Postman collection for ISO-native CreateDomesticPayment and GetDomesticPaymentStatus API flows. Uses pain.001.001.09 requests and pain.002.001.10 responses. The HK clearing and settlement behavior is simulator-only. pacs.008 is internal only. Allowed X-Mock-Scenario values: success, rejection, suspicious_proxy_or_account, pending, timeout, internal_failure.",
+    "description": "Postman collection for ISO-native CreateDomesticPayment and GetDomesticPaymentStatus API flows. Uses pain.001.001.09 requests and pain.002.001.10 responses. The HK clearing and settlement behavior is simulator-only. pacs.008 is internal only. Allowed X-Mock-Scenario values: success, rejection, suspicious_proxy_or_account, pending, timeout, internal_failure. Classic Payment Rail Simulation journey adds RTP baseline, ACH Direct Credit JSON batch, RTGS corporate/FI JSON payment, and FI correspondent comparison scenarios.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
@@ -1561,6 +1561,667 @@
                   "  pm.response.to.have.status(400);",
                   "  pm.expect(pm.response.json().code).to.eql('VALIDATION_ERROR');",
                   "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Classic Payment Rail Simulation",
+      "description": "Manual product and architecture journey comparing RTP, ACH Direct Credit, RTGS, and FI correspondent arrangements. RTP is immediate domestic payment API baseline; ACH is JSON batch clearing with settlement/status summaries; RTGS is gross settlement with finality/liquidity outcomes; FI correspondent is a separate nostro/vostro/loro arrangement that can be compared with but is not necessarily RTP/ACH/RTGS. Token scopes used in this journey: payments:create, payments:read, ach-batches:create, ach-batches:read, rtgs-payments:create, rtgs-payments:read.",
+      "item": [
+        {
+          "name": "RTP Baseline - Create Payment",
+          "request": {
+            "method": "POST",
+            "description": "RTP baseline using the existing domestic real-time payment flow. Expected HTTP status: 200; expected lifecycle status: ACSC. Common setup: jwtToken must include payments:create and payments:read.",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "success"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/pain.001+xml"
+              },
+              {
+                "key": "Accept",
+                "value": "application/pain.002+xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-CLASSIC-RTP-0001</MsgId><CreDtTm>2026-06-01T10:00:00+08:00</CreDtTm><NbOfTxs>1</NbOfTxs></GrpHdr><PmtInf><PmtInfId>PMT-CLASSIC-RTP</PmtInfId><PmtMtd>TRF</PmtMtd><Dbtr><Nm>Acme Treasury HK</Nm></Dbtr><DbtrAcct><Id><Othr><Id>000111222333</Id></Othr></Id></DbtrAcct><DbtrAgt><FinInstnId><BICFI>CIBBHKHH</BICFI></FinInstnId></DbtrAgt><CdtTrfTxInf><PmtId><InstrId>INSTR-CLASSIC-RTP-0001</InstrId><EndToEndId>INV-CLASSIC-RTP-0001</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"HKD\">1250.50</InstdAmt></Amt><CdtrAgt><FinInstnId><BICFI>SUPPHKHH</BICFI></FinInstnId></CdtrAgt><Cdtr><Nm>Supplier HK Limited</Nm></Cdtr><CdtrAcct><Id><Othr><Id>000123456789</Id></Othr></Id></CdtrAcct><RmtInf><Ustrd>Classic rail RTP baseline</Ustrd></RmtInf></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/domestic-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "domestic-payments"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('RTP baseline returns pain.002 ACSC', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.text()).to.include('<TxSts>ACSC</TxSts>');",
+                  "const acctSvcrRef = pm.response.text().match(/<AcctSvcrRef>([^<]+)<\\/AcctSvcrRef>/); if (acctSvcrRef) { pm.environment.set('paymentId', acctSvcrRef[1]); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RTP Baseline - Get Payment Status",
+          "request": {
+            "method": "GET",
+            "description": "RTP baseline status lookup. Expected HTTP status: 200; expected lifecycle status: ACSC. Common setup: run RTP Baseline - Create Payment first; no Idempotency-Key is used for status.",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{readOnlyJwtToken}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/pain.002+xml"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/domestic-payments/{{paymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "domestic-payments",
+                "{{paymentId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('RTP status returns pain.002', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ACH Direct Credit - Settled",
+          "request": {
+            "method": "POST",
+            "description": "ACH Direct Credit JSON batch settled scenario. Expected HTTP status: 202; expected lifecycle status: SETTLED. Key fields: batchId, rail ACH, entryCount, totalAmount, entry-level status summary. Common setup: use a fresh idempotency key and a JWT with the create scope; X-Mock-Scenario aligns with deterministic simulator mappings.",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{achJwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{achSettledIdempotencyKey}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "ach_direct_credit_settled"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"batchReference\": \"ACH-CLASSIC-SETTLED-001\",\n  \"originatorName\": \"Acme Treasury Operations\",\n  \"effectiveEntryDate\": \"2026-06-01\",\n  \"settlementAccount\": {\n    \"bankCode\": \"CIBBUS33\",\n    \"accountNumber\": \"99000011112222\",\n    \"accountName\": \"Acme ACH Settlement\"\n  },\n  \"entries\": [\n    {\n      \"entryReference\": \"ACH-SETTLED-ENTRY-001\",\n      \"receiverName\": \"Supplier One LLC\",\n      \"receiverAccount\": {\n        \"bankCode\": \"SUPPUS33\",\n        \"accountNumber\": \"100200300400\",\n        \"accountName\": \"Supplier One LLC Operating\"\n      },\n      \"amount\": {\n        \"currency\": \"USD\",\n        \"value\": \"1200.00\"\n      },\n      \"purpose\": \"Vendor payment\"\n    },\n    {\n      \"entryReference\": \"ACH-SETTLED-ENTRY-002\",\n      \"receiverName\": \"Supplier Two LLC\",\n      \"receiverAccount\": {\n        \"bankCode\": \"SUP2US33\",\n        \"accountNumber\": \"100200300400\",\n        \"accountName\": \"Supplier Two LLC Operating\"\n      },\n      \"amount\": {\n        \"currency\": \"USD\",\n        \"value\": \"800.00\"\n      },\n      \"purpose\": \"Vendor payment\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/ach-batches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "ach-batches"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('ACH settled batch accepted', function () { pm.response.to.have.status(202); });",
+                  "const body = pm.response.json(); pm.expect(body.status).to.eql('SETTLED'); pm.expect(body.entries.length).to.be.above(0);",
+                  "if (pm.response.code === 202) { pm.environment.set('achBatchId', pm.response.json().batchId); pm.environment.set('railMockScenario', 'ach_direct_credit_settled'); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ACH Direct Credit - Get Batch Status",
+          "request": {
+            "method": "GET",
+            "description": "ACH Direct Credit status lookup. Expected HTTP status: 200; expected lifecycle status: latest resource status. Common setup: run a create request first to capture the ID; no Idempotency-Key is used for status.",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{achReadOnlyJwtToken}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/ach-batches/{{achBatchId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "ach-batches",
+                "{{achBatchId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('ACH status returns JSON batch summary', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); pm.expect(body.batchId).to.eql(pm.environment.get('achBatchId')); pm.expect(body.entries).to.be.an('array');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ACH Direct Credit - Partially Returned",
+          "request": {
+            "method": "POST",
+            "description": "ACH Direct Credit JSON batch partial return scenario. Expected HTTP status: 202; expected lifecycle status: PARTIALLY_RETURNED. Key fields: batch-level reason, returned entry, settled remaining entries, entry-level status summary. Common setup: use a fresh idempotency key and a JWT with the create scope; X-Mock-Scenario aligns with deterministic simulator mappings.",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{achJwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{achPartiallyReturnedIdempotencyKey}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "ach_direct_credit_partially_returned"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"batchReference\": \"ACH-CLASSIC-PARTIAL-001\",\n  \"originatorName\": \"Acme Treasury Operations\",\n  \"effectiveEntryDate\": \"2026-06-01\",\n  \"settlementAccount\": {\n    \"bankCode\": \"CIBBUS33\",\n    \"accountNumber\": \"99000011112222\",\n    \"accountName\": \"Acme ACH Settlement\"\n  },\n  \"entries\": [\n    {\n      \"entryReference\": \"ACH-PARTIAL-ENTRY-001\",\n      \"receiverName\": \"Closed Account Vendor\",\n      \"receiverAccount\": {\n        \"bankCode\": \"RETUUS33\",\n        \"accountNumber\": \"100200300400\",\n        \"accountName\": \"Closed Account Vendor Operating\"\n      },\n      \"amount\": {\n        \"currency\": \"USD\",\n        \"value\": \"250.00\"\n      },\n      \"purpose\": \"Vendor payment\"\n    },\n    {\n      \"entryReference\": \"ACH-PARTIAL-ENTRY-002\",\n      \"receiverName\": \"Supplier Three LLC\",\n      \"receiverAccount\": {\n        \"bankCode\": \"SUP3US33\",\n        \"accountNumber\": \"100200300400\",\n        \"accountName\": \"Supplier Three LLC Operating\"\n      },\n      \"amount\": {\n        \"currency\": \"USD\",\n        \"value\": \"950.00\"\n      },\n      \"purpose\": \"Vendor payment\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/ach-batches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "ach-batches"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('ACH partially returned batch accepted', function () { pm.response.to.have.status(202); });",
+                  "const body = pm.response.json(); pm.expect(body.status).to.eql('PARTIALLY_RETURNED'); pm.expect(body.entries.some(e => e.status === 'RETURNED')).to.eql(true);",
+                  "if (pm.response.code === 202) { pm.environment.set('achBatchId', pm.response.json().batchId); pm.environment.set('railMockScenario', 'ach_direct_credit_partially_returned'); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ACH Direct Credit - Rejected",
+          "request": {
+            "method": "POST",
+            "description": "ACH Direct Credit JSON batch rejected scenario. Expected HTTP status: 202; expected lifecycle status: REJECTED. Key fields: batch-level reason, rejected entry statuses, entry-level status summary. Common setup: use a fresh idempotency key and a JWT with the create scope; X-Mock-Scenario aligns with deterministic simulator mappings.",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{achJwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{achRejectedIdempotencyKey}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "ach_direct_credit_rejected"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"batchReference\": \"ACH-CLASSIC-REJECTED-001\",\n  \"originatorName\": \"Acme Treasury Operations\",\n  \"effectiveEntryDate\": \"2026-06-01\",\n  \"settlementAccount\": {\n    \"bankCode\": \"CIBBUS33\",\n    \"accountNumber\": \"99000011112222\",\n    \"accountName\": \"Acme ACH Settlement\"\n  },\n  \"entries\": [\n    {\n      \"entryReference\": \"ACH-REJECTED-ENTRY-001\",\n      \"receiverName\": \"Blocked Vendor LLC\",\n      \"receiverAccount\": {\n        \"bankCode\": \"BLCKUS33\",\n        \"accountNumber\": \"100200300400\",\n        \"accountName\": \"Blocked Vendor LLC Operating\"\n      },\n      \"amount\": {\n        \"currency\": \"USD\",\n        \"value\": \"700.00\"\n      },\n      \"purpose\": \"Vendor payment\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/ach-batches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "ach-batches"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('ACH rejected batch accepted with rejected lifecycle', function () { pm.response.to.have.status(202); });",
+                  "const body = pm.response.json(); pm.expect(body.status).to.eql('REJECTED');",
+                  "if (pm.response.code === 202) { pm.environment.set('achBatchId', pm.response.json().batchId); pm.environment.set('railMockScenario', 'ach_direct_credit_rejected'); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Corporate RTGS - Settled",
+          "request": {
+            "method": "POST",
+            "description": "Corporate RTGS JSON payment settled scenario. Expected HTTP status: 202; expected lifecycle status: SETTLED. Key fields: paymentId, rail RTGS, clientSegment CORPORATE, settlementFinality true. Common setup: use a fresh idempotency key and a JWT with the create scope; X-Mock-Scenario aligns with deterministic simulator mappings.",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{rtgsJwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{rtgsCorporateSettledIdempotencyKey}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "rtgs_settled"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentReference\": \"RTGS-CORP-SETTLED-001\",\n  \"clientSegment\": \"CORPORATE\",\n  \"debtorAccount\": {\n    \"bankCode\": \"CIBBUS33\",\n    \"accountNumber\": \"88000011112222\",\n    \"accountName\": \"Acme Operating Account\"\n  },\n  \"creditorAccount\": {\n    \"bankCode\": \"BENFUS33\",\n    \"accountNumber\": \"77000033334444\",\n    \"accountName\": \"Strategic Supplier Account\"\n  },\n  \"amount\": {\n    \"currency\": \"USD\",\n    \"value\": \"2500000.00\"\n  },\n  \"requestedSettlementDate\": \"2026-06-01\",\n  \"settlementPriority\": \"HIGH\",\n  \"purpose\": \"Corporate treasury RTGS settlement\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rtgs-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rtgs-payments"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Corporate RTGS settled with finality', function () { pm.response.to.have.status(202); });",
+                  "const body = pm.response.json(); pm.expect(body.status).to.eql('SETTLED'); pm.expect(body.clientSegment).to.eql('CORPORATE'); pm.expect(body.settlementFinality).to.eql(true);",
+                  "if (pm.response.code === 202) { pm.environment.set('rtgsPaymentId', pm.response.json().paymentId); pm.environment.set('railMockScenario', 'rtgs_settled'); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "FI RTGS - Settled",
+          "request": {
+            "method": "POST",
+            "description": "FI RTGS JSON payment settled scenario. Expected HTTP status: 202; expected lifecycle status: SETTLED. Key fields: paymentId, rail RTGS, clientSegment FI, instructing/instructed BICs, settlementFinality true. Common setup: use a fresh idempotency key and a JWT with the create scope; X-Mock-Scenario aligns with deterministic simulator mappings.",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{rtgsJwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{rtgsFiSettledIdempotencyKey}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "rtgs_settled"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentReference\": \"RTGS-FI-SETTLED-001\",\n  \"clientSegment\": \"FI\",\n  \"instructingAgentBic\": \"CIBBUS33\",\n  \"instructedAgentBic\": \"BANKUS44\",\n  \"amount\": {\n    \"currency\": \"USD\",\n    \"value\": \"5000000.00\"\n  },\n  \"requestedSettlementDate\": \"2026-06-01\",\n  \"settlementPriority\": \"HIGH\",\n  \"purpose\": \"FI interbank settlement\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rtgs-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rtgs-payments"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('FI RTGS settled with finality', function () { pm.response.to.have.status(202); });",
+                  "const body = pm.response.json(); pm.expect(body.status).to.eql('SETTLED'); pm.expect(body.clientSegment).to.eql('FI'); pm.expect(body.settlementFinality).to.eql(true);",
+                  "if (pm.response.code === 202) { pm.environment.set('rtgsPaymentId', pm.response.json().paymentId); pm.environment.set('railMockScenario', 'rtgs_settled'); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "FI RTGS - Queued For Liquidity",
+          "request": {
+            "method": "POST",
+            "description": "FI RTGS queued-for-liquidity scenario. Expected HTTP status: 202; expected lifecycle status: QUEUED_FOR_LIQUIDITY. Key fields: clientSegment FI, settlementFinality false, RTGS_LIQUIDITY_QUEUE reason. Common setup: use a fresh idempotency key and a JWT with the create scope; X-Mock-Scenario aligns with deterministic simulator mappings.",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{rtgsJwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{rtgsFiQueuedIdempotencyKey}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "rtgs_queued_for_liquidity"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentReference\": \"RTGS-FI-QUEUED-001\",\n  \"clientSegment\": \"FI\",\n  \"instructingAgentBic\": \"CIBBUS33\",\n  \"instructedAgentBic\": \"BANKUS44\",\n  \"amount\": {\n    \"currency\": \"USD\",\n    \"value\": \"9000000.00\"\n  },\n  \"requestedSettlementDate\": \"2026-06-01\",\n  \"settlementPriority\": \"HIGH\",\n  \"purpose\": \"FI liquidity queue demo\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rtgs-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rtgs-payments"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('FI RTGS queues for liquidity', function () { pm.response.to.have.status(202); });",
+                  "const body = pm.response.json(); pm.expect(body.status).to.eql('QUEUED_FOR_LIQUIDITY'); pm.expect(body.clientSegment).to.eql('FI'); pm.expect(body.settlementFinality).to.eql(false);",
+                  "if (pm.response.code === 202) { pm.environment.set('rtgsPaymentId', pm.response.json().paymentId); pm.environment.set('railMockScenario', 'rtgs_queued_for_liquidity'); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RTGS - Rejected",
+          "request": {
+            "method": "POST",
+            "description": "RTGS rejected scenario. Expected HTTP status: 202; expected lifecycle status: REJECTED. Key fields: settlementFinality false and RTGS_PAYMENT_REJECTED reason. Common setup: use a fresh idempotency key and a JWT with the create scope; X-Mock-Scenario aligns with deterministic simulator mappings.",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{rtgsJwtToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{rtgsRejectedIdempotencyKey}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "X-Mock-Scenario",
+                "value": "rtgs_rejected"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentReference\": \"RTGS-REJECTED-001\",\n  \"clientSegment\": \"CORPORATE\",\n  \"debtorAccount\": {\n    \"bankCode\": \"CIBBUS33\",\n    \"accountNumber\": \"88000011112222\",\n    \"accountName\": \"Acme Operating Account\"\n  },\n  \"creditorAccount\": {\n    \"bankCode\": \"BENFUS33\",\n    \"accountNumber\": \"77000033334444\",\n    \"accountName\": \"Strategic Supplier Account\"\n  },\n  \"amount\": {\n    \"currency\": \"USD\",\n    \"value\": \"2500000.00\"\n  },\n  \"requestedSettlementDate\": \"2026-06-01\",\n  \"settlementPriority\": \"HIGH\",\n  \"purpose\": \"Corporate treasury RTGS settlement\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rtgs-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rtgs-payments"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('RTGS rejected lifecycle returned', function () { pm.response.to.have.status(202); });",
+                  "const body = pm.response.json(); pm.expect(body.status).to.eql('REJECTED'); pm.expect(body.settlementFinality).to.eql(false);",
+                  "if (pm.response.code === 202) { pm.environment.set('rtgsPaymentId', pm.response.json().paymentId); pm.environment.set('railMockScenario', 'rtgs_rejected'); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RTGS - Get Payment Status",
+          "request": {
+            "method": "GET",
+            "description": "RTGS status lookup. Expected HTTP status: 200; expected lifecycle status: latest resource status. Common setup: run a create request first to capture the ID; no Idempotency-Key is used for status.",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{rtgsReadOnlyJwtToken}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/rtgs-payments/{{rtgsPaymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rtgs-payments",
+                "{{rtgsPaymentId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('RTGS status returns JSON payment state', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); pm.expect(body.paymentId).to.eql(pm.environment.get('rtgsPaymentId')); pm.expect(body).to.have.property('settlementFinality');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "FI Correspondent Comparison - Existing Arrangement",
+          "request": {
+            "method": "GET",
+            "description": "Comparison note: FI correspondent payment is a separate arrangement, not necessarily RTP/ACH/RTGS. Use existing FI correspondent requests to demonstrate correspondent account path context: nostro, vostro, loro, correspondentOrIntermediaryBic, and masked simulated account reference. Expected HTTP status: 200 when querying an existing FI payment status. Common setup: run Create FI Payment - Accepted first to capture fiPaymentId.",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{fiReadOnlyJwtToken}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/fi-payments/{{fiPaymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "fi-payments",
+                "{{fiPaymentId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('FI correspondent comparison returns status context', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); pm.expect(body).to.have.property('correspondentSettlementContext');"
                 ]
               }
             }

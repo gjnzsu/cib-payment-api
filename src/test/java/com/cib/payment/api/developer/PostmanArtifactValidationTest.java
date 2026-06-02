@@ -219,6 +219,105 @@ class PostmanArtifactValidationTest {
     }
 
     @Test
+    void postmanCollectionCoversClassicPaymentRailSimulationJourney() throws Exception {
+        var collection = objectMapper.readTree(Files.readString(COLLECTION, StandardCharsets.UTF_8));
+        var serialized = collection.toString();
+
+        assertThat(folderNames(collection)).contains("Classic Payment Rail Simulation");
+        assertThat(requestNames(collection)).contains(
+                "RTP Baseline - Create Payment",
+                "RTP Baseline - Get Payment Status",
+                "ACH Direct Credit - Settled",
+                "ACH Direct Credit - Get Batch Status",
+                "ACH Direct Credit - Partially Returned",
+                "ACH Direct Credit - Rejected",
+                "Corporate RTGS - Settled",
+                "FI RTGS - Settled",
+                "FI RTGS - Queued For Liquidity",
+                "RTGS - Rejected",
+                "RTGS - Get Payment Status",
+                "FI Correspondent Comparison - Existing Arrangement");
+
+        assertClassicRailCreateRequest(collection, "ACH Direct Credit - Settled",
+                "/v1/ach-batches", "{{achJwtToken}}", "{{achSettledIdempotencyKey}}",
+                "ach_direct_credit_settled", "SETTLED");
+        assertClassicRailCreateRequest(collection, "ACH Direct Credit - Partially Returned",
+                "/v1/ach-batches", "{{achJwtToken}}", "{{achPartiallyReturnedIdempotencyKey}}",
+                "ach_direct_credit_partially_returned", "PARTIALLY_RETURNED");
+        assertClassicRailCreateRequest(collection, "ACH Direct Credit - Rejected",
+                "/v1/ach-batches", "{{achJwtToken}}", "{{achRejectedIdempotencyKey}}",
+                "ach_direct_credit_rejected", "REJECTED");
+        assertClassicRailStatusRequest(collection, "ACH Direct Credit - Get Batch Status",
+                "/v1/ach-batches/{{achBatchId}}", "{{achReadOnlyJwtToken}}");
+
+        assertClassicRailCreateRequest(collection, "Corporate RTGS - Settled",
+                "/v1/rtgs-payments", "{{rtgsJwtToken}}", "{{rtgsCorporateSettledIdempotencyKey}}",
+                "rtgs_settled", "SETTLED");
+        assertClassicRailCreateRequest(collection, "FI RTGS - Settled",
+                "/v1/rtgs-payments", "{{rtgsJwtToken}}", "{{rtgsFiSettledIdempotencyKey}}",
+                "rtgs_settled", "SETTLED");
+        assertClassicRailCreateRequest(collection, "FI RTGS - Queued For Liquidity",
+                "/v1/rtgs-payments", "{{rtgsJwtToken}}", "{{rtgsFiQueuedIdempotencyKey}}",
+                "rtgs_queued_for_liquidity", "QUEUED_FOR_LIQUIDITY");
+        assertClassicRailCreateRequest(collection, "RTGS - Rejected",
+                "/v1/rtgs-payments", "{{rtgsJwtToken}}", "{{rtgsRejectedIdempotencyKey}}",
+                "rtgs_rejected", "REJECTED");
+        assertClassicRailStatusRequest(collection, "RTGS - Get Payment Status",
+                "/v1/rtgs-payments/{{rtgsPaymentId}}", "{{rtgsReadOnlyJwtToken}}");
+        assertClassicRailCreateRequestsUseDistinctIdempotencyKeys(collection);
+
+        assertThat(requestDescription(collection, "FI Correspondent Comparison - Existing Arrangement"))
+                .contains("separate arrangement", "not necessarily RTP/ACH/RTGS", "nostro", "vostro", "loro");
+        assertThat(serialized).contains(
+                "Expected HTTP status: 202",
+                "Expected HTTP status: 200",
+                "expected lifecycle status",
+                "entry-level status summary",
+                "settlementFinality",
+                "clientSegment",
+                "payments:create",
+                "ach-batches:create",
+                "ach-batches:read",
+                "rtgs-payments:create",
+                "rtgs-payments:read");
+    }
+
+    @Test
+    void postmanEnvironmentProvidesClassicPaymentRailVariables() throws Exception {
+        var environment = objectMapper.readTree(Files.readString(ENVIRONMENT, StandardCharsets.UTF_8));
+
+        assertThat(environmentVariables(environment)).contains(
+                "achBatchId",
+                "achIdempotencyKey",
+                "achSettledIdempotencyKey",
+                "achPartiallyReturnedIdempotencyKey",
+                "achRejectedIdempotencyKey",
+                "rtgsPaymentId",
+                "rtgsIdempotencyKey",
+                "rtgsCorporateSettledIdempotencyKey",
+                "rtgsFiSettledIdempotencyKey",
+                "rtgsFiQueuedIdempotencyKey",
+                "rtgsRejectedIdempotencyKey",
+                "railMockScenario",
+                "achJwtToken",
+                "achReadOnlyJwtToken",
+                "rtgsJwtToken",
+                "rtgsReadOnlyJwtToken");
+
+        assertThat(List.of(
+                        environmentVariableValue(environment, "achSettledIdempotencyKey"),
+                        environmentVariableValue(environment, "achPartiallyReturnedIdempotencyKey"),
+                        environmentVariableValue(environment, "achRejectedIdempotencyKey"),
+                        environmentVariableValue(environment, "rtgsCorporateSettledIdempotencyKey"),
+                        environmentVariableValue(environment, "rtgsFiSettledIdempotencyKey"),
+                        environmentVariableValue(environment, "rtgsFiQueuedIdempotencyKey"),
+                        environmentVariableValue(environment, "rtgsRejectedIdempotencyKey")))
+                .as("Classic rail per-scenario idempotency key values")
+                .doesNotContain("")
+                .doesNotHaveDuplicates();
+    }
+
+    @Test
     void fiRecallScenariosDocumentOneRecallRecordPerFreshPayment() throws Exception {
         var collection = objectMapper.readTree(Files.readString(COLLECTION, StandardCharsets.UTF_8));
         var docs = Files.readString(DOCS, StandardCharsets.UTF_8);
@@ -443,6 +542,12 @@ class PostmanArtifactValidationTest {
         return names;
     }
 
+    private Set<String> folderNames(JsonNode node) {
+        var names = new HashSet<String>();
+        collectFolderNames(node.path("item"), names);
+        return names;
+    }
+
     private Set<String> savedExampleNames(JsonNode node) {
         var names = new HashSet<String>();
         collectResponseNames(node.path("item"), names);
@@ -453,6 +558,17 @@ class PostmanArtifactValidationTest {
         var variables = new HashSet<String>();
         environment.path("values").forEach(value -> variables.add(value.path("key").asText()));
         return variables;
+    }
+
+    private String environmentVariableValue(JsonNode environment, String key) {
+        var values = new ArrayList<String>();
+        environment.path("values").forEach(value -> {
+            if (key.equals(value.path("key").asText())) {
+                values.add(value.path("value").asText());
+            }
+        });
+        assertThat(values).as(key + " environment variable").hasSize(1);
+        return values.getFirst();
     }
 
     private void assertPacs009AcceptedByRuntimeContract(String xml) {
@@ -526,6 +642,103 @@ class PostmanArtifactValidationTest {
         return objectMapper.readTree(matchingBodies.getFirst());
     }
 
+    private JsonNode request(JsonNode collection, String requestName) {
+        var matchingRequests = new ArrayList<JsonNode>();
+        collectRequests(collection.path("item"), requestName, matchingRequests);
+        assertThat(matchingRequests).as(requestName + " request").hasSize(1);
+        return matchingRequests.getFirst();
+    }
+
+    private void assertClassicRailCreateRequestsUseDistinctIdempotencyKeys(JsonNode collection) {
+        var createRequestNames = List.of(
+                "ACH Direct Credit - Settled",
+                "ACH Direct Credit - Partially Returned",
+                "ACH Direct Credit - Rejected",
+                "Corporate RTGS - Settled",
+                "FI RTGS - Settled",
+                "FI RTGS - Queued For Liquidity",
+                "RTGS - Rejected");
+
+        var idempotencyKeyVariables = createRequestNames.stream()
+                .map(requestName -> headerValue(request(collection, requestName), "Idempotency-Key"))
+                .toList();
+
+        assertThat(idempotencyKeyVariables)
+                .as("Classic rail create requests use unique Idempotency-Key variables")
+                .doesNotHaveDuplicates();
+    }
+
+    private void assertClassicRailCreateRequest(
+            JsonNode collection,
+            String requestName,
+            String endpoint,
+            String tokenVariable,
+            String idempotencyKeyVariable,
+            String scenario,
+            String expectedLifecycleStatus) {
+        var request = request(collection, requestName);
+
+        assertThat(request.path("method").asText()).as(requestName + " method").isEqualTo("POST");
+        assertThat(request.path("url").path("raw").asText()).as(requestName + " URL").contains(endpoint);
+        assertThat(headerValue(request, "Authorization")).isEqualTo("Bearer " + tokenVariable);
+        assertThat(headerValue(request, "Idempotency-Key")).isEqualTo(idempotencyKeyVariable);
+        assertThat(headerValue(request, "X-Correlation-ID")).isEqualTo("{{correlationId}}");
+        assertThat(headerValue(request, "X-Mock-Scenario")).isEqualTo(scenario);
+        assertThat(headerValue(request, "Content-Type")).isEqualTo("application/json");
+        assertThat(headerValue(request, "Accept")).isEqualTo("application/json");
+        assertThat(requestDescription(collection, requestName)).contains(
+                "Expected HTTP status: 202",
+                "expected lifecycle status: " + expectedLifecycleStatus,
+                "Common setup");
+        assertThat(requestItem(collection, requestName).path("event").toString()).contains(
+                "pm.response.to.have.status(202)",
+                expectedLifecycleStatus);
+    }
+
+    private void assertClassicRailStatusRequest(
+            JsonNode collection,
+            String requestName,
+            String endpoint,
+            String tokenVariable) {
+        var request = request(collection, requestName);
+
+        assertThat(request.path("method").asText()).as(requestName + " method").isEqualTo("GET");
+        assertThat(request.path("url").path("raw").asText()).as(requestName + " URL").contains(endpoint);
+        assertThat(headerValue(request, "Authorization")).isEqualTo("Bearer " + tokenVariable);
+        assertThat(headerNames(request)).doesNotContain("Idempotency-Key");
+        assertThat(headerValue(request, "X-Correlation-ID")).isEqualTo("{{correlationId}}");
+        assertThat(headerValue(request, "Accept")).isEqualTo("application/json");
+        assertThat(requestDescription(collection, requestName)).contains(
+                "Expected HTTP status: 200",
+                "Common setup");
+        assertThat(requestItem(collection, requestName).path("event").toString())
+                .contains("pm.response.to.have.status(200)");
+    }
+
+    private String headerValue(JsonNode request, String headerName) {
+        var values = new ArrayList<String>();
+        request.path("header").forEach(header -> {
+            if (headerName.equals(header.path("key").asText())) {
+                values.add(header.path("value").asText());
+            }
+        });
+        assertThat(values).as(headerName + " header").hasSize(1);
+        return values.getFirst();
+    }
+
+    private Set<String> headerNames(JsonNode request) {
+        var names = new HashSet<String>();
+        request.path("header").forEach(header -> names.add(header.path("key").asText()));
+        return names;
+    }
+
+    private JsonNode requestItem(JsonNode collection, String requestName) {
+        var matchingItems = new ArrayList<JsonNode>();
+        collectRequestItems(collection.path("item"), requestName, matchingItems);
+        assertThat(matchingItems).as(requestName + " item").hasSize(1);
+        return matchingItems.getFirst();
+    }
+
     private void assertFiCorrespondentContext(JsonNode response) {
         var context = response.path("correspondentSettlementContext");
 
@@ -558,6 +771,15 @@ class PostmanArtifactValidationTest {
         });
     }
 
+    private void collectFolderNames(JsonNode items, Set<String> names) {
+        items.forEach(item -> {
+            if (item.has("item") && !item.has("request")) {
+                names.add(item.path("name").asText());
+            }
+            collectFolderNames(item.path("item"), names);
+        });
+    }
+
     private void collectResponseNames(JsonNode items, Set<String> names) {
         items.forEach(item -> {
             item.path("response").forEach(response -> names.add(response.path("name").asText()));
@@ -580,6 +802,24 @@ class PostmanArtifactValidationTest {
                 bodies.add(item.path("request").path("body").path("raw").asText());
             }
             collectRequestBodies(item.path("item"), requestName, bodies);
+        });
+    }
+
+    private void collectRequests(JsonNode items, String requestName, List<JsonNode> requests) {
+        items.forEach(item -> {
+            if (item.has("request") && requestName.equals(item.path("name").asText())) {
+                requests.add(item.path("request"));
+            }
+            collectRequests(item.path("item"), requestName, requests);
+        });
+    }
+
+    private void collectRequestItems(JsonNode items, String requestName, List<JsonNode> matchingItems) {
+        items.forEach(item -> {
+            if (item.has("request") && requestName.equals(item.path("name").asText())) {
+                matchingItems.add(item);
+            }
+            collectRequestItems(item.path("item"), requestName, matchingItems);
         });
     }
 

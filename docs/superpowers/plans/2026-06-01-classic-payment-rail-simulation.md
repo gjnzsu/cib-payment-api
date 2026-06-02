@@ -471,7 +471,7 @@ Expected: pass.
 - Modify `postman/domestic-rtp-payment-api.local.postman_environment.json`
 - Test: `src/test/java/com/cib/payment/api/developer/PostmanArtifactValidationTest.java`
 
-- [ ] **Step 1: Add failing Postman validation assertions**
+- [x] **Step 1: Add failing Postman validation assertions**
 
 Assert folder/request coverage:
 - RTP Baseline
@@ -482,7 +482,7 @@ Assert folder/request coverage:
 - RTGS rejected/status
 - FI Correspondent Comparison
 
-- [ ] **Step 2: Update Postman collection and environment**
+- [x] **Step 2: Update Postman collection and environment**
 
 Add variables:
 - `achBatchId`
@@ -493,7 +493,7 @@ Add variables:
 
 Include expected-result documentation for each manual scenario.
 
-- [ ] **Step 3: Run Postman artifact test**
+- [x] **Step 3: Run Postman artifact test**
 
 ```powershell
 mvn -Dtest=PostmanArtifactValidationTest test
