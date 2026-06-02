@@ -27,6 +27,15 @@ spec:
             value: /v1/domestic-payments
         - path:
             type: PathPrefix
+            value: /v1/ach-batches
+        - path:
+            type: PathPrefix
+            value: /v1/rtgs-payments
+        - path:
+            type: PathPrefix
+            value: /v1/fi-payments
+        - path:
+            type: PathPrefix
             value: /swagger-ui
         - path:
             type: PathPrefix

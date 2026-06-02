@@ -35,6 +35,9 @@ class PostmanArtifactValidationTest {
     private static final Path ENVIRONMENT = Path.of("postman", "domestic-rtp-payment-api.local.postman_environment.json");
     private static final Path README = Path.of("README.md");
     private static final Path DOCS = Path.of("docs", "developer-support", "postman-local-testing.md");
+    private static final Path CLASSIC_RAIL_DOCS =
+            Path.of("docs", "developer-support", "classic-payment-rail-simulation.md");
+    private static final Path GATEWAY = Path.of("k8s", "gateway.yaml");
     private static final String ORIGINAL_FI_REFERENCE = "FI-E2E-20260528-0001";
     private static final Set<String> SUPPORTED_FI_RECALL_REASONS = Set.of("DUPL", "CUST", "AM09", "FRAD", "TECH");
 
@@ -506,6 +509,98 @@ class PostmanArtifactValidationTest {
         assertThat(readme).contains("docs/developer-support/postman-local-testing.md");
         assertThat(readme).contains("docs/product-strategy/payment-simulation-suite-vision.md");
         assertThat(readme).contains("2026-05-29-add-fi-correspondent-rfi-workflow");
+    }
+
+    @Test
+    void classicPaymentRailDocumentationExplainsProductSurfaceBoundariesAndDeveloperJourney() throws Exception {
+        var readme = Files.readString(README, StandardCharsets.UTF_8);
+        var guide = Files.readString(CLASSIC_RAIL_DOCS, StandardCharsets.UTF_8);
+        var gateway = Files.readString(GATEWAY, StandardCharsets.UTF_8);
+
+        assertThat(readme).contains(
+                "Classic Payment Rail Simulation",
+                "RTP baseline",
+                "/v1/domestic-payments",
+                "ACH Direct Credit batch simulation",
+                "/v1/ach-batches",
+                "RTGS payment simulation",
+                "/v1/rtgs-payments",
+                "FI correspondent payment is a separate arrangement",
+                "not an RTP, ACH, or RTGS rail",
+                "cross-border",
+                "future-facing only",
+                "AI recommendation copilot",
+                "no runtime behavior",
+                "docs/developer-support/classic-payment-rail-simulation.md");
+        assertThat(readme).contains(
+                "/v1/domestic-payments",
+                "/v1/ach-batches",
+                "/v1/rtgs-payments",
+                "/v1/fi-payments",
+                "Use the Gateway address as the Postman `baseUrl` for remote GKE testing");
+        assertThat(gateway).contains(
+                "value: /v1/domestic-payments",
+                "value: /v1/ach-batches",
+                "value: /v1/rtgs-payments",
+                "value: /v1/fi-payments");
+
+        assertThat(guide).contains(
+                "Rail Comparison",
+                "| RTP |",
+                "| ACH Direct Credit |",
+                "| RTGS |",
+                "| FI correspondent arrangement |",
+                "Scenario Catalog",
+                "Postman",
+                "Classic Payment Rail Simulation",
+                "per-scenario idempotency keys",
+                "Common Setup Mistakes",
+                "Future Copilot Hook");
+        assertThat(guide).contains(
+                "/v1/domestic-payments",
+                "/v1/ach-batches",
+                "/v1/rtgs-payments",
+                "/v1/fi-payments",
+                "payments:create",
+                "payments:read",
+                "ach-batches:create",
+                "ach-batches:read",
+                "rtgs-payments:create",
+                "rtgs-payments:read",
+                "fi-payments:create",
+                "fi-payments:read");
+        assertThat(guide).contains(
+                "success",
+                "ach_direct_credit_settled",
+                "ach_direct_credit_partially_returned",
+                "ach_direct_credit_rejected",
+                "rtgs_settled",
+                "rtgs_queued_for_liquidity",
+                "rtgs_rejected",
+                "ACSC",
+                "SETTLED",
+                "PARTIALLY_RETURNED",
+                "QUEUED_FOR_LIQUIDITY",
+                "REJECTED");
+        assertThat(guide).contains(
+                "achSettledIdempotencyKey",
+                "achPartiallyReturnedIdempotencyKey",
+                "achRejectedIdempotencyKey",
+                "rtgsCorporateSettledIdempotencyKey",
+                "rtgsFiSettledIdempotencyKey",
+                "rtgsFiQueuedIdempotencyKey",
+                "rtgsRejectedIdempotencyKey");
+        assertThat(guide).contains(
+                "no NACHA",
+                "no ISO runtime for ACH/RTGS",
+                "no Direct Debit runtime",
+                "no cross-border runtime",
+                "no automatic RTGS-to-FI correspondent orchestration");
+        assertThat(guide).contains(
+                "payment rail recommendation copilot",
+                "future hook",
+                "does not make runtime recommendations",
+                "does not execute cross-border or FX behavior");
     }
 
     private void assertDomesticScenarioOutcome(

@@ -6,6 +6,10 @@ The suite currently exposes:
 
 - `POST /v1/domestic-payments`
 - `GET /v1/domestic-payments/{paymentId}`
+- `POST /v1/ach-batches`
+- `GET /v1/ach-batches/{batchId}`
+- `POST /v1/rtgs-payments`
+- `GET /v1/rtgs-payments/{paymentId}`
 - `POST /v1/fi-payments`
 - `GET /v1/fi-payments/{paymentId}`
 - `POST /v1/fi-payments/{paymentId}/recall-requests`
@@ -16,6 +20,16 @@ The implementation follows these archived OpenSpec changes:
 - `openspec/changes/archive/2026-05-29-add-fi-correspondent-rfi-workflow`
 
 ## Capabilities
+
+### Classic Payment Rail Simulation
+
+- Uses the existing domestic payment API as the RTP baseline through `POST /v1/domestic-payments` and `GET /v1/domestic-payments/{paymentId}`.
+- Adds ACH Direct Credit batch simulation through `POST /v1/ach-batches` and `GET /v1/ach-batches/{batchId}` with a JSON batch envelope, multiple entries, batch-level status, and entry-level status summary.
+- Adds RTGS payment simulation through `POST /v1/rtgs-payments` and `GET /v1/rtgs-payments/{paymentId}` for corporate and FI client segments, including settlement finality and queued-for-liquidity scenarios.
+- FI correspondent payment is a separate arrangement, not an RTP, ACH, or RTGS rail. The existing FI flow remains available through `/v1/fi-payments` for nostro, vostro, and loro correspondent-account-path demonstrations.
+- Keeps cross-border and AI recommendation copilot concepts future-facing only. They describe possible product direction and no runtime behavior in this service.
+
+Developer guidance is in `docs/developer-support/classic-payment-rail-simulation.md`.
 
 ### Domestic ISO Payment Simulation
 
@@ -33,6 +47,7 @@ The implementation follows these archived OpenSpec changes:
 - Includes deterministic local simulator scenarios for accepted FI payment, unsupported correspondent rejection, correspondent review pending, recall accepted, recall rejected, and investigation pending.
 
 This is a local simulation product. It does not provide real FPS/HKICL, SWIFT, CBPR+, correspondent banking, ledger, AML, sanctions, fraud, settlement, balance, or reconciliation connectivity.
+ACH and RTGS simulation uses JSON runtime payloads only. It does not implement NACHA, ISO runtime for ACH/RTGS, ACH Direct Debit runtime, cross-border runtime, FX conversion, real ACH or RTGS connectivity, central bank ledger, liquidity management, or automatic RTGS-to-FI correspondent orchestration.
 
 ## Local Development
 
@@ -73,7 +88,7 @@ postman/domestic-rtp-payment-api.postman_collection.json
 postman/domestic-rtp-payment-api.local.postman_environment.json
 ```
 
-Import both files into Postman, select the local environment, then set local JWT variables before calling secured endpoints. The collection contains domestic ISO XML scenarios, FI `pacs.009` scenarios, FI `camt.056` to `camt.029` recall/investigation scenarios, deterministic simulator outcomes, replay/conflict checks, auth/scope failure checks, and status queries. Detailed local testing guidance is in `docs/developer-support/postman-local-testing.md`.
+Import both files into Postman, select the local environment, then set local JWT variables before calling secured endpoints. The collection contains domestic ISO XML scenarios, the `Classic Payment Rail Simulation` journey for RTP baseline, ACH Direct Credit, RTGS, and FI correspondent comparison, FI `pacs.009` scenarios, FI `camt.056` to `camt.029` recall/investigation scenarios, deterministic simulator outcomes, replay/conflict checks, auth/scope failure checks, and status queries. Detailed local testing guidance is in `docs/developer-support/postman-local-testing.md` and `docs/developer-support/classic-payment-rail-simulation.md`.
 
 Generate a local domestic Postman token:
 
@@ -85,6 +100,13 @@ Generate a local FI Postman token:
 
 ```powershell
 mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructure.security.LocalJwtTokenGenerator" "-Dexec.args=fi-client-a fi-payments:create,fi-payments:read,fi-payments:investigate 3600"
+```
+
+Generate local ACH and RTGS Postman tokens:
+
+```powershell
+mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructure.security.LocalJwtTokenGenerator" "-Dexec.args=client-a ach-batches:create,ach-batches:read 3600"
+mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructure.security.LocalJwtTokenGenerator" "-Dexec.args=client-a rtgs-payments:create,rtgs-payments:read 3600"
 ```
 
 ## Product Process
@@ -138,6 +160,8 @@ The `HTTPRoute` forwards these path prefixes to the `domestic-rtp-payment-api` s
 
 ```text
 /v1/domestic-payments
+/v1/ach-batches
+/v1/rtgs-payments
 /v1/fi-payments
 /swagger-ui
 /swagger-ui.html

@@ -38,8 +38,8 @@
 - [x] 5.2 Add OpenAPI paths, schemas, security scopes, examples, settlement finality fields, and error responses for RTGS APIs.
 - [x] 5.3 Update the Postman collection with the Classic Payment Rail Simulation journey for RTP baseline, ACH Direct Credit, RTGS, and FI correspondent comparison scenarios.
 - [x] 5.4 Update the Postman local environment with ACH and RTGS variables, token guidance, idempotency keys, captured IDs, and mock scenario values.
-- [ ] 5.5 Update the root README to describe the classic payment rail simulation product surface.
-- [ ] 5.6 Add or update developer support documentation with the rail comparison table, scenario catalog, expected results, common setup mistakes, and future copilot hook.
+- [x] 5.5 Update the root README to describe the classic payment rail simulation product surface.
+- [x] 5.6 Add or update developer support documentation with the rail comparison table, scenario catalog, expected results, common setup mistakes, and future copilot hook.
 
 ## 6. Tests And Validation
 

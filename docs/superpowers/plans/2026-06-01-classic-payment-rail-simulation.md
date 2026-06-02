@@ -508,7 +508,7 @@ Expected: pass.
 - Create `docs/developer-support/classic-payment-rail-simulation.md`
 - Test: extend developer artifact validation where practical.
 
-- [ ] **Step 1: Add documentation validation assertions**
+- [x] **Step 1: Add documentation validation assertions**
 
 Assert README and developer guide mention:
 - RTP baseline
@@ -517,7 +517,7 @@ Assert README and developer guide mention:
 - FI correspondent as separate arrangement
 - cross-border and AI copilot as future-facing
 
-- [ ] **Step 2: Update README and guide**
+- [x] **Step 2: Update README and guide**
 
 Guide must include:
 - rail comparison table
@@ -527,7 +527,7 @@ Guide must include:
 - common setup mistakes
 - future copilot hook without runtime claims.
 
-- [ ] **Step 3: Run artifact tests**
+- [x] **Step 3: Run artifact tests**
 
 ```powershell
 mvn -Dtest=PostmanArtifactValidationTest,OpenApiContractTest test
