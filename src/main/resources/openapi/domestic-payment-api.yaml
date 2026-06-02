@@ -4,11 +4,15 @@ info:
   version: 0.2.0
   x-fi-simulator-limitation: no real SWIFT, CBPR+, correspondent banking, ledger, AML, sanctions, fraud, or settlement connectivity
   x-fi-status-idempotency: FI status query does not require Idempotency-Key
+  x-classic-rail-simulator-limitation: no central bank ledger, liquidity, queue management, or settlement connectivity
   description: >
     ISO-native HK domestic realtime payment simulation API. Payment initiation
     accepts supported pain.001.001.09 XML and returns pain.002.001.10 XML.
     The simulator has no real HKICL/FPS connectivity, and pacs.008 is internal
-    only inside the payment engine mapping.
+    only inside the payment engine mapping. Classic rail extensions are
+    simulator-only: no real ACH or RTGS connectivity, no NACHA or ISO 20022
+    runtime for ACH or RTGS, and no central bank ledger, liquidity, queue
+    management, or settlement connectivity.
 servers:
   - url: http://localhost:8080
     description: Local development
@@ -144,6 +148,256 @@ paths:
                     <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.002.001.10">
                       <CstmrPmtStsRpt><OrgnlPmtInfAndSts><TxInfAndSts><OrgnlEndToEndId>INV-2026-0001</OrgnlEndToEndId><TxSts>ACSC</TxSts></TxInfAndSts></OrgnlPmtInfAndSts></CstmrPmtStsRpt>
                     </Document>
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/ach-batches:
+    post:
+      operationId: CreateAchBatch
+      summary: Create an ACH Direct Credit batch simulation
+      description: >
+        Accepts one JSON ACH Direct Credit batch envelope with multiple payment
+        entries for the USD-only simulator profile. The API distinguishes batch
+        acceptance, clearing, and settlement-style status reporting without
+        generating NACHA files or running ISO 20022 ACH messages. Supported
+        local/test-only X-Mock-Scenario values are ach_direct_credit_accepted,
+        ach_direct_credit_settled, ach_direct_credit_settlement_pending,
+        ach_direct_credit_partially_returned, and ach_direct_credit_rejected.
+        This behavior is simulator-only with no real ACH or RTGS connectivity,
+        no NACHA or ISO 20022 runtime for ACH or RTGS, and no central bank
+        ledger, liquidity, queue management, or settlement connectivity.
+      security:
+        - bearerAuth: []
+      x-required-scopes:
+        - ach-batches:create
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/AchMockScenario'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAchBatchRequest'
+            examples:
+              settled:
+                summary: Direct Credit batch settled
+                value:
+                  batchReference: ACH-BATCH-20260602-001
+                  originatorName: Example Treasury Ltd
+                  effectiveEntryDate: '2026-06-02'
+                  settlementAccount:
+                    bankCode: USBANK
+                    accountNumber: '000123456789'
+                    accountName: Example Treasury Settlement
+                  entries:
+                    - entryReference: ACH-ENTRY-001
+                      receiverName: Supplier One LLC
+                      receiverAccount:
+                        bankCode: USBANK
+                        accountNumber: '000987654321'
+                        accountName: Supplier One LLC
+                      amount:
+                        currency: USD
+                        value: '1250.50'
+                      purpose: Invoice INV-1001
+                    - entryReference: ACH-ENTRY-002
+                      receiverName: Supplier Two LLC
+                      receiverAccount:
+                        bankCode: USBANK
+                        accountNumber: '000555000111'
+                        accountName: Supplier Two LLC
+                      amount:
+                        currency: USD
+                        value: '500.00'
+                      purpose: Invoice INV-1002
+      responses:
+        '202':
+          description: ACH batch accepted by the simulator for asynchronous status inspection.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchBatchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/IdempotencyConflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/ach-batches/{batchId}:
+    get:
+      operationId: GetAchBatchStatus
+      summary: Get ACH batch and entry-level status summary
+      description: >
+        Returns the current ACH batch status for the authenticated client that
+        owns the batch. Status query does not require Idempotency-Key. The
+        response includes batch-level status, derived entry count and total,
+        entry-level status summaries, reason details when present, and
+        correlation ID.
+      security:
+        - bearerAuth: []
+      x-required-scopes:
+        - ach-batches:read
+      parameters:
+        - name: batchId
+          in: path
+          required: true
+          description: ACH batch ID returned by CreateAchBatch.
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Current ACH batch and entry-level status response.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchBatchStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/rtgs-payments:
+    post:
+      operationId: CreateRtgsPayment
+      summary: Create an RTGS payment simulation
+      description: >
+        Accepts one JSON RTGS payment instruction for CORPORATE or FI client
+        segments in the USD-only simulator profile. Corporate requests provide
+        debtor and creditor account references; FI requests provide instructing
+        and instructed agent BICs. Supported local/test-only X-Mock-Scenario
+        values are rtgs_settled, rtgs_queued_for_liquidity, and rtgs_rejected.
+        This behavior is simulator-only with no real ACH or RTGS connectivity,
+        no NACHA or ISO 20022 runtime for ACH or RTGS, and no central bank
+        ledger, liquidity, queue management, or settlement connectivity.
+      security:
+        - bearerAuth: []
+      x-required-scopes:
+        - rtgs-payments:create
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/RtgsMockScenario'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRtgsPaymentRequest'
+            examples:
+              corporateSettled:
+                summary: Corporate RTGS settled
+                value:
+                  paymentReference: RTGS-CORP-20260602-001
+                  clientSegment: CORPORATE
+                  debtorAccount:
+                    bankCode: USBANK
+                    accountNumber: '000111222333'
+                    accountName: Corporate Treasury LLC
+                  creditorAccount:
+                    bankCode: USBANK
+                    accountNumber: '000444555666'
+                    accountName: Supplier Settlement LLC
+                  amount:
+                    currency: USD
+                    value: '250000.00'
+                  requestedSettlementDate: '2026-06-02'
+                  settlementPriority: HIGH
+                  purpose: Same-day supplier settlement
+              fiQueuedForLiquidity:
+                summary: FI RTGS queued for liquidity
+                value:
+                  paymentReference: RTGS-FI-20260602-001
+                  clientSegment: FI
+                  instructingAgentBic: CIBBUS33
+                  instructedAgentBic: FEDBUS33
+                  amount:
+                    currency: USD
+                    value: '5000000.00'
+                  requestedSettlementDate: '2026-06-02'
+                  settlementPriority: URGENT
+                  purpose: FI interbank settlement transfer
+      responses:
+        '202':
+          description: RTGS payment accepted by the simulator for asynchronous status inspection.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RtgsPaymentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/IdempotencyConflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/rtgs-payments/{paymentId}:
+    get:
+      operationId: GetRtgsPaymentStatus
+      summary: Get RTGS payment status
+      description: >
+        Returns the current RTGS payment status for the authenticated client
+        that owns the payment. Status query does not require Idempotency-Key.
+        The response includes clientSegment, settlementFinality, segment
+        parties, reason details when present, links, and correlation ID.
+      security:
+        - bearerAuth: []
+      x-required-scopes:
+        - rtgs-payments:read
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          description: RTGS payment ID returned by CreateRtgsPayment.
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Current RTGS payment status response.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RtgsPaymentStatusResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -411,6 +665,35 @@ components:
           - pending
           - timeout
           - internal_failure
+    AchMockScenario:
+      name: X-Mock-Scenario
+      in: header
+      required: false
+      description: >
+        Optional local/test-only ACH Direct Credit simulator scenario selector.
+        Not part of production payment semantics. Omit for the default accepted
+        for clearing scenario.
+      schema:
+        type: string
+        enum:
+          - ach_direct_credit_accepted
+          - ach_direct_credit_settled
+          - ach_direct_credit_settlement_pending
+          - ach_direct_credit_partially_returned
+          - ach_direct_credit_rejected
+    RtgsMockScenario:
+      name: X-Mock-Scenario
+      in: header
+      required: false
+      description: >
+        Optional local/test-only RTGS simulator scenario selector. Not part of
+        production payment semantics. Omit for the default settled scenario.
+      schema:
+        type: string
+        enum:
+          - rtgs_settled
+          - rtgs_queued_for_liquidity
+          - rtgs_rejected
     FiMockScenario:
       name: X-Mock-Scenario
       in: header
@@ -519,6 +802,335 @@ components:
           type: string
         message:
           type: string
+    Money:
+      type: object
+      required:
+        - currency
+        - value
+      properties:
+        currency:
+          type: string
+          example: USD
+        value:
+          type: string
+          pattern: '^[0-9]+(\.[0-9]{1,2})?$'
+          example: '1250.50'
+    AccountReference:
+      type: object
+      required:
+        - bankCode
+        - accountNumber
+        - accountName
+      properties:
+        bankCode:
+          type: string
+        accountNumber:
+          type: string
+          description: Account identifier supplied by the client. Logging and diagnostics must mask or omit this value.
+        accountName:
+          type: string
+    PaymentLinks:
+      type: object
+      properties:
+        self:
+          type: string
+        status:
+          type: string
+    CreateAchBatchRequest:
+      type: object
+      required:
+        - batchReference
+        - originatorName
+        - effectiveEntryDate
+        - settlementAccount
+        - entries
+      properties:
+        batchReference:
+          type: string
+        originatorName:
+          type: string
+        effectiveEntryDate:
+          type: string
+          format: date
+        settlementAccount:
+          $ref: '#/components/schemas/AccountReference'
+        entries:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/AchBatchEntryRequest'
+      additionalProperties: false
+    AchBatchEntryRequest:
+      type: object
+      required:
+        - entryReference
+        - receiverName
+        - receiverAccount
+        - amount
+        - purpose
+      properties:
+        entryReference:
+          type: string
+        receiverName:
+          type: string
+        receiverAccount:
+          $ref: '#/components/schemas/AccountReference'
+        amount:
+          $ref: '#/components/schemas/Money'
+        purpose:
+          type: string
+      additionalProperties: false
+    AchBatchResponse:
+      type: object
+      required:
+        - batchId
+        - rail
+        - status
+        - entryCount
+        - totalAmount
+        - entries
+        - correlationId
+        - links
+      properties:
+        batchId:
+          type: string
+          format: uuid
+        rail:
+          type: string
+          enum: [ACH]
+        status:
+          type: string
+          enum: [ACCEPTED_FOR_CLEARING, SETTLEMENT_PENDING, SETTLED, PARTIALLY_RETURNED, REJECTED]
+        entryCount:
+          type: integer
+          format: int32
+        totalAmount:
+          $ref: '#/components/schemas/Money'
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchBatchEntryStatusResponse'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        correlationId:
+          type: string
+        reason:
+          $ref: '#/components/schemas/PaymentReason'
+        links:
+          $ref: '#/components/schemas/PaymentLinks'
+    AchBatchStatusResponse:
+      type: object
+      required:
+        - batchId
+        - rail
+        - batchReference
+        - originatorName
+        - effectiveEntryDate
+        - status
+        - entryCount
+        - totalAmount
+        - entries
+        - correlationId
+        - links
+      properties:
+        batchId:
+          type: string
+          format: uuid
+        rail:
+          type: string
+          enum: [ACH]
+        batchReference:
+          type: string
+        originatorName:
+          type: string
+        effectiveEntryDate:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [ACCEPTED_FOR_CLEARING, SETTLEMENT_PENDING, SETTLED, PARTIALLY_RETURNED, REJECTED]
+        entryCount:
+          type: integer
+          format: int32
+        totalAmount:
+          $ref: '#/components/schemas/Money'
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchBatchEntryStatusResponse'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        correlationId:
+          type: string
+        reason:
+          $ref: '#/components/schemas/PaymentReason'
+        links:
+          $ref: '#/components/schemas/PaymentLinks'
+    AchBatchEntryStatusResponse:
+      type: object
+      required:
+        - entryId
+        - entryReference
+        - receiverName
+        - amount
+        - status
+      properties:
+        entryId:
+          type: string
+          format: uuid
+        entryReference:
+          type: string
+        receiverName:
+          type: string
+        amount:
+          $ref: '#/components/schemas/Money'
+        status:
+          type: string
+          enum: [ACCEPTED, SETTLED, RETURNED, REJECTED]
+        reason:
+          $ref: '#/components/schemas/PaymentReason'
+    CreateRtgsPaymentRequest:
+      type: object
+      required:
+        - paymentReference
+        - clientSegment
+        - amount
+        - requestedSettlementDate
+        - settlementPriority
+        - purpose
+      properties:
+        paymentReference:
+          type: string
+        clientSegment:
+          type: string
+          enum: [CORPORATE, FI]
+        debtorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        creditorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        instructingAgentBic:
+          type: string
+        instructedAgentBic:
+          type: string
+        amount:
+          $ref: '#/components/schemas/Money'
+        requestedSettlementDate:
+          type: string
+          format: date
+        settlementPriority:
+          type: string
+          example: HIGH
+        purpose:
+          type: string
+      additionalProperties: false
+    RtgsPaymentResponse:
+      type: object
+      required:
+        - paymentId
+        - rail
+        - clientSegment
+        - status
+        - settlementFinality
+        - correlationId
+        - links
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+        rail:
+          type: string
+          enum: [RTGS]
+        clientSegment:
+          type: string
+          enum: [CORPORATE, FI]
+        status:
+          type: string
+          enum: [ACCEPTED_FOR_SETTLEMENT, QUEUED_FOR_LIQUIDITY, SETTLED, REJECTED]
+        settlementFinality:
+          type: boolean
+          description: True only when the simulator returns a settled RTGS outcome.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        correlationId:
+          type: string
+        reason:
+          $ref: '#/components/schemas/PaymentReason'
+        links:
+          $ref: '#/components/schemas/PaymentLinks'
+    RtgsPaymentStatusResponse:
+      type: object
+      required:
+        - paymentId
+        - rail
+        - paymentReference
+        - clientSegment
+        - amount
+        - requestedSettlementDate
+        - settlementPriority
+        - purpose
+        - status
+        - settlementFinality
+        - correlationId
+        - links
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+        rail:
+          type: string
+          enum: [RTGS]
+        paymentReference:
+          type: string
+        clientSegment:
+          type: string
+          enum: [CORPORATE, FI]
+        debtorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        creditorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        instructingAgentBic:
+          type: string
+        instructedAgentBic:
+          type: string
+        amount:
+          $ref: '#/components/schemas/Money'
+        requestedSettlementDate:
+          type: string
+          format: date
+        settlementPriority:
+          type: string
+        purpose:
+          type: string
+        status:
+          type: string
+          enum: [ACCEPTED_FOR_SETTLEMENT, QUEUED_FOR_LIQUIDITY, SETTLED, REJECTED]
+        settlementFinality:
+          type: boolean
+          description: True only when the simulator returns a settled RTGS outcome.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        correlationId:
+          type: string
+        reason:
+          $ref: '#/components/schemas/PaymentReason'
+        links:
+          $ref: '#/components/schemas/PaymentLinks'
     FiPaymentAcknowledgementResponse:
       type: object
       required:

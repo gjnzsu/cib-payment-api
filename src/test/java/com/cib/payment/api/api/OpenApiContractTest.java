@@ -123,6 +123,129 @@ class OpenApiContractTest {
         assertThat(components.has("RecallInvestigationSummary")).isTrue();
     }
 
+    @Test
+    void openApiStructurallyDefinesAchAndRtgsOperationsSecurityScenariosAndSchemas() throws Exception {
+        var openApi = readOpenApi();
+        var createAchBatch = operation(openApi, "/v1/ach-batches", "post");
+        var getAchBatchStatus = operation(openApi, "/v1/ach-batches/{batchId}", "get");
+        var createRtgsPayment = operation(openApi, "/v1/rtgs-payments", "post");
+        var getRtgsPaymentStatus = operation(openApi, "/v1/rtgs-payments/{paymentId}", "get");
+
+        assertBearerSecurityAndScope(createAchBatch, "ach-batches:create");
+        assertParameterRefs(createAchBatch, "IdempotencyKey", "CorrelationId", "AchMockScenario");
+        assertThat(createAchBatch.path("requestBody").path("required").asBoolean()).isTrue();
+        assertThat(createAchBatch.at("/requestBody/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/CreateAchBatchRequest");
+        assertThat(createAchBatch.at("/responses/202/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/AchBatchResponse");
+        assertStandardJsonErrors(createAchBatch, "400", "401", "403", "409", "422", "500");
+
+        assertBearerSecurityAndScope(getAchBatchStatus, "ach-batches:read");
+        assertPathParameter(getAchBatchStatus, "batchId");
+        assertParameterRefs(getAchBatchStatus, "CorrelationId");
+        assertThat(parameterRefs(getAchBatchStatus)).doesNotContain("IdempotencyKey");
+        assertThat(getAchBatchStatus.at("/responses/200/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/AchBatchStatusResponse");
+        assertStandardJsonErrors(getAchBatchStatus, "400", "401", "403", "404", "500");
+
+        assertBearerSecurityAndScope(createRtgsPayment, "rtgs-payments:create");
+        assertParameterRefs(createRtgsPayment, "IdempotencyKey", "CorrelationId", "RtgsMockScenario");
+        assertThat(createRtgsPayment.path("requestBody").path("required").asBoolean()).isTrue();
+        assertThat(createRtgsPayment.at("/requestBody/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/CreateRtgsPaymentRequest");
+        assertThat(createRtgsPayment.at("/responses/202/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/RtgsPaymentResponse");
+        assertStandardJsonErrors(createRtgsPayment, "400", "401", "403", "409", "422", "500");
+
+        assertBearerSecurityAndScope(getRtgsPaymentStatus, "rtgs-payments:read");
+        assertPathParameter(getRtgsPaymentStatus, "paymentId");
+        assertParameterRefs(getRtgsPaymentStatus, "CorrelationId");
+        assertThat(parameterRefs(getRtgsPaymentStatus)).doesNotContain("IdempotencyKey");
+        assertThat(getRtgsPaymentStatus.at("/responses/200/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/RtgsPaymentStatusResponse");
+        assertStandardJsonErrors(getRtgsPaymentStatus, "400", "401", "403", "404", "500");
+
+        var parameters = openApi.at("/components/parameters");
+        assertThat(textValues(parameters.at("/AchMockScenario/schema/enum"))).containsExactly(
+                "ach_direct_credit_accepted",
+                "ach_direct_credit_settled",
+                "ach_direct_credit_settlement_pending",
+                "ach_direct_credit_partially_returned",
+                "ach_direct_credit_rejected");
+        assertThat(textValues(parameters.at("/RtgsMockScenario/schema/enum"))).containsExactly(
+                "rtgs_settled",
+                "rtgs_queued_for_liquidity",
+                "rtgs_rejected");
+
+        var components = openApi.at("/components/schemas");
+        assertRequiredFields(
+                components.path("CreateAchBatchRequest"),
+                "batchReference",
+                "originatorName",
+                "effectiveEntryDate",
+                "settlementAccount",
+                "entries");
+        assertRequiredFields(
+                components.path("AchBatchStatusResponse"),
+                "batchId",
+                "rail",
+                "batchReference",
+                "originatorName",
+                "effectiveEntryDate",
+                "status",
+                "entryCount",
+                "totalAmount",
+                "entries",
+                "correlationId",
+                "links");
+        assertRequiredFields(
+                components.path("AchBatchEntryStatusResponse"),
+                "entryId",
+                "entryReference",
+                "receiverName",
+                "amount",
+                "status");
+        assertThat(textValues(components.at("/AchBatchEntryStatusResponse/properties/status/enum")))
+                .contains("ACCEPTED", "SETTLED", "RETURNED", "REJECTED");
+
+        assertRequiredFields(
+                components.path("CreateRtgsPaymentRequest"),
+                "paymentReference",
+                "clientSegment",
+                "amount",
+                "requestedSettlementDate",
+                "settlementPriority",
+                "purpose");
+        assertThat(textValues(components.at("/CreateRtgsPaymentRequest/properties/clientSegment/enum")))
+                .containsExactly("CORPORATE", "FI");
+        assertRequiredFields(
+                components.path("RtgsPaymentStatusResponse"),
+                "paymentId",
+                "rail",
+                "paymentReference",
+                "clientSegment",
+                "amount",
+                "requestedSettlementDate",
+                "settlementPriority",
+                "purpose",
+                "status",
+                "settlementFinality",
+                "correlationId",
+                "links");
+        assertThat(textValues(components.at("/RtgsPaymentStatusResponse/properties/status/enum")))
+                .contains("ACCEPTED_FOR_SETTLEMENT", "QUEUED_FOR_LIQUIDITY", "SETTLED", "REJECTED");
+        assertThat(components.at("/RtgsPaymentStatusResponse/properties/settlementFinality/type").asText())
+                .isEqualTo("boolean");
+
+        var yaml = new ClassPathResource("openapi/domestic-payment-api.yaml")
+                .getContentAsString(StandardCharsets.UTF_8);
+        assertThat(yaml).contains(
+                "simulator-only",
+                "no real ACH or RTGS connectivity",
+                "no NACHA or ISO 20022 runtime for ACH or RTGS",
+                "no central bank ledger, liquidity, queue management, or settlement connectivity");
+    }
+
     private JsonNode readOpenApi() throws Exception {
         var resource = new ClassPathResource("openapi/domestic-payment-api.yaml");
         return yamlMapper.readTree(resource.getInputStream());
@@ -161,6 +284,13 @@ class OpenApiContractTest {
                     assertThat(parameter.path("in").asText()).isEqualTo("path");
                     assertThat(parameter.path("required").asBoolean()).isTrue();
                 });
+    }
+
+    private void assertStandardJsonErrors(JsonNode operation, String... statuses) {
+        for (var status : statuses) {
+            var response = operation.path("responses").path(status);
+            assertThat(response.path("$ref").asText()).as("response " + status).startsWith("#/components/responses/");
+        }
     }
 
     private void assertRequiredFields(JsonNode schema, String... expectedFields) {

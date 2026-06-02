@@ -34,8 +34,8 @@
 
 ## 5. OpenAPI And Developer Artifacts
 
-- [ ] 5.1 Add OpenAPI paths, schemas, security scopes, examples, and error responses for ACH Direct Credit batch APIs.
-- [ ] 5.2 Add OpenAPI paths, schemas, security scopes, examples, settlement finality fields, and error responses for RTGS APIs.
+- [x] 5.1 Add OpenAPI paths, schemas, security scopes, examples, and error responses for ACH Direct Credit batch APIs.
+- [x] 5.2 Add OpenAPI paths, schemas, security scopes, examples, settlement finality fields, and error responses for RTGS APIs.
 - [ ] 5.3 Update the Postman collection with the Classic Payment Rail Simulation journey for RTP baseline, ACH Direct Credit, RTGS, and FI correspondent comparison scenarios.
 - [ ] 5.4 Update the Postman local environment with ACH and RTGS variables, token guidance, idempotency keys, captured IDs, and mock scenario values.
 - [ ] 5.5 Update the root README to describe the classic payment rail simulation product surface.
@@ -47,7 +47,7 @@
 - [ ] 6.2 Add RTGS unit and integration tests for corporate settled, FI settled, FI queued for liquidity, rejected, validation, idempotency replay/conflict, owner-only status query, and settlement finality.
 - [x] 6.3 Add scope authorization tests for ACH and RTGS create/read operations.
 - [x] 6.4 Add sensitive logging tests or assertions for ACH and RTGS account identifiers and raw sensitive payload handling.
-- [ ] 6.5 Extend OpenAPI contract tests to verify ACH and RTGS paths, schemas, scopes, examples, and error responses.
+- [x] 6.5 Extend OpenAPI contract tests to verify ACH and RTGS paths, schemas, scopes, examples, and error responses.
 - [ ] 6.6 Extend Postman artifact validation tests to verify scenario requests, expected statuses, required headers, environment variables, and alignment with simulator mappings.
 - [ ] 6.7 Run `npx.cmd openspec validate add-classic-payment-rail-simulation`.
 - [ ] 6.8 Run focused Maven tests for ACH, RTGS, OpenAPI, Postman, auth, idempotency, and logging coverage.

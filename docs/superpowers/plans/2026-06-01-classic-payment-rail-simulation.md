@@ -443,11 +443,11 @@ Expected: pass.
 - Modify `src/main/resources/openapi/domestic-payment-api.yaml`
 - Tests: `OpenApiContractTest`, `OpenApiResourceHttpTest`
 
-- [ ] **Step 1: Add failing OpenAPI assertions**
+- [x] **Step 1: Add failing OpenAPI assertions**
 
 Assert paths, scopes, schemas, examples, and error responses exist for ACH and RTGS.
 
-- [ ] **Step 2: Update OpenAPI YAML**
+- [x] **Step 2: Update OpenAPI YAML**
 
 Add:
 - ACH create/status paths and schemas.
@@ -456,7 +456,7 @@ Add:
 - examples matching deterministic scenarios.
 - simulator-only limitations.
 
-- [ ] **Step 3: Run OpenAPI tests**
+- [x] **Step 3: Run OpenAPI tests**
 
 ```powershell
 mvn -Dtest=OpenApiContractTest,OpenApiResourceHttpTest test
