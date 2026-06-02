@@ -43,12 +43,12 @@
 
 ## 6. Tests And Validation
 
-- [ ] 6.1 Add ACH unit and integration tests for validation, deterministic outcomes, idempotency replay/conflict, owner-only status query, correlation propagation, and entry-level status summaries.
-- [ ] 6.2 Add RTGS unit and integration tests for corporate settled, FI settled, FI queued for liquidity, rejected, validation, idempotency replay/conflict, owner-only status query, and settlement finality.
+- [x] 6.1 Add ACH unit and integration tests for validation, deterministic outcomes, idempotency replay/conflict, owner-only status query, correlation propagation, and entry-level status summaries.
+- [x] 6.2 Add RTGS unit and integration tests for corporate settled, FI settled, FI queued for liquidity, rejected, validation, idempotency replay/conflict, owner-only status query, and settlement finality.
 - [x] 6.3 Add scope authorization tests for ACH and RTGS create/read operations.
 - [x] 6.4 Add sensitive logging tests or assertions for ACH and RTGS account identifiers and raw sensitive payload handling.
 - [x] 6.5 Extend OpenAPI contract tests to verify ACH and RTGS paths, schemas, scopes, examples, and error responses.
 - [x] 6.6 Extend Postman artifact validation tests to verify scenario requests, expected statuses, required headers, environment variables, and alignment with simulator mappings.
-- [ ] 6.7 Run `npx.cmd openspec validate add-classic-payment-rail-simulation`.
-- [ ] 6.8 Run focused Maven tests for ACH, RTGS, OpenAPI, Postman, auth, idempotency, and logging coverage.
-- [ ] 6.9 Run the full `mvn test` suite before marking implementation complete.
+- [x] 6.7 Run `npx.cmd openspec validate add-classic-payment-rail-simulation`.
+- [x] 6.8 Run focused Maven tests for ACH, RTGS, OpenAPI, Postman, auth, idempotency, and logging coverage.
+- [x] 6.9 Run the full `mvn test` suite before marking implementation complete.

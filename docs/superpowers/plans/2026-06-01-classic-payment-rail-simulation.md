@@ -540,7 +540,7 @@ Expected: pass.
 **Files:**
 - All changed files.
 
-- [ ] **Step 1: Validate OpenSpec**
+- [x] **Step 1: Validate OpenSpec**
 
 ```powershell
 npx.cmd openspec validate add-classic-payment-rail-simulation
@@ -552,7 +552,7 @@ Expected:
 Change 'add-classic-payment-rail-simulation' is valid
 ```
 
-- [ ] **Step 2: Run focused suite**
+- [x] **Step 2: Run focused suite**
 
 ```powershell
 mvn -Dtest=AchDomainModelTest,DeterministicAchDirectCreditSimulatorTest,AchInMemoryRepositoryTest,CreateAchBatchRequestValidationTest,CreateAchBatchServiceTest,AchBatchControllerIntegrationTest,RtgsDomainModelTest,DeterministicRtgsPaymentSimulatorTest,RtgsInMemoryRepositoryTest,CreateRtgsPaymentRequestValidationTest,CreateRtgsPaymentServiceTest,RtgsPaymentControllerIntegrationTest,OpenApiContractTest,PostmanArtifactValidationTest test
@@ -560,7 +560,7 @@ mvn -Dtest=AchDomainModelTest,DeterministicAchDirectCreditSimulatorTest,AchInMem
 
 Expected: all tests pass.
 
-- [ ] **Step 3: Run full suite**
+- [x] **Step 3: Run full suite**
 
 ```powershell
 mvn test
@@ -568,7 +568,7 @@ mvn test
 
 Expected: all tests pass.
 
-- [ ] **Step 4: Inspect git status**
+- [x] **Step 4: Inspect git status**
 
 ```powershell
 git status -sb
