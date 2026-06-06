@@ -1,29 +1,29 @@
 ## 1. Domain And Application Model
 
-- [ ] 1.1 Add recommendation domain records and enums for recommendation ID, status, rail, arrangement, client segment, urgency, cost sensitivity, confidence level, matched factor, warning, reason code, next API guidance, and tradeoff dimensions.
-- [ ] 1.2 Add amount summary and debtor account profile value objects without storing full account identifiers.
-- [ ] 1.3 Add application service interfaces or ports needed to keep deterministic rule evaluation separate from HTTP controllers.
-- [ ] 1.4 Add unit tests for recommendation model validation, enum coverage, and response-local recommendation ID behavior.
+- [x] 1.1 Add recommendation domain records and enums for recommendation ID, status, rail, arrangement, client segment, urgency, cost sensitivity, confidence level, matched factor, warning, reason code, next API guidance, and tradeoff dimensions.
+- [x] 1.2 Add amount summary and debtor account profile value objects without storing full account identifiers.
+- [x] 1.3 Add application service interfaces or ports needed to keep deterministic rule evaluation separate from HTTP controllers.
+- [x] 1.4 Add unit tests for recommendation model validation, enum coverage, and response-local recommendation ID behavior.
 
 ## 2. API DTOs And Validation
 
-- [ ] 2.1 Add request DTOs for `POST /v1/payment-rail-recommendations` with required rail-neutral intent fields and optional preference fields.
-- [ ] 2.2 Add response DTOs for recommended option, confidence level, matched factors, warnings, alternatives, tradeoffs, intent fit, and next API guidance.
-- [ ] 2.3 Validate required fields, positive `paymentCount`, positive amount summary values, supported enum values, and default `debtorAccountProfile.count` to one when omitted.
+- [x] 2.1 Add request DTOs for `POST /v1/payment-rail-recommendations` with required rail-neutral intent fields and optional preference fields.
+- [x] 2.2 Add response DTOs for recommended option, confidence level, matched factors, warnings, alternatives, tradeoffs, intent fit, and next API guidance.
+- [x] 2.3 Validate required fields, positive `paymentCount`, positive amount summary values, supported enum values, and default `debtorAccountProfile.count` to one when omitted.
 - [ ] 2.4 Reject malformed or missing required fields with consistent JSON validation errors and field-level details.
-- [ ] 2.5 Add DTO validation tests for valid single-payment, valid batch, missing field, invalid enum, invalid amount, and invalid payment count cases.
+- [x] 2.5 Add DTO validation tests for valid single-payment, valid batch, missing field, invalid enum, invalid amount, and invalid payment count cases.
 
 ## 3. Deterministic Recommendation Rules
 
-- [ ] 3.1 Implement unsupported guardrails for non-domestic and non-USD valid intents returning recommendation status `UNSUPPORTED`.
-- [ ] 3.2 Implement FI correspondent preference rule for FI client intents with `CORRESPONDENT_ACCOUNT_PATH`.
-- [ ] 3.3 Implement ACH batch rule for `paymentCount > 1`, `batchPreferred=true`, or high cost sensitivity.
-- [ ] 3.4 Implement RTGS rule for finality-required or high-value single-payment intents using the `100000 USD` simulator threshold.
-- [ ] 3.5 Implement RTP rule for immediate low-value single-payment intents without finality requirement.
-- [ ] 3.6 Implement deterministic rule precedence and fallback behavior for default domestic single-payment intents.
-- [ ] 3.7 Return warnings and RTGS alternatives for ACH batch recommendations with high maximum single amount or finality conflicts.
-- [ ] 3.8 Return missing `maxSingleAmount` warning for multiple-payment intents that omit it.
-- [ ] 3.9 Add unit tests for each recommendation rule, precedence path, warning path, unsupported path, confidence level, matched factors, and no numeric score.
+- [x] 3.1 Implement unsupported guardrails for non-domestic and non-USD valid intents returning recommendation status `UNSUPPORTED`.
+- [x] 3.2 Implement FI correspondent preference rule for FI client intents with `CORRESPONDENT_ACCOUNT_PATH`.
+- [x] 3.3 Implement ACH batch rule for `paymentCount > 1`, `batchPreferred=true`, or high cost sensitivity.
+- [x] 3.4 Implement RTGS rule for finality-required or high-value single-payment intents using the `100000 USD` simulator threshold.
+- [x] 3.5 Implement RTP rule for immediate low-value single-payment intents without finality requirement.
+- [x] 3.6 Implement deterministic rule precedence and fallback behavior for default domestic single-payment intents.
+- [x] 3.7 Return warnings and RTGS alternatives for ACH batch recommendations with high maximum single amount or finality conflicts.
+- [x] 3.8 Return missing `maxSingleAmount` warning for multiple-payment intents that omit it.
+- [x] 3.9 Add unit tests for each recommendation rule, precedence path, warning path, unsupported path, confidence level, matched factors, and no numeric score.
 
 ## 4. Recommendation API Flow
 
