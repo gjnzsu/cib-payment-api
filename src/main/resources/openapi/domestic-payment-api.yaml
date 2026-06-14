@@ -5,6 +5,8 @@ info:
   x-fi-simulator-limitation: no real SWIFT, CBPR+, correspondent banking, ledger, AML, sanctions, fraud, or settlement connectivity
   x-fi-status-idempotency: FI status query does not require Idempotency-Key
   x-classic-rail-simulator-limitation: no central bank ledger, liquidity, queue management, or settlement connectivity
+  x-recommendation-threshold-note: deterministic simulator threshold
+  x-recommendation-non-goal: no real AI, LLM, pricing, liquidity, sanctions, fraud, FX, compliance, or real rail availability decision
   description: >
     ISO-native HK domestic realtime payment simulation API. Payment initiation
     accepts supported pain.001.001.09 XML and returns pain.002.001.10 XML.
@@ -13,6 +15,9 @@ info:
     simulator-only: no real ACH or RTGS connectivity, no NACHA or ISO 20022
     runtime for ACH or RTGS, and no central bank ledger, liquidity, queue
     management, or settlement connectivity.
+    Payment rail recommendation is deterministic simulator guidance only: no
+    real AI, LLM, pricing, liquidity, sanctions, fraud, FX, compliance, or real
+    rail availability decision.
 servers:
   - url: http://localhost:8080
     description: Local development
@@ -624,6 +629,120 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /v1/payment-rail-recommendations:
+    post:
+      operationId: CreatePaymentRailRecommendation
+      summary: Recommend a payment rail and arrangement for a payment intent
+      description: >
+        Accepts one JSON rail-neutral payment intent and returns deterministic
+        simulator guidance for RTP, ACH, RTGS, or FI correspondent arrangement.
+        Idempotency-Key is not required because this endpoint is stateless and
+        does not create payment, batch, FI, recall, investigation, or
+        idempotency records. The 100000 USD value is a deterministic simulator
+        threshold and not a real scheme limit, bank policy, or production
+        decision threshold. Valid cross-border or non-USD intents return
+        recommendationStatus UNSUPPORTED. This endpoint performs no real AI,
+        LLM, pricing, liquidity, sanctions, fraud, FX, compliance, or real rail
+        availability decision.
+      security:
+        - bearerAuth: []
+      x-required-scopes:
+        - payment-rail-recommendations:create
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentRailRecommendationRequest'
+            examples:
+              rtpImmediate:
+                summary: Immediate low-value domestic USD intent
+                value:
+                  clientSegment: CORPORATE
+                  paymentCount: 1
+                  amountSummary:
+                    currency: USD
+                    totalAmount: '250.00'
+                    maxSingleAmount: '250.00'
+                  debtorCountry: US
+                  creditorCountry: US
+                  urgency: IMMEDIATE
+                  requiresFinality: false
+              unsupportedCrossBorder:
+                summary: Valid but unsupported cross-border intent
+                value:
+                  clientSegment: CORPORATE
+                  paymentCount: 1
+                  amountSummary:
+                    currency: USD
+                    totalAmount: '1000.00'
+                  debtorCountry: US
+                  creditorCountry: GB
+                  urgency: SAME_DAY
+      responses:
+        '200':
+          description: Recommendation result for a supported or valid-but-unsupported intent.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentRailRecommendationResponse'
+              examples:
+                rtp:
+                  summary: RTP recommendation
+                  value:
+                    recommendationId: 11111111-1111-1111-1111-111111111111
+                    recommendationStatus: RECOMMENDED
+                    recommendedOption:
+                      rail: RTP
+                      arrangement: DOMESTIC_REAL_TIME_CLEARING
+                      clientSegment: CORPORATE
+                      reasonCode: IMMEDIATE_LOW_VALUE
+                    confidenceLevel: HIGH
+                    decisionSummary: RTP is recommended for immediate low-value domestic payment.
+                    matchedFactors:
+                      - DOMESTIC_USD
+                      - IMMEDIATE_URGENCY
+                      - LOW_VALUE
+                    warnings: []
+                    alternatives: []
+                    tradeoffs: []
+                    nextApiGuidance:
+                      method: POST
+                      endpoint: /v1/domestic-payments
+                      requiredScopes:
+                        - payments:create
+                      requiredHeaders:
+                        - Authorization
+                        - X-Correlation-ID
+                      payloadFormat: application/pain.001+xml
+                    correlationId: postman-local-correlation-001
+                unsupported:
+                  summary: Unsupported cross-border recommendation result
+                  value:
+                    recommendationId: 22222222-2222-2222-2222-222222222222
+                    recommendationStatus: UNSUPPORTED
+                    confidenceLevel: LOW
+                    decisionSummary: Cross-border payment intents are outside the simulator recommendation scope.
+                    matchedFactors: []
+                    warnings:
+                      - code: CROSS_BORDER_NOT_SUPPORTED
+                        message: Only domestic US intents are supported.
+                    alternatives: []
+                    tradeoffs: []
+                    correlationId: postman-local-correlation-001
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   securitySchemes:
     bearerAuth:
@@ -771,6 +890,230 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
   schemas:
+    CreatePaymentRailRecommendationRequest:
+      type: object
+      required:
+        - clientSegment
+        - paymentCount
+        - amountSummary
+        - debtorCountry
+        - creditorCountry
+        - urgency
+      properties:
+        clientSegment:
+          type: string
+          enum: [CORPORATE, FI]
+        paymentPurpose:
+          type: string
+        paymentCount:
+          type: integer
+          minimum: 1
+          description: Intent-level count of payments represented by the recommendation request.
+        amountSummary:
+          $ref: '#/components/schemas/RecommendationAmountSummaryRequest'
+        debtorCountry:
+          type: string
+          example: US
+        creditorCountry:
+          type: string
+          example: US
+        urgency:
+          type: string
+          enum: [IMMEDIATE, SAME_DAY, NEXT_DAY, STANDARD]
+        creditorType:
+          type: string
+        requiresFinality:
+          type: boolean
+        batchPreferred:
+          type: boolean
+        costSensitivity:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        fiToFi:
+          type: boolean
+        arrangementPreference:
+          type: string
+          enum:
+            - DOMESTIC_REAL_TIME_CLEARING
+            - BATCH_CLEARING_NET_SETTLEMENT
+            - DOMESTIC_INTERBANK_GROSS_SETTLEMENT
+            - CORRESPONDENT_ACCOUNT_PATH
+        debtorAccountProfile:
+          $ref: '#/components/schemas/RecommendationDebtorAccountProfileRequest'
+      description: >
+        Rail-neutral intent summary. It does not require account identifiers
+        and does not accept a complete create-payment payload.
+    RecommendationAmountSummaryRequest:
+      type: object
+      required:
+        - currency
+        - totalAmount
+      properties:
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          description: USD is supported for recommendations; other valid currencies return UNSUPPORTED.
+        totalAmount:
+          type: string
+          pattern: '^[0-9]+(\.[0-9]{1,2})?$'
+        maxSingleAmount:
+          type: string
+          pattern: '^[0-9]+(\.[0-9]{1,2})?$'
+          description: Optional highest individual payment amount for multiple-payment intents.
+    RecommendationDebtorAccountProfileRequest:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Optional debtor account count signal; defaults to one when omitted.
+    PaymentRailRecommendationResponse:
+      type: object
+      required:
+        - recommendationId
+        - recommendationStatus
+        - confidenceLevel
+        - decisionSummary
+        - matchedFactors
+        - warnings
+        - alternatives
+        - tradeoffs
+        - correlationId
+      properties:
+        recommendationId:
+          type: string
+          format: uuid
+          description: Response-local diagnostic reference; no query endpoint is exposed in the MVP.
+        recommendationStatus:
+          type: string
+          enum: [RECOMMENDED, UNSUPPORTED]
+        recommendedOption:
+          $ref: '#/components/schemas/RecommendationOption'
+        confidenceLevel:
+          type: string
+          enum: [HIGH, MEDIUM, LOW]
+          description: Qualitative simulator confidence level; no numeric score is returned.
+        decisionSummary:
+          type: string
+        matchedFactors:
+          type: array
+          items:
+            type: string
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecommendationWarning'
+        alternatives:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecommendationOption'
+        tradeoffs:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecommendationTradeoff'
+        nextApiGuidance:
+          $ref: '#/components/schemas/RecommendationNextApiGuidance'
+        correlationId:
+          type: string
+    RecommendationOption:
+      type: object
+      required:
+        - rail
+        - arrangement
+        - clientSegment
+        - reasonCode
+      properties:
+        rail:
+          type: string
+          enum: [RTP, ACH, RTGS, FI_CORRESPONDENT]
+        arrangement:
+          type: string
+          enum:
+            - DOMESTIC_REAL_TIME_CLEARING
+            - BATCH_CLEARING_NET_SETTLEMENT
+            - DOMESTIC_INTERBANK_GROSS_SETTLEMENT
+            - CORRESPONDENT_ACCOUNT_PATH
+        clientSegment:
+          type: string
+          enum: [CORPORATE, FI]
+        reasonCode:
+          type: string
+    RecommendationWarning:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: MAX_SINGLE_AMOUNT_NOT_PROVIDED
+        message:
+          type: string
+    RecommendationTradeoff:
+      type: object
+      required:
+        - rail
+        - arrangement
+        - speed
+        - cost
+        - finality
+        - intentFit
+        - intentFitReason
+        - summary
+      properties:
+        rail:
+          type: string
+          enum: [RTP, ACH, RTGS, FI_CORRESPONDENT]
+        arrangement:
+          type: string
+          enum:
+            - DOMESTIC_REAL_TIME_CLEARING
+            - BATCH_CLEARING_NET_SETTLEMENT
+            - DOMESTIC_INTERBANK_GROSS_SETTLEMENT
+            - CORRESPONDENT_ACCOUNT_PATH
+        speed:
+          type: string
+          enum: [HIGH, MEDIUM, LOW]
+        cost:
+          type: string
+          enum: [HIGH, MEDIUM, LOW]
+        finality:
+          type: string
+          enum: [REAL_TIME, DEFERRED, IMMEDIATE_FINAL, CORRESPONDENT_DEPENDENT]
+        intentFit:
+          type: string
+          enum: [HIGH, MEDIUM, LOW]
+          description: Simulator rule explanation only, not production suitability, compliance, pricing, or SLA evidence.
+        intentFitReason:
+          type: string
+        summary:
+          type: string
+    RecommendationNextApiGuidance:
+      type: object
+      required:
+        - method
+        - endpoint
+        - requiredScopes
+        - requiredHeaders
+        - payloadFormat
+      properties:
+        method:
+          type: string
+          enum: [POST]
+        endpoint:
+          type: string
+        requiredScopes:
+          type: array
+          items:
+            type: string
+        requiredHeaders:
+          type: array
+          items:
+            type: string
+        payloadFormat:
+          type: string
+      description: Identifies candidate API endpoint, scopes, headers, and payload format, but does not generate a complete payment creation payload.
     ErrorResponse:
       type: object
       required:

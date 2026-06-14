@@ -246,6 +246,79 @@ class OpenApiContractTest {
                 "no central bank ledger, liquidity, queue management, or settlement connectivity");
     }
 
+    @Test
+    void openApiStructurallyDefinesPaymentRailRecommendationOperationAndSchemas() throws Exception {
+        var openApi = readOpenApi();
+        var recommend = operation(openApi, "/v1/payment-rail-recommendations", "post");
+
+        assertBearerSecurityAndScope(recommend, "payment-rail-recommendations:create");
+        assertParameterRefs(recommend, "CorrelationId");
+        assertThat(parameterRefs(recommend)).doesNotContain("IdempotencyKey");
+        assertThat(recommend.at("/requestBody/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/CreatePaymentRailRecommendationRequest");
+        assertThat(recommend.at("/responses/200/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/PaymentRailRecommendationResponse");
+        assertStandardJsonErrors(recommend, "400", "401", "403", "500");
+
+        var components = openApi.at("/components/schemas");
+        assertRequiredFields(
+                components.path("CreatePaymentRailRecommendationRequest"),
+                "clientSegment",
+                "paymentCount",
+                "amountSummary",
+                "debtorCountry",
+                "creditorCountry",
+                "urgency");
+        assertRequiredFields(
+                components.path("RecommendationAmountSummaryRequest"),
+                "currency",
+                "totalAmount");
+        assertRequiredFields(
+                components.path("PaymentRailRecommendationResponse"),
+                "recommendationId",
+                "recommendationStatus",
+                "confidenceLevel",
+                "decisionSummary",
+                "matchedFactors",
+                "warnings",
+                "alternatives",
+                "tradeoffs",
+                "correlationId");
+        assertRequiredFields(
+                components.path("RecommendationOption"),
+                "rail",
+                "arrangement",
+                "clientSegment",
+                "reasonCode");
+        assertRequiredFields(
+                components.path("RecommendationTradeoff"),
+                "rail",
+                "arrangement",
+                "speed",
+                "cost",
+                "finality",
+                "intentFit",
+                "intentFitReason",
+                "summary");
+        assertThat(textValues(components.at("/RecommendationOption/properties/rail/enum")))
+                .containsExactly("RTP", "ACH", "RTGS", "FI_CORRESPONDENT");
+        assertThat(textValues(components.at("/RecommendationOption/properties/arrangement/enum")))
+                .containsExactly(
+                        "DOMESTIC_REAL_TIME_CLEARING",
+                        "BATCH_CLEARING_NET_SETTLEMENT",
+                        "DOMESTIC_INTERBANK_GROSS_SETTLEMENT",
+                        "CORRESPONDENT_ACCOUNT_PATH");
+
+        var yaml = new ClassPathResource("openapi/domestic-payment-api.yaml")
+                .getContentAsString(StandardCharsets.UTF_8);
+        assertThat(yaml).contains(
+                "100000 USD",
+                "deterministic simulator threshold",
+                "not a real scheme limit",
+                "no real AI, LLM, pricing, liquidity, sanctions, fraud, FX, compliance, or real rail availability decision",
+                "Idempotency-Key is not required");
+    }
+
     private JsonNode readOpenApi() throws Exception {
         var resource = new ClassPathResource("openapi/domestic-payment-api.yaml");
         return yamlMapper.readTree(resource.getInputStream());

@@ -13,6 +13,7 @@ The suite currently exposes:
 - `POST /v1/fi-payments`
 - `GET /v1/fi-payments/{paymentId}`
 - `POST /v1/fi-payments/{paymentId}/recall-requests`
+- `POST /v1/payment-rail-recommendations`
 
 The implementation follows these archived OpenSpec changes:
 
@@ -27,9 +28,21 @@ The implementation follows these archived OpenSpec changes:
 - Adds ACH Direct Credit batch simulation through `POST /v1/ach-batches` and `GET /v1/ach-batches/{batchId}` with a JSON batch envelope, multiple entries, batch-level status, and entry-level status summary.
 - Adds RTGS payment simulation through `POST /v1/rtgs-payments` and `GET /v1/rtgs-payments/{paymentId}` for corporate and FI client segments, including settlement finality and queued-for-liquidity scenarios.
 - FI correspondent payment is a separate arrangement, not an RTP, ACH, or RTGS rail. The existing FI flow remains available through `/v1/fi-payments` for nostro, vostro, and loro correspondent-account-path demonstrations.
-- Keeps cross-border and AI recommendation copilot concepts future-facing only. They describe possible product direction and no runtime behavior in this service.
+- Keeps cross-border execution future-facing only. Cross-border recommendation requests return `UNSUPPORTED`.
+- The earlier AI recommendation copilot concept is no longer just a no runtime behavior note; the current runtime endpoint is deterministic simulator guidance only.
 
 Developer guidance is in `docs/developer-support/classic-payment-rail-simulation.md`.
+
+### Payment Rail Recommendation Copilot
+
+- Adds deterministic simulator guidance through `POST /v1/payment-rail-recommendations`.
+- Requires JWT scope `payment-rail-recommendations:create`; no Idempotency-Key is required because the endpoint creates no payment, batch, FI, recall, investigation, recommendation, or idempotency record.
+- Accepts rail-neutral JSON intent fields such as `paymentCount`, `amountSummary`, `urgency`, `requiresFinality`, `batchPreferred`, `costSensitivity`, `clientSegment`, and optional `arrangementPreference`.
+- Returns rail and arrangement output for `RTP`, `ACH`, `RTGS`, and `FI_CORRESPONDENT`, with `confidenceLevel`, matched factors, warnings, alternatives, tradeoffs, `intentFit`, and next API guidance.
+- Uses a deterministic simulator threshold of `100000 USD`; this is not a real scheme limit, bank policy, or production decision threshold.
+- Does not provide real AI, LLM integration, payment execution, recommendation persistence, cross-border support, FX, sanctions, fraud, pricing, liquidity, compliance decisions, or real rail availability decisions.
+
+Developer guidance is in `docs/developer-support/payment-rail-recommendation-copilot.md`.
 
 ### Domestic ISO Payment Simulation
 
@@ -88,7 +101,7 @@ postman/domestic-rtp-payment-api.postman_collection.json
 postman/domestic-rtp-payment-api.local.postman_environment.json
 ```
 
-Import both files into Postman, select the local environment, then set local JWT variables before calling secured endpoints. The collection contains domestic ISO XML scenarios, the `Classic Payment Rail Simulation` journey for RTP baseline, ACH Direct Credit, RTGS, and FI correspondent comparison, FI `pacs.009` scenarios, FI `camt.056` to `camt.029` recall/investigation scenarios, deterministic simulator outcomes, replay/conflict checks, auth/scope failure checks, and status queries. Detailed local testing guidance is in `docs/developer-support/postman-local-testing.md` and `docs/developer-support/classic-payment-rail-simulation.md`.
+Import both files into Postman, select the local environment, then set local JWT variables before calling secured endpoints. The collection contains domestic ISO XML scenarios, the `Classic Payment Rail Simulation` journey for RTP baseline, ACH Direct Credit, RTGS, and FI correspondent comparison, the `Payment Rail Recommendation Copilot` recommendation scenarios, FI `pacs.009` scenarios, FI `camt.056` to `camt.029` recall/investigation scenarios, deterministic simulator outcomes, replay/conflict checks, auth/scope failure checks, and status queries. Detailed local testing guidance is in `docs/developer-support/postman-local-testing.md`, `docs/developer-support/classic-payment-rail-simulation.md`, and `docs/developer-support/payment-rail-recommendation-copilot.md`.
 
 Generate a local domestic Postman token:
 
@@ -107,6 +120,12 @@ Generate local ACH and RTGS Postman tokens:
 ```powershell
 mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructure.security.LocalJwtTokenGenerator" "-Dexec.args=client-a ach-batches:create,ach-batches:read 3600"
 mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructure.security.LocalJwtTokenGenerator" "-Dexec.args=client-a rtgs-payments:create,rtgs-payments:read 3600"
+```
+
+Generate a local payment rail recommendation Postman token:
+
+```powershell
+mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructure.security.LocalJwtTokenGenerator" "-Dexec.args=client-a payment-rail-recommendations:create 3600"
 ```
 
 ## Product Process
@@ -163,6 +182,7 @@ The `HTTPRoute` forwards these path prefixes to the `domestic-rtp-payment-api` s
 /v1/ach-batches
 /v1/rtgs-payments
 /v1/fi-payments
+/v1/payment-rail-recommendations
 /swagger-ui
 /swagger-ui.html
 /openapi

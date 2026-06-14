@@ -9,6 +9,7 @@ import com.cib.payment.api.domain.model.InternalInterbankTransfer;
 import com.cib.payment.api.domain.model.IsoPaymentCandidate;
 import com.cib.payment.api.domain.model.FiPaymentRecord;
 import com.cib.payment.api.domain.model.PaymentRecord;
+import com.cib.payment.api.domain.model.PaymentRailRecommendation;
 import com.cib.payment.api.domain.model.PaymentReason;
 import com.cib.payment.api.domain.model.PaymentStatus;
 import com.cib.payment.api.domain.model.RecallInvestigationRecord;
@@ -52,6 +53,8 @@ public interface PaymentObservability {
     void achBatchAccepted(AchBatchRecord record, AuthorizationContext authorizationContext);
 
     void rtgsPaymentAccepted(RtgsPaymentRecord record, AuthorizationContext authorizationContext);
+
+    void paymentRailRecommendationGenerated(PaymentRailRecommendation recommendation, AuthorizationContext authorizationContext);
 
     static PaymentObservability noop() {
         return new PaymentObservability() {
@@ -121,6 +124,11 @@ public interface PaymentObservability {
 
             @Override
             public void rtgsPaymentAccepted(RtgsPaymentRecord record, AuthorizationContext authorizationContext) {}
+
+            @Override
+            public void paymentRailRecommendationGenerated(
+                    PaymentRailRecommendation recommendation,
+                    AuthorizationContext authorizationContext) {}
         };
     }
 }

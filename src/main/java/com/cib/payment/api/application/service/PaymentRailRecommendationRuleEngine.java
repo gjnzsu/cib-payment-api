@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 
+@Service
 public class PaymentRailRecommendationRuleEngine implements PaymentRailRecommendationRules {
     private static final BigDecimal SIMULATOR_HIGH_VALUE_THRESHOLD = new BigDecimal("100000.00");
 

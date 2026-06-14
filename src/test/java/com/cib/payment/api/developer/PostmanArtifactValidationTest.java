@@ -321,6 +321,62 @@ class PostmanArtifactValidationTest {
     }
 
     @Test
+    void postmanCollectionCoversPaymentRailRecommendationScenarios() throws Exception {
+        var collection = objectMapper.readTree(Files.readString(COLLECTION, StandardCharsets.UTF_8));
+        var serialized = collection.toString();
+
+        assertThat(folderNames(collection)).contains("Payment Rail Recommendation Copilot");
+        assertThat(requestNames(collection)).contains(
+                "Recommend Rail - RTP Immediate Low Value",
+                "Recommend Rail - ACH Vendor Batch",
+                "Recommend Rail - ACH Missing Max Single Amount Warning",
+                "Recommend Rail - ACH Finality Conflict",
+                "Recommend Rail - RTGS Corporate Finality",
+                "Recommend Rail - RTGS FI Gross Settlement",
+                "Recommend Rail - FI Correspondent Arrangement",
+                "Recommend Rail - Cross Border Unsupported",
+                "Recommend Rail - Non USD Unsupported",
+                "Recommend Rail - Scope Failure");
+        assertThat(serialized).contains(
+                "/v1/payment-rail-recommendations",
+                "Bearer {{recommendationJwtToken}}",
+                "Bearer {{recommendationScopeFailureToken}}",
+                "payment-rail-recommendations:create",
+                "recommendationStatus",
+                "RECOMMENDED",
+                "UNSUPPORTED",
+                "RTP",
+                "ACH",
+                "RTGS",
+                "FI_CORRESPONDENT",
+                "DOMESTIC_REAL_TIME_CLEARING",
+                "BATCH_CLEARING_NET_SETTLEMENT",
+                "DOMESTIC_INTERBANK_GROSS_SETTLEMENT",
+                "CORRESPONDENT_ACCOUNT_PATH",
+                "MAX_SINGLE_AMOUNT_NOT_PROVIDED",
+                "BATCH_HIGH_VALUE_ENTRY_REVIEW",
+                "CROSS_BORDER_NOT_SUPPORTED",
+                "NON_USD_NOT_SUPPORTED",
+                "intentFit",
+                "nextApiGuidance");
+
+        assertRecommendationRequest(collection, "Recommend Rail - RTP Immediate Low Value", "RTP");
+        assertRecommendationRequest(collection, "Recommend Rail - ACH Vendor Batch", "ACH");
+        assertRecommendationRequest(collection, "Recommend Rail - RTGS Corporate Finality", "RTGS");
+        assertThat(headerNames(request(collection, "Recommend Rail - RTP Immediate Low Value")))
+                .doesNotContain("Idempotency-Key");
+    }
+
+    @Test
+    void postmanEnvironmentProvidesPaymentRailRecommendationVariables() throws Exception {
+        var environment = objectMapper.readTree(Files.readString(ENVIRONMENT, StandardCharsets.UTF_8));
+
+        assertThat(environmentVariables(environment)).contains(
+                "recommendationJwtToken",
+                "recommendationScopeFailureToken");
+    }
+
+    @Test
     void fiRecallScenariosDocumentOneRecallRecordPerFreshPayment() throws Exception {
         var collection = objectMapper.readTree(Files.readString(COLLECTION, StandardCharsets.UTF_8));
         var docs = Files.readString(DOCS, StandardCharsets.UTF_8);
@@ -500,15 +556,57 @@ class PostmanArtifactValidationTest {
         var readme = Files.readString(README, StandardCharsets.UTF_8);
 
         assertThat(readme).contains("CIB Payment API Simulation Suite");
-        assertThat(readme).contains("/v1/domestic-payments", "/v1/fi-payments");
+        assertThat(readme).contains("/v1/domestic-payments", "/v1/fi-payments", "/v1/payment-rail-recommendations");
         assertThat(readme).contains("/v1/fi-payments/{paymentId}/recall-requests");
         assertThat(readme).contains("pain.001.001.09", "pain.002.001.10");
         assertThat(readme).contains("pacs.009.001.08", "camt.056.001.08", "camt.029.001.09");
         assertThat(readme).contains("NOSTRO", "VOSTRO", "LORO");
         assertThat(readme).contains("fi-payments:create", "fi-payments:read", "fi-payments:investigate");
         assertThat(readme).contains("docs/developer-support/postman-local-testing.md");
+        assertThat(readme).contains("docs/developer-support/payment-rail-recommendation-copilot.md");
         assertThat(readme).contains("docs/product-strategy/payment-simulation-suite-vision.md");
         assertThat(readme).contains("2026-05-29-add-fi-correspondent-rfi-workflow");
+    }
+
+    @Test
+    void paymentRailRecommendationDocumentationExplainsApiRulesAndBoundaries() throws Exception {
+        var readme = Files.readString(README, StandardCharsets.UTF_8);
+        var guide = Files.readString(Path.of("docs", "developer-support", "payment-rail-recommendation-copilot.md"), StandardCharsets.UTF_8);
+        var postmanGuide = Files.readString(DOCS, StandardCharsets.UTF_8);
+        var gateway = Files.readString(GATEWAY, StandardCharsets.UTF_8);
+
+        assertThat(readme).contains(
+                "Payment Rail Recommendation Copilot",
+                "POST /v1/payment-rail-recommendations",
+                "payment-rail-recommendations:create",
+                "deterministic simulator",
+                "no Idempotency-Key",
+                "100000 USD",
+                "not a real scheme limit");
+        assertThat(guide).contains(
+                "POST /v1/payment-rail-recommendations",
+                "payment-rail-recommendations:create",
+                "rail and arrangement",
+                "RTP",
+                "ACH",
+                "RTGS",
+                "FI_CORRESPONDENT",
+                "DOMESTIC_REAL_TIME_CLEARING",
+                "BATCH_CLEARING_NET_SETTLEMENT",
+                "DOMESTIC_INTERBANK_GROSS_SETTLEMENT",
+                "CORRESPONDENT_ACCOUNT_PATH",
+                "UNSUPPORTED",
+                "CROSS_BORDER_NOT_SUPPORTED",
+                "NON_USD_NOT_SUPPORTED",
+                "intentFit",
+                "next API guidance",
+                "no real AI, LLM, payment execution, recommendation persistence, cross-border support, FX, sanctions, fraud, pricing, liquidity, compliance decisions, or real rail availability decisions");
+        assertThat(postmanGuide).contains(
+                "recommendationJwtToken",
+                "payment-rail-recommendations:create",
+                "Recommend Rail - RTP Immediate Low Value",
+                "Recommend Rail - Scope Failure");
+        assertThat(gateway).contains("value: /v1/payment-rail-recommendations");
     }
 
     @Test
@@ -808,6 +906,21 @@ class PostmanArtifactValidationTest {
                 "Common setup");
         assertThat(requestItem(collection, requestName).path("event").toString())
                 .contains("pm.response.to.have.status(200)");
+    }
+
+    private void assertRecommendationRequest(JsonNode collection, String requestName, String expectedRail) {
+        var request = request(collection, requestName);
+
+        assertThat(request.path("method").asText()).as(requestName + " method").isEqualTo("POST");
+        assertThat(request.path("url").path("raw").asText())
+                .as(requestName + " URL")
+                .contains("/v1/payment-rail-recommendations");
+        assertThat(headerValue(request, "Authorization")).isEqualTo("Bearer {{recommendationJwtToken}}");
+        assertThat(headerValue(request, "X-Correlation-ID")).isEqualTo("{{correlationId}}");
+        assertThat(headerValue(request, "Content-Type")).isEqualTo("application/json");
+        assertThat(headerValue(request, "Accept")).isEqualTo("application/json");
+        assertThat(requestDescription(collection, requestName)).contains("Expected HTTP status: 200");
+        assertThat(requestItem(collection, requestName).path("event").toString()).contains(expectedRail);
     }
 
     private String headerValue(JsonNode request, String headerName) {

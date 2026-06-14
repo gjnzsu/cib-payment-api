@@ -36,6 +36,9 @@ spec:
             value: /v1/fi-payments
         - path:
             type: PathPrefix
+            value: /v1/payment-rail-recommendations
+        - path:
+            type: PathPrefix
             value: /swagger-ui
         - path:
             type: PathPrefix

@@ -44,6 +44,8 @@ public class SecurityConfig {
                         .hasAuthority("SCOPE_rtgs-payments:create")
                         .requestMatchers(HttpMethod.GET, "/v1/rtgs-payments/*")
                         .hasAuthority("SCOPE_rtgs-payments:read")
+                        .requestMatchers(HttpMethod.POST, "/v1/payment-rail-recommendations")
+                        .hasAuthority("SCOPE_payment-rail-recommendations:create")
                         .requestMatchers(HttpMethod.POST, "/v1/fi-payments/*/recall-requests")
                         .hasAuthority("SCOPE_fi-payments:investigate")
                         .requestMatchers(HttpMethod.POST, "/v1/fi-payments")

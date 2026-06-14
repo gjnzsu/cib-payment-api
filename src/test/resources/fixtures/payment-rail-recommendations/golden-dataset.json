@@ -1,0 +1,535 @@
+[
+  {
+    "scenarioId": "rtp-immediate-low-value-corporate",
+    "caseType": "RECOMMENDATION",
+    "purpose": "Immediate low-value domestic USD corporate single payment should recommend RTP.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentPurpose": "SUPPLIER_PAYMENT",
+      "paymentCount": 1,
+      "amountSummary": {"currency": "USD", "totalAmount": "250.00", "maxSingleAmount": "250.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "IMMEDIATE",
+      "requiresFinality": false,
+      "batchPreferred": false,
+      "costSensitivity": "MEDIUM"
+    },
+    "expected": {
+      "recommendationStatus": "RECOMMENDED",
+      "rail": "RTP",
+      "arrangement": "DOMESTIC_REAL_TIME_CLEARING",
+      "confidenceLevel": "HIGH",
+      "requiredMatchedFactors": ["DOMESTIC_USD", "IMMEDIATE_URGENCY", "LOW_VALUE"],
+      "requiredWarnings": [],
+      "requiredAlternativeRails": ["ACH"],
+      "nextApiEndpoint": "/v1/domestic-payments"
+    }
+  },
+  {
+    "scenarioId": "ach-vendor-batch-cost-sensitive",
+    "caseType": "RECOMMENDATION",
+    "purpose": "Multiple-payment cost-sensitive vendor batch should recommend ACH.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentPurpose": "VENDOR_BATCH",
+      "paymentCount": 50,
+      "amountSummary": {"currency": "USD", "totalAmount": "45000.00", "maxSingleAmount": "5000.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "STANDARD",
+      "batchPreferred": true,
+      "costSensitivity": "HIGH"
+    },
+    "expected": {
+      "recommendationStatus": "RECOMMENDED",
+      "rail": "ACH",
+      "arrangement": "BATCH_CLEARING_NET_SETTLEMENT",
+      "confidenceLevel": "HIGH",
+      "requiredMatchedFactors": ["DOMESTIC_USD", "MULTIPLE_PAYMENTS", "BATCH_PREFERRED", "COST_SENSITIVE"],
+      "requiredWarnings": [],
+      "requiredAlternativeRails": [],
+      "nextApiEndpoint": "/v1/ach-batches"
+    }
+  },
+  {
+    "scenarioId": "ach-single-payment-high-cost-sensitivity",
+    "caseType": "RECOMMENDATION",
+    "purpose": "Single domestic USD payment with high cost sensitivity should recommend ACH through batch/cost rule.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentCount": 1,
+      "amountSummary": {"currency": "USD", "totalAmount": "850.00", "maxSingleAmount": "850.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "NEXT_DAY",
+      "costSensitivity": "HIGH"
+    },
+    "expected": {
+      "recommendationStatus": "RECOMMENDED",
+      "rail": "ACH",
+      "arrangement": "BATCH_CLEARING_NET_SETTLEMENT",
+      "confidenceLevel": "HIGH",
+      "requiredMatchedFactors": ["DOMESTIC_USD", "COST_SENSITIVE"],
+      "requiredWarnings": [],
+      "requiredAlternativeRails": [],
+      "nextApiEndpoint": "/v1/ach-batches"
+    }
+  },
+  {
+    "scenarioId": "ach-missing-max-single-amount",
+    "caseType": "RECOMMENDATION",
+    "purpose": "Batch intent without maxSingleAmount should still recommend ACH and warn that individual high-value entries were not evaluated.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentPurpose": "PAYROLL",
+      "paymentCount": 250,
+      "amountSummary": {"currency": "USD", "totalAmount": "125000.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "STANDARD",
+      "batchPreferred": true,
+      "costSensitivity": "HIGH"
+    },
+    "expected": {
+      "recommendationStatus": "RECOMMENDED",
+      "rail": "ACH",
+      "arrangement": "BATCH_CLEARING_NET_SETTLEMENT",
+      "confidenceLevel": "HIGH",
+      "requiredMatchedFactors": ["DOMESTIC_USD", "MULTIPLE_PAYMENTS", "BATCH_PREFERRED", "COST_SENSITIVE"],
+      "requiredWarnings": ["MAX_SINGLE_AMOUNT_NOT_PROVIDED"],
+      "requiredAlternativeRails": [],
+      "nextApiEndpoint": "/v1/ach-batches"
+    }
+  },
+  {
+    "scenarioId": "ach-batch-finality-conflict",
+    "caseType": "RECOMMENDATION",
+    "purpose": "Batch intent with finality conflict should keep ACH primary and include RTGS review guidance.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentCount": 4,
+      "amountSummary": {"currency": "USD", "totalAmount": "500000.00", "maxSingleAmount": "80000.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "SAME_DAY",
+      "requiresFinality": true,
+      "batchPreferred": true
+    },
+    "expected": {
+      "recommendationStatus": "RECOMMENDED",
+      "rail": "ACH",
+      "arrangement": "BATCH_CLEARING_NET_SETTLEMENT",
+      "confidenceLevel": "HIGH",
+      "requiredMatchedFactors": ["DOMESTIC_USD", "MULTIPLE_PAYMENTS", "BATCH_PREFERRED"],
+      "requiredWarnings": ["BATCH_HIGH_VALUE_ENTRY_REVIEW"],
+      "requiredAlternativeRails": ["RTGS"],
+      "nextApiEndpoint": "/v1/ach-batches"
+    }
+  },
+  {
+    "scenarioId": "ach-batch-high-max-single-amount-conflict",
+    "caseType": "RECOMMENDATION",
+    "purpose": "Batch intent with high maximum single amount should keep ACH primary and include RTGS alternative.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentCount": 8,
+      "amountSummary": {"currency": "USD", "totalAmount": "900000.00", "maxSingleAmount": "250000.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "STANDARD",
+      "batchPreferred": true
+    },
+    "expected": {
+      "recommendationStatus": "RECOMMENDED",
+      "rail": "ACH",
+      "arrangement": "BATCH_CLEARING_NET_SETTLEMENT",
+      "confidenceLevel": "HIGH",
+      "requiredMatchedFactors": ["DOMESTIC_USD", "MULTIPLE_PAYMENTS", "BATCH_PREFERRED"],
+      "requiredWarnings": ["BATCH_HIGH_VALUE_ENTRY_REVIEW"],
+      "requiredAlternativeRails": ["RTGS"],
+      "nextApiEndpoint": "/v1/ach-batches"
+    }
+  },
+  {
+    "scenarioId": "rtgs-high-value-corporate",
+    "caseType": "RECOMMENDATION",
+    "purpose": "High-value domestic USD single payment should recommend RTGS.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentPurpose": "TREASURY_TRANSFER",
+      "paymentCount": 1,
+      "amountSummary": {"currency": "USD", "totalAmount": "250000.00", "maxSingleAmount": "250000.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "SAME_DAY",
+      "requiresFinality": false
+    },
+    "expected": {
+      "recommendationStatus": "RECOMMENDED",
+      "rail": "RTGS",
+      "arrangement": "DOMESTIC_INTERBANK_GROSS_SETTLEMENT",
+      "confidenceLevel": "HIGH",
+      "requiredMatchedFactors": ["DOMESTIC_USD", "HIGH_VALUE"],
+      "requiredWarnings": [],
+      "requiredAlternativeRails": ["RTP"],
+      "nextApiEndpoint": "/v1/rtgs-payments"
+    }
+  },
+  {
+    "scenarioId": "rtgs-finality-required-low-value",
+    "caseType": "RECOMMENDATION",
+    "purpose": "Finality-required low-value domestic USD single payment should recommend RTGS.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentCount": 1,
+      "amountSummary": {"currency": "USD", "totalAmount": "5000.00", "maxSingleAmount": "5000.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "SAME_DAY",
+      "requiresFinality": true
+    },
+    "expected": {
+      "recommendationStatus": "RECOMMENDED",
+      "rail": "RTGS",
+      "arrangement": "DOMESTIC_INTERBANK_GROSS_SETTLEMENT",
+      "confidenceLevel": "HIGH",
+      "requiredMatchedFactors": ["DOMESTIC_USD", "REQUIRES_FINALITY"],
+      "requiredWarnings": [],
+      "requiredAlternativeRails": ["RTP"],
+      "nextApiEndpoint": "/v1/rtgs-payments"
+    }
+  },
+  {
+    "scenarioId": "rtgs-threshold-exactly-100000",
+    "caseType": "RECOMMENDATION",
+    "purpose": "Exactly 100000 USD should be treated as high value by the simulator threshold and recommend RTGS.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentCount": 1,
+      "amountSummary": {"currency": "USD", "totalAmount": "100000.00", "maxSingleAmount": "100000.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "IMMEDIATE",
+      "requiresFinality": false
+    },
+    "expected": {
+      "recommendationStatus": "RECOMMENDED",
+      "rail": "RTGS",
+      "arrangement": "DOMESTIC_INTERBANK_GROSS_SETTLEMENT",
+      "confidenceLevel": "HIGH",
+      "requiredMatchedFactors": ["DOMESTIC_USD", "HIGH_VALUE"],
+      "requiredWarnings": [],
+      "requiredAlternativeRails": ["RTP"],
+      "nextApiEndpoint": "/v1/rtgs-payments"
+    }
+  },
+  {
+    "scenarioId": "rtp-threshold-just-below-100000",
+    "caseType": "RECOMMENDATION",
+    "purpose": "Immediate payment just below 100000 USD with no finality requirement should recommend RTP.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentCount": 1,
+      "amountSummary": {"currency": "USD", "totalAmount": "99999.99", "maxSingleAmount": "99999.99"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "IMMEDIATE",
+      "requiresFinality": false
+    },
+    "expected": {
+      "recommendationStatus": "RECOMMENDED",
+      "rail": "RTP",
+      "arrangement": "DOMESTIC_REAL_TIME_CLEARING",
+      "confidenceLevel": "HIGH",
+      "requiredMatchedFactors": ["DOMESTIC_USD", "IMMEDIATE_URGENCY", "LOW_VALUE"],
+      "requiredWarnings": [],
+      "requiredAlternativeRails": ["ACH"],
+      "nextApiEndpoint": "/v1/domestic-payments"
+    }
+  },
+  {
+    "scenarioId": "ach-default-standard-single-payment",
+    "caseType": "RECOMMENDATION",
+    "purpose": "Standard domestic USD single payment without immediate/finality signals should default to ACH with medium confidence.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentCount": 1,
+      "amountSummary": {"currency": "USD", "totalAmount": "1000.00", "maxSingleAmount": "1000.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "STANDARD"
+    },
+    "expected": {
+      "recommendationStatus": "RECOMMENDED",
+      "rail": "ACH",
+      "arrangement": "BATCH_CLEARING_NET_SETTLEMENT",
+      "confidenceLevel": "MEDIUM",
+      "requiredMatchedFactors": ["DOMESTIC_USD"],
+      "requiredWarnings": [],
+      "requiredAlternativeRails": ["RTP"],
+      "nextApiEndpoint": "/v1/ach-batches"
+    }
+  },
+  {
+    "scenarioId": "rtgs-fi-domestic-gross-settlement",
+    "caseType": "RECOMMENDATION",
+    "purpose": "FI domestic gross settlement intent should recommend RTGS, not correspondent account path.",
+    "request": {
+      "clientSegment": "FI",
+      "paymentCount": 1,
+      "amountSummary": {"currency": "USD", "totalAmount": "750000.00", "maxSingleAmount": "750000.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "SAME_DAY",
+      "requiresFinality": true,
+      "fiToFi": true,
+      "arrangementPreference": "DOMESTIC_INTERBANK_GROSS_SETTLEMENT"
+    },
+    "expected": {
+      "recommendationStatus": "RECOMMENDED",
+      "rail": "RTGS",
+      "arrangement": "DOMESTIC_INTERBANK_GROSS_SETTLEMENT",
+      "confidenceLevel": "HIGH",
+      "requiredMatchedFactors": ["DOMESTIC_USD", "HIGH_VALUE", "REQUIRES_FINALITY"],
+      "requiredWarnings": [],
+      "requiredAlternativeRails": ["RTP"],
+      "nextApiEndpoint": "/v1/rtgs-payments"
+    }
+  },
+  {
+    "scenarioId": "fi-correspondent-arrangement-preference",
+    "caseType": "RECOMMENDATION",
+    "purpose": "FI client with correspondent account path preference should recommend FI_CORRESPONDENT.",
+    "request": {
+      "clientSegment": "FI",
+      "paymentCount": 1,
+      "amountSummary": {"currency": "USD", "totalAmount": "1000000.00", "maxSingleAmount": "1000000.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "SAME_DAY",
+      "fiToFi": true,
+      "arrangementPreference": "CORRESPONDENT_ACCOUNT_PATH"
+    },
+    "expected": {
+      "recommendationStatus": "RECOMMENDED",
+      "rail": "FI_CORRESPONDENT",
+      "arrangement": "CORRESPONDENT_ACCOUNT_PATH",
+      "confidenceLevel": "HIGH",
+      "requiredMatchedFactors": ["DOMESTIC_USD", "FI_CLIENT", "CORRESPONDENT_ACCOUNT_PATH"],
+      "requiredWarnings": [],
+      "requiredAlternativeRails": ["RTGS"],
+      "nextApiEndpoint": "/v1/fi-payments"
+    }
+  },
+  {
+    "scenarioId": "fi-correspondent-precedence-over-high-value-finality",
+    "caseType": "RECOMMENDATION",
+    "purpose": "FI correspondent preference should take precedence over high-value and finality RTGS signals.",
+    "request": {
+      "clientSegment": "FI",
+      "paymentCount": 1,
+      "amountSummary": {"currency": "USD", "totalAmount": "5000000.00", "maxSingleAmount": "5000000.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "SAME_DAY",
+      "requiresFinality": true,
+      "fiToFi": true,
+      "arrangementPreference": "CORRESPONDENT_ACCOUNT_PATH"
+    },
+    "expected": {
+      "recommendationStatus": "RECOMMENDED",
+      "rail": "FI_CORRESPONDENT",
+      "arrangement": "CORRESPONDENT_ACCOUNT_PATH",
+      "confidenceLevel": "HIGH",
+      "requiredMatchedFactors": ["DOMESTIC_USD", "FI_CLIENT", "CORRESPONDENT_ACCOUNT_PATH"],
+      "requiredWarnings": [],
+      "requiredAlternativeRails": ["RTGS"],
+      "nextApiEndpoint": "/v1/fi-payments"
+    }
+  },
+  {
+    "scenarioId": "optional-debtor-account-profile-omitted",
+    "caseType": "RECOMMENDATION",
+    "purpose": "Omitting debtorAccountProfile should remain valid and use default debtor account count.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentCount": 1,
+      "amountSummary": {"currency": "USD", "totalAmount": "600.00", "maxSingleAmount": "600.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "IMMEDIATE"
+    },
+    "expected": {
+      "recommendationStatus": "RECOMMENDED",
+      "rail": "RTP",
+      "arrangement": "DOMESTIC_REAL_TIME_CLEARING",
+      "confidenceLevel": "HIGH",
+      "requiredMatchedFactors": ["DOMESTIC_USD", "IMMEDIATE_URGENCY", "LOW_VALUE"],
+      "requiredWarnings": [],
+      "requiredAlternativeRails": ["ACH"],
+      "nextApiEndpoint": "/v1/domestic-payments"
+    }
+  },
+  {
+    "scenarioId": "optional-debtor-account-profile-count-two",
+    "caseType": "RECOMMENDATION",
+    "purpose": "Providing debtorAccountProfile.count should be accepted without changing the primary rail decision.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentCount": 1,
+      "amountSummary": {"currency": "USD", "totalAmount": "600.00", "maxSingleAmount": "600.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "IMMEDIATE",
+      "debtorAccountProfile": {"count": 2}
+    },
+    "expected": {
+      "recommendationStatus": "RECOMMENDED",
+      "rail": "RTP",
+      "arrangement": "DOMESTIC_REAL_TIME_CLEARING",
+      "confidenceLevel": "HIGH",
+      "requiredMatchedFactors": ["DOMESTIC_USD", "IMMEDIATE_URGENCY", "LOW_VALUE"],
+      "requiredWarnings": [],
+      "requiredAlternativeRails": ["ACH"],
+      "nextApiEndpoint": "/v1/domestic-payments"
+    }
+  },
+  {
+    "scenarioId": "unsupported-cross-border-usd",
+    "caseType": "RECOMMENDATION",
+    "purpose": "Valid cross-border USD intent should return UNSUPPORTED rather than validation error.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentCount": 1,
+      "amountSummary": {"currency": "USD", "totalAmount": "1000.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "GB",
+      "urgency": "SAME_DAY"
+    },
+    "expected": {
+      "recommendationStatus": "UNSUPPORTED",
+      "rail": null,
+      "arrangement": null,
+      "confidenceLevel": "LOW",
+      "requiredMatchedFactors": [],
+      "requiredWarnings": ["CROSS_BORDER_NOT_SUPPORTED"],
+      "requiredAlternativeRails": [],
+      "nextApiEndpoint": null
+    }
+  },
+  {
+    "scenarioId": "unsupported-non-usd-domestic",
+    "caseType": "RECOMMENDATION",
+    "purpose": "Valid domestic non-USD intent should return UNSUPPORTED rather than validation error.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentCount": 1,
+      "amountSummary": {"currency": "EUR", "totalAmount": "1000.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "SAME_DAY"
+    },
+    "expected": {
+      "recommendationStatus": "UNSUPPORTED",
+      "rail": null,
+      "arrangement": null,
+      "confidenceLevel": "LOW",
+      "requiredMatchedFactors": [],
+      "requiredWarnings": ["NON_USD_NOT_SUPPORTED"],
+      "requiredAlternativeRails": [],
+      "nextApiEndpoint": null
+    }
+  },
+  {
+    "scenarioId": "unsupported-cross-border-and-non-usd-precedence",
+    "caseType": "RECOMMENDATION",
+    "purpose": "When both cross-border and non-USD are present, cross-border unsupported guardrail is evaluated first.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentCount": 1,
+      "amountSummary": {"currency": "EUR", "totalAmount": "1000.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "DE",
+      "urgency": "SAME_DAY"
+    },
+    "expected": {
+      "recommendationStatus": "UNSUPPORTED",
+      "rail": null,
+      "arrangement": null,
+      "confidenceLevel": "LOW",
+      "requiredMatchedFactors": [],
+      "requiredWarnings": ["CROSS_BORDER_NOT_SUPPORTED"],
+      "requiredAlternativeRails": [],
+      "nextApiEndpoint": null
+    }
+  },
+  {
+    "scenarioId": "validation-missing-client-segment",
+    "caseType": "VALIDATION",
+    "purpose": "Missing required clientSegment should be rejected before recommendation.",
+    "request": {
+      "paymentCount": 1,
+      "amountSummary": {"currency": "USD", "totalAmount": "250.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "IMMEDIATE"
+    },
+    "expected": null
+  },
+  {
+    "scenarioId": "validation-zero-payment-count",
+    "caseType": "VALIDATION",
+    "purpose": "paymentCount must be positive.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentCount": 0,
+      "amountSummary": {"currency": "USD", "totalAmount": "250.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "IMMEDIATE"
+    },
+    "expected": null
+  },
+  {
+    "scenarioId": "validation-invalid-urgency",
+    "caseType": "VALIDATION",
+    "purpose": "Unsupported urgency enum should be rejected before recommendation.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentCount": 1,
+      "amountSummary": {"currency": "USD", "totalAmount": "250.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "RIGHT_NOW"
+    },
+    "expected": null
+  },
+  {
+    "scenarioId": "validation-negative-total-amount",
+    "caseType": "VALIDATION",
+    "purpose": "Negative amount should be rejected before recommendation.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentCount": 1,
+      "amountSummary": {"currency": "USD", "totalAmount": "-10.00"},
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "IMMEDIATE"
+    },
+    "expected": null
+  },
+  {
+    "scenarioId": "validation-missing-amount-summary",
+    "caseType": "VALIDATION",
+    "purpose": "Missing amountSummary should be rejected before recommendation.",
+    "request": {
+      "clientSegment": "CORPORATE",
+      "paymentCount": 1,
+      "debtorCountry": "US",
+      "creditorCountry": "US",
+      "urgency": "IMMEDIATE"
+    },
+    "expected": null
+  }
+]

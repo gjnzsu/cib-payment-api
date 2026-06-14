@@ -10,6 +10,7 @@ import com.cib.payment.api.domain.model.IdempotencyRecord;
 import com.cib.payment.api.domain.model.InternalInterbankTransfer;
 import com.cib.payment.api.domain.model.IsoPaymentCandidate;
 import com.cib.payment.api.domain.model.PaymentRecord;
+import com.cib.payment.api.domain.model.PaymentRailRecommendation;
 import com.cib.payment.api.domain.model.PaymentReason;
 import com.cib.payment.api.domain.model.PaymentStatus;
 import com.cib.payment.api.domain.model.RecallInvestigationRecord;
@@ -254,5 +255,32 @@ public class MicrometerPaymentObservability implements PaymentObservability {
                         .map(account -> AccountNumberMasker.maskSensitive(account.accountNumber()))
                         .orElse(""),
                 record.settlementAmount().currency());
+    }
+
+    @Override
+    public void paymentRailRecommendationGenerated(
+            PaymentRailRecommendation recommendation,
+            AuthorizationContext authorizationContext) {
+        var rail = recommendation.recommendedOption()
+                .map(option -> option.rail().name())
+                .orElse("");
+        var arrangement = recommendation.recommendedOption()
+                .map(option -> option.arrangement().name())
+                .orElse("");
+        meterRegistry.counter(
+                        "payment.rail.recommendations",
+                        "status",
+                        recommendation.recommendationStatus().name(),
+                        "rail",
+                        rail)
+                .increment();
+        log.info(
+                "payment_rail_recommendation_generated correlationId={} clientId={} recommendationId={} recommendationStatus={} rail={} arrangement={}",
+                recommendation.correlationId().value(),
+                authorizationContext.clientId(),
+                recommendation.recommendationId().value(),
+                recommendation.recommendationStatus().name(),
+                rail,
+                arrangement);
     }
 }

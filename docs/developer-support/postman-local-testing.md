@@ -56,6 +56,8 @@ Set these environment variables before running secured API requests:
 - `fiPaymentId`: captured from a successful FI payment acknowledgement and used by FI status and recall requests.
 - `fiMockScenario`: local/test-only FI payment simulator scenario selector, normally `fi_payment_accepted`.
 - `fiRecallScenario`: local/test-only FI recall/investigation simulator selector, normally `recall_accepted`.
+- `recommendationJwtToken`: JWT bearer token with `payment-rail-recommendations:create`.
+- `recommendationScopeFailureToken`: JWT bearer token without `payment-rail-recommendations:create`, used by `Recommend Rail - Scope Failure`.
 
 JWTs must match the API's configured issuer, audience, signature validation, and required claims. For local testing, generate Postman-compatible tokens with the local-only helper:
 
@@ -90,6 +92,20 @@ mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructur
 ```
 
 Paste these values into `fiJwtToken`, `fiReadOnlyJwtToken`, and `fiInvestigateToken` respectively. FI tokens still use the local `domestic-payment-api` audience; the scopes distinguish FI create, FI read, and FI investigation entitlements.
+
+For payment rail recommendation scenarios, generate a recommendation token:
+
+```powershell
+mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructure.security.LocalJwtTokenGenerator" "-Dexec.args=client-a payment-rail-recommendations:create 3600"
+```
+
+For `Recommend Rail - Scope Failure`, generate a token without the recommendation scope:
+
+```powershell
+mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructure.security.LocalJwtTokenGenerator" "-Dexec.args=client-a payments:create 3600"
+```
+
+Paste these values into `recommendationJwtToken` and `recommendationScopeFailureToken`.
 
 Generated local tokens use:
 
@@ -170,6 +186,27 @@ Suggested FI flow:
 4. Run one FI recall outcome request, such as `Create FI Recall - Accepted`.
 5. For `Create FI Recall - Rejected` or `Create FI Recall - Investigation Pending`, first run `Create FI Payment - Accepted` again with a new `fiIdempotencyKey`, confirm Postman captured the fresh `fiPaymentId`, and then run exactly one recall outcome request for that payment.
 6. Run FI replay, FI idempotency conflict, FI authentication failure, FI scope failure, and FI validation failure scenarios.
+
+## Payment Rail Recommendation Copilot Flow
+
+`POST /v1/payment-rail-recommendations` accepts JSON intent summaries and returns deterministic simulator guidance. It requires `payment-rail-recommendations:create`, accepts `X-Correlation-ID`, and does not require `Idempotency-Key`.
+
+Use these Postman requests:
+
+| Postman request | Expected result |
+| --- | --- |
+| `Recommend Rail - RTP Immediate Low Value` | HTTP `200`, `recommendationStatus=RECOMMENDED`, rail `RTP`, arrangement `DOMESTIC_REAL_TIME_CLEARING`. |
+| `Recommend Rail - ACH Vendor Batch` | HTTP `200`, rail `ACH`, arrangement `BATCH_CLEARING_NET_SETTLEMENT`. |
+| `Recommend Rail - ACH Missing Max Single Amount Warning` | HTTP `200`, rail `ACH`, warning `MAX_SINGLE_AMOUNT_NOT_PROVIDED`. |
+| `Recommend Rail - ACH Finality Conflict` | HTTP `200`, rail `ACH`, warning `BATCH_HIGH_VALUE_ENTRY_REVIEW`, and RTGS alternative. |
+| `Recommend Rail - RTGS Corporate Finality` | HTTP `200`, rail `RTGS`, arrangement `DOMESTIC_INTERBANK_GROSS_SETTLEMENT`. |
+| `Recommend Rail - RTGS FI Gross Settlement` | HTTP `200`, rail `RTGS`, client segment `FI`. |
+| `Recommend Rail - FI Correspondent Arrangement` | HTTP `200`, rail `FI_CORRESPONDENT`, arrangement `CORRESPONDENT_ACCOUNT_PATH`. |
+| `Recommend Rail - Cross Border Unsupported` | HTTP `200`, `recommendationStatus=UNSUPPORTED`, warning `CROSS_BORDER_NOT_SUPPORTED`. |
+| `Recommend Rail - Non USD Unsupported` | HTTP `200`, `recommendationStatus=UNSUPPORTED`, warning `NON_USD_NOT_SUPPORTED`. |
+| `Recommend Rail - Scope Failure` | HTTP `403`, JSON body `code=FORBIDDEN`. |
+
+The `100000 USD` threshold is a deterministic simulator threshold, not a real scheme limit, bank policy, or production decision threshold. The endpoint returns `intentFit` as simulator rule explanation only, and next API guidance identifies candidate endpoint, scopes, headers, and payload format without generating a complete payment creation payload.
 
 ## Domestic Postman Expected Results
 

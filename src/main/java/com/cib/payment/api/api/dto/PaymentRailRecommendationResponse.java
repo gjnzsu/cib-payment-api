@@ -1,7 +1,9 @@
 package com.cib.payment.api.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record PaymentRailRecommendationResponse(
         String recommendationId,
         String recommendationStatus,
