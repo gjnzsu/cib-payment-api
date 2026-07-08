@@ -3,6 +3,7 @@ package com.cib.payment.api.application.port;
 import com.cib.payment.api.api.dto.CreateDomesticPaymentRequest;
 import com.cib.payment.api.domain.model.AchBatchRecord;
 import com.cib.payment.api.domain.model.AuthorizationContext;
+import com.cib.payment.api.domain.model.CollectionRecord;
 import com.cib.payment.api.domain.model.CorrelationId;
 import com.cib.payment.api.domain.model.IdempotencyRecord;
 import com.cib.payment.api.domain.model.InternalInterbankTransfer;
@@ -51,6 +52,8 @@ public interface PaymentObservability {
     void recallInvestigationCreated(RecallInvestigationRecord record, AuthorizationContext authorizationContext);
 
     void achBatchAccepted(AchBatchRecord record, AuthorizationContext authorizationContext);
+
+    void collectionAccepted(CollectionRecord record, AuthorizationContext authorizationContext);
 
     void rtgsPaymentAccepted(RtgsPaymentRecord record, AuthorizationContext authorizationContext);
 
@@ -121,6 +124,9 @@ public interface PaymentObservability {
 
             @Override
             public void achBatchAccepted(AchBatchRecord record, AuthorizationContext authorizationContext) {}
+
+            @Override
+            public void collectionAccepted(CollectionRecord record, AuthorizationContext authorizationContext) {}
 
             @Override
             public void rtgsPaymentAccepted(RtgsPaymentRecord record, AuthorizationContext authorizationContext) {}

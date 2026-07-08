@@ -5,6 +5,7 @@ import com.cib.payment.api.application.port.PaymentObservability;
 import com.cib.payment.api.domain.model.AuthorizationContext;
 import com.cib.payment.api.domain.model.CorrelationId;
 import com.cib.payment.api.domain.model.AchBatchRecord;
+import com.cib.payment.api.domain.model.CollectionRecord;
 import com.cib.payment.api.domain.model.FiPaymentRecord;
 import com.cib.payment.api.domain.model.IdempotencyRecord;
 import com.cib.payment.api.domain.model.InternalInterbankTransfer;
@@ -234,6 +235,25 @@ public class MicrometerPaymentObservability implements PaymentObservability {
                 record.entries().stream()
                         .map(entry -> AccountNumberMasker.maskSensitive(entry.receiverAccount().accountNumber()))
                         .toList(),
+                record.totalAmount().currency());
+    }
+
+    @Override
+    public void collectionAccepted(CollectionRecord record, AuthorizationContext authorizationContext) {
+        meterRegistry.counter("payment.collections.accepted", "status", record.status().name()).increment();
+        log.info(
+                "collection_accepted correlationId={} clientId={} collectionId={} profile={} status={} mandateReference={} settlementAccount={} payerAccounts={} payerAlias={} currency={}",
+                record.correlationId().value(),
+                authorizationContext.clientId(),
+                record.collectionId().value(),
+                record.collectionProfile().name(),
+                record.status().name(),
+                AccountNumberMasker.maskSensitive(record.mandateReference()),
+                record.settlementAccount() == null ? "" : AccountNumberMasker.maskSensitive(record.settlementAccount().accountNumber()),
+                record.entries().stream()
+                        .map(entry -> AccountNumberMasker.maskSensitive(entry.payerAccount().accountNumber()))
+                        .toList(),
+                AccountNumberMasker.maskSensitive(record.payerAlias()),
                 record.totalAmount().currency());
     }
 

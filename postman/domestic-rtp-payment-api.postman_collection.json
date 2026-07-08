@@ -2841,6 +2841,143 @@
                                                 ]
                                   }
                               ]
+                 },
+                 {
+                     "name": "Collections Simulation",
+                     "item": [
+                         {
+                             "name": "Collection - US ACH Direct Debit Collected",
+                             "request": {
+                                 "method": "POST",
+                                 "header": [
+                                     {"key": "Authorization", "value": "Bearer {{collectionJwtToken}}"},
+                                     {"key": "Idempotency-Key", "value": "{{collectionUsAchIdempotencyKey}}"},
+                                     {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
+                                     {"key": "X-Mock-Scenario", "value": "us_ach_debit_collected"},
+                                     {"key": "Content-Type", "value": "application/json"},
+                                     {"key": "Accept", "value": "application/json"}
+                                 ],
+                                 "body": {
+                                     "mode": "raw",
+                                     "raw": "{\n  \"collectionProfile\": \"US_ACH_DIRECT_DEBIT_BATCH\",\n  \"collectionReference\": \"COLL-US-ACH-20260707-0001\",\n  \"mandateReference\": \"MANDATE-US-001\",\n  \"creditorName\": \"CIB Collection Services\",\n  \"debtorName\": \"Corporate Customer\",\n  \"settlementAccount\": {\n    \"bankCode\": \"021000021\",\n    \"accountNumber\": \"123456789\",\n    \"accountName\": \"CIB Collections\"\n  },\n  \"entries\": [\n    {\n      \"entryReference\": \"COLL-ENTRY-0001\",\n      \"payerName\": \"Payer One\",\n      \"payerAccount\": {\n        \"bankCode\": \"111000025\",\n        \"accountNumber\": \"987654321\",\n        \"accountName\": \"Payer One\"\n      },\n      \"amount\": {\n        \"currency\": \"USD\",\n        \"value\": \"125.40\"\n      },\n      \"purpose\": \"INVOICE_COLLECTION\"\n    }\n  ]\n}",
+                                     "options": {"raw": {"language": "json"}}
+                                 },
+                                 "url": {"raw": "{{baseUrl}}/v1/collections", "host": ["{{baseUrl}}"], "path": ["v1", "collections"]},
+                                 "description": "Expected HTTP status: 202. Creates a US ACH Direct Debit batch-style collection using an existing mandateReference. Common setup: collectionJwtToken must include collections:create."
+                             },
+                             "response": [],
+                             "event": [
+                                 {"listen": "test", "script": {"type": "text/javascript", "exec": [
+                                     "pm.test('Expected HTTP status: 202', function () { pm.response.to.have.status(202); });",
+                                     "pm.test('collection is collected', function () { const body = pm.response.json(); pm.expect(body.collectionProfile).to.eql('US_ACH_DIRECT_DEBIT_BATCH'); pm.expect(body.status).to.eql('COLLECTED'); pm.environment.set('collectionId', body.collectionId); });"
+                                 ]}}
+                             ]
+                         },
+                         {
+                             "name": "Collection - US ACH Direct Debit Replay",
+                             "request": {
+                                 "method": "POST",
+                                 "header": [
+                                     {"key": "Authorization", "value": "Bearer {{collectionJwtToken}}"},
+                                     {"key": "Idempotency-Key", "value": "{{collectionUsAchIdempotencyKey}}"},
+                                     {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
+                                     {"key": "X-Mock-Scenario", "value": "us_ach_debit_collected"},
+                                     {"key": "Content-Type", "value": "application/json"},
+                                     {"key": "Accept", "value": "application/json"}
+                                 ],
+                                 "body": {
+                                     "mode": "raw",
+                                     "raw": "{\n  \"collectionProfile\": \"US_ACH_DIRECT_DEBIT_BATCH\",\n  \"collectionReference\": \"COLL-US-ACH-20260707-0001\",\n  \"mandateReference\": \"MANDATE-US-001\",\n  \"creditorName\": \"CIB Collection Services\",\n  \"debtorName\": \"Corporate Customer\",\n  \"settlementAccount\": {\n    \"bankCode\": \"021000021\",\n    \"accountNumber\": \"123456789\",\n    \"accountName\": \"CIB Collections\"\n  },\n  \"entries\": [\n    {\n      \"entryReference\": \"COLL-ENTRY-0001\",\n      \"payerName\": \"Payer One\",\n      \"payerAccount\": {\n        \"bankCode\": \"111000025\",\n        \"accountNumber\": \"987654321\",\n        \"accountName\": \"Payer One\"\n      },\n      \"amount\": {\n        \"currency\": \"USD\",\n        \"value\": \"125.40\"\n      },\n      \"purpose\": \"INVOICE_COLLECTION\"\n    }\n  ]\n}",
+                                     "options": {"raw": {"language": "json"}}
+                                 },
+                                 "url": {"raw": "{{baseUrl}}/v1/collections", "host": ["{{baseUrl}}"], "path": ["v1", "collections"]},
+                                 "description": "Expected HTTP status: 202. Run after Collection - US ACH Direct Debit Collected; same Idempotency-Key and same body should replay the original response."
+                             },
+                             "response": [],
+                             "event": [
+                                 {"listen": "test", "script": {"type": "text/javascript", "exec": [
+                                     "pm.test('Expected HTTP status: 202', function () { pm.response.to.have.status(202); });",
+                                     "pm.test('idempotent replay returns original collection', function () { pm.expect(pm.response.json().collectionId).to.eql(pm.environment.get('collectionId')); });"
+                                 ]}}
+                             ]
+                         },
+                         {
+                             "name": "Collection - US ACH Direct Debit Idempotency Conflict",
+                             "request": {
+                                 "method": "POST",
+                                 "header": [
+                                     {"key": "Authorization", "value": "Bearer {{collectionJwtToken}}"},
+                                     {"key": "Idempotency-Key", "value": "{{collectionUsAchIdempotencyKey}}"},
+                                     {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
+                                     {"key": "X-Mock-Scenario", "value": "us_ach_debit_partially_returned"},
+                                     {"key": "Content-Type", "value": "application/json"},
+                                     {"key": "Accept", "value": "application/json"}
+                                 ],
+                                 "body": {
+                                     "mode": "raw",
+                                     "raw": "{\n  \"collectionProfile\": \"US_ACH_DIRECT_DEBIT_BATCH\",\n  \"collectionReference\": \"COLL-US-ACH-20260707-0001\",\n  \"mandateReference\": \"MANDATE-US-001\",\n  \"creditorName\": \"CIB Collection Services\",\n  \"debtorName\": \"Corporate Customer\",\n  \"settlementAccount\": {\n    \"bankCode\": \"021000021\",\n    \"accountNumber\": \"123456789\",\n    \"accountName\": \"CIB Collections\"\n  },\n  \"entries\": [\n    {\n      \"entryReference\": \"COLL-ENTRY-CHANGED\",\n      \"payerName\": \"Payer One\",\n      \"payerAccount\": {\n        \"bankCode\": \"111000025\",\n        \"accountNumber\": \"987654321\",\n        \"accountName\": \"Payer One\"\n      },\n      \"amount\": {\n        \"currency\": \"USD\",\n        \"value\": \"125.40\"\n      },\n      \"purpose\": \"INVOICE_COLLECTION\"\n    }\n  ]\n}",
+                                     "options": {"raw": {"language": "json"}}
+                                 },
+                                 "url": {"raw": "{{baseUrl}}/v1/collections", "host": ["{{baseUrl}}"], "path": ["v1", "collections"]},
+                                 "description": "Expected HTTP status: 409. Run after Collection - US ACH Direct Debit Collected; same Idempotency-Key with changed semantics should return IDEMPOTENCY_CONFLICT."
+                             },
+                             "response": [],
+                             "event": [
+                                 {"listen": "test", "script": {"type": "text/javascript", "exec": [
+                                     "pm.test('Expected HTTP status: 409', function () { pm.response.to.have.status(409); });",
+                                     "pm.test('idempotency conflict returns conflict code', function () { pm.expect(pm.response.json().code).to.eql('IDEMPOTENCY_CONFLICT'); });"
+                                 ]}}
+                             ]
+                         },
+                         {
+                             "name": "Collection - HK FPS Direct Debit Completed",
+                             "request": {
+                                 "method": "POST",
+                                 "header": [
+                                     {"key": "Authorization", "value": "Bearer {{collectionJwtToken}}"},
+                                     {"key": "Idempotency-Key", "value": "{{collectionHkFpsIdempotencyKey}}"},
+                                     {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
+                                     {"key": "X-Mock-Scenario", "value": "hk_fps_collection_completed"},
+                                     {"key": "Content-Type", "value": "application/json"},
+                                     {"key": "Accept", "value": "application/json"}
+                                 ],
+                                 "body": {
+                                     "mode": "raw",
+                                     "raw": "{\n  \"collectionProfile\": \"HK_FPS_DIRECT_DEBIT\",\n  \"collectionReference\": \"COLL-HK-FPS-20260707-0001\",\n  \"mandateReference\": \"EDDA-HK-001\",\n  \"creditorName\": \"Sample Merchant HK\",\n  \"debtorName\": \"Sample Payer HK\",\n  \"payerBankCode\": \"004\",\n  \"payerAlias\": \"FPS-PROXY-ALIAS\",\n  \"amount\": {\n    \"currency\": \"HKD\",\n    \"value\": \"350.00\"\n  },\n  \"purpose\": \"MONTHLY_TUTORIAL_FEE\",\n  \"entries\": []\n}",
+                                     "options": {"raw": {"language": "json"}}
+                                 },
+                                 "url": {"raw": "{{baseUrl}}/v1/collections", "host": ["{{baseUrl}}"], "path": ["v1", "collections"]},
+                                 "description": "Expected HTTP status: 202. Creates an HK FPS/eDDA-style direct debit collection using an existing mandateReference. This is simulator-only and does not set up eDDA."
+                             },
+                             "response": [],
+                             "event": [
+                                 {"listen": "test", "script": {"type": "text/javascript", "exec": [
+                                     "pm.test('Expected HTTP status: 202', function () { pm.response.to.have.status(202); });",
+                                     "pm.test('HK FPS collection completed', function () { const body = pm.response.json(); pm.expect(body.collectionProfile).to.eql('HK_FPS_DIRECT_DEBIT'); pm.expect(body.status).to.eql('COMPLETED'); pm.environment.set('collectionId', body.collectionId); });"
+                                 ]}}
+                             ]
+                         },
+                         {
+                             "name": "Collection - Get Status",
+                             "request": {
+                                 "method": "GET",
+                                 "header": [
+                                     {"key": "Authorization", "value": "Bearer {{collectionReadOnlyJwtToken}}"},
+                                     {"key": "X-Correlation-ID", "value": "{{correlationId}}"},
+                                     {"key": "Accept", "value": "application/json"}
+                                 ],
+                                 "url": {"raw": "{{baseUrl}}/v1/collections/{{collectionId}}", "host": ["{{baseUrl}}"], "path": ["v1", "collections", "{{collectionId}}"]},
+                                 "description": "Expected HTTP status: 200. Status query does not require Idempotency-Key. Common setup: run a collection create request first or set collectionId manually."
+                             },
+                             "response": [],
+                             "event": [
+                                 {"listen": "test", "script": {"type": "text/javascript", "exec": [
+                                     "pm.test('Expected HTTP status: 200', function () { pm.response.to.have.status(200); });",
+                                     "pm.test('status response contains collectionId', function () { pm.expect(pm.response.json().collectionId).to.eql(pm.environment.get('collectionId')); });"
+                                 ]}}
+                             ]
+                         }
+                     ]
                  }
              ]
 }

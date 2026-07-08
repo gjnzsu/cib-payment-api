@@ -10,6 +10,8 @@ The suite currently exposes:
 - `GET /v1/ach-batches/{batchId}`
 - `POST /v1/rtgs-payments`
 - `GET /v1/rtgs-payments/{paymentId}`
+- `POST /v1/collections`
+- `GET /v1/collections/{collectionId}`
 - `POST /v1/fi-payments`
 - `GET /v1/fi-payments/{paymentId}`
 - `POST /v1/fi-payments/{paymentId}/recall-requests`
@@ -21,6 +23,17 @@ The implementation follows these archived OpenSpec changes:
 - `openspec/changes/archive/2026-05-29-add-fi-correspondent-rfi-workflow`
 
 ## Capabilities
+
+### Collections Simulation
+
+- Adds pre-authorized pull-payment collection simulation through `POST /v1/collections` and `GET /v1/collections/{collectionId}`.
+- Supports `US_ACH_DIRECT_DEBIT_BATCH` for ACH debit-style batch collections and `HK_FPS_DIRECT_DEBIT` for HK FPS/eDDA-style direct debit collection simulation.
+- Requires JWT scopes `collections:create` and `collections:read`; creation requires `Idempotency-Key`.
+- Requires a `mandateReference` as simulator evidence that authorization already exists, but does not create, amend, cancel, activate, expire, or verify mandates.
+- Includes deterministic simulator outcomes for collected/completed, settlement or authorization pending, partial return, rejected authorization, insufficient funds, timeout, and internal failure.
+- Does not provide real ACH, NACHA, HK FPS, HKICL, eDDA setup, account validation, balance check, fraud, sanctions, clearing, settlement, recurring scheduling, webhooks, or production decisioning.
+
+Developer guidance is in `docs/developer-support/collections-simulation.md`.
 
 ### Classic Payment Rail Simulation
 
@@ -122,6 +135,12 @@ mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructur
 mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructure.security.LocalJwtTokenGenerator" "-Dexec.args=client-a rtgs-payments:create,rtgs-payments:read 3600"
 ```
 
+Generate a local collections Postman token:
+
+```powershell
+mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructure.security.LocalJwtTokenGenerator" "-Dexec.args=client-a collections:create,collections:read 3600"
+```
+
 Generate a local payment rail recommendation Postman token:
 
 ```powershell
@@ -181,6 +200,7 @@ The `HTTPRoute` forwards these path prefixes to the `domestic-rtp-payment-api` s
 /v1/domestic-payments
 /v1/ach-batches
 /v1/rtgs-payments
+/v1/collections
 /v1/fi-payments
 /v1/payment-rail-recommendations
 /swagger-ui

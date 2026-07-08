@@ -15,6 +15,11 @@ info:
     simulator-only: no real ACH or RTGS connectivity, no NACHA or ISO 20022
     runtime for ACH or RTGS, and no central bank ledger, liquidity, queue
     management, or settlement connectivity.
+    Collections simulation is a pre-authorized pull-payment product surface with
+    US ACH Direct Debit batch and HK FPS Direct Debit simulator profiles only.
+    It has no real ACH, NACHA, HK FPS, HKICL, eDDA setup, account validation,
+    balance check, fraud, sanctions, clearing, settlement, or production
+    decisioning connectivity.
     Payment rail recommendation is deterministic simulator guidance only: no
     real AI, LLM, pricing, liquidity, sanctions, fraud, FX, compliance, or real
     rail availability decision.
@@ -279,6 +284,133 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AchBatchStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/collections:
+    post:
+      operationId: CreateCollection
+      summary: Create a pre-authorized collection simulation
+      description: >
+        Accepts one JSON collection request for a supported simulator profile:
+        US_ACH_DIRECT_DEBIT_BATCH or HK_FPS_DIRECT_DEBIT. A mandateReference is
+        required and treated as evidence of an existing authorization; the API
+        does not create or verify mandates. This behavior is simulator-only:
+        no real ACH, NACHA, HK FPS, HKICL, eDDA setup, account validation,
+        balance check, fraud, sanctions, clearing, settlement, or production
+        decisioning connectivity.
+      security:
+        - bearerAuth: []
+      x-required-scopes:
+        - collections:create
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/CollectionMockScenario'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCollectionRequest'
+            examples:
+              usAchDebit:
+                summary: US ACH Direct Debit batch collection
+                value:
+                  collectionProfile: US_ACH_DIRECT_DEBIT_BATCH
+                  collectionReference: COLL-US-ACH-20260707-0001
+                  mandateReference: MANDATE-US-001
+                  creditorName: CIB Collection Services
+                  debtorName: Corporate Customer
+                  settlementAccount:
+                    bankCode: '021000021'
+                    accountNumber: '123456789'
+                    accountName: CIB Collections
+                  entries:
+                    - entryReference: COLL-ENTRY-0001
+                      payerName: Payer One
+                      payerAccount:
+                        bankCode: '111000025'
+                        accountNumber: '987654321'
+                        accountName: Payer One
+                      amount:
+                        currency: USD
+                        value: '125.40'
+                      purpose: INVOICE_COLLECTION
+              hkFps:
+                summary: HK FPS Direct Debit collection
+                value:
+                  collectionProfile: HK_FPS_DIRECT_DEBIT
+                  collectionReference: COLL-HK-FPS-20260707-0001
+                  mandateReference: EDDA-HK-001
+                  creditorName: Sample Merchant HK
+                  debtorName: Sample Payer HK
+                  payerBankCode: '004'
+                  payerAlias: FPS-PROXY-ALIAS
+                  amount:
+                    currency: HKD
+                    value: '350.00'
+                  purpose: MONTHLY_TUTORIAL_FEE
+                  entries: []
+      responses:
+        '202':
+          description: Collection accepted by the simulator for status inspection.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/IdempotencyConflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/collections/{collectionId}:
+    get:
+      operationId: GetCollectionStatus
+      summary: Get collection status
+      description: >
+        Returns the current collection status for the authenticated client that
+        owns the collection. Status query does not require Idempotency-Key.
+      security:
+        - bearerAuth: []
+      x-required-scopes:
+        - collections:read
+      parameters:
+        - name: collectionId
+          in: path
+          required: true
+          description: Collection ID returned by CreateCollection.
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Current collection status response.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionStatusResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -813,6 +945,28 @@ components:
           - rtgs_settled
           - rtgs_queued_for_liquidity
           - rtgs_rejected
+    CollectionMockScenario:
+      name: X-Mock-Scenario
+      in: header
+      required: false
+      description: >
+        Optional local/test-only collections simulator scenario selector. Not
+        part of production payment semantics. Omit for the default profile
+        outcome.
+      schema:
+        type: string
+        enum:
+          - us_ach_debit_collected
+          - us_ach_debit_settlement_pending
+          - us_ach_debit_partially_returned
+          - us_ach_debit_rejected_authorization
+          - us_ach_debit_rejected_insufficient_funds
+          - hk_fps_collection_completed
+          - hk_fps_collection_pending_authorization
+          - hk_fps_collection_rejected_invalid_authorization
+          - hk_fps_collection_rejected_insufficient_funds
+          - collection_timeout
+          - collection_internal_failure
     FiMockScenario:
       name: X-Mock-Scenario
       in: header
@@ -1179,6 +1333,150 @@ components:
           type: string
         status:
           type: string
+    CreateCollectionRequest:
+      type: object
+      required:
+        - collectionProfile
+        - collectionReference
+        - mandateReference
+        - creditorName
+        - debtorName
+        - entries
+      properties:
+        collectionProfile:
+          type: string
+          enum: [US_ACH_DIRECT_DEBIT_BATCH, HK_FPS_DIRECT_DEBIT]
+        collectionReference:
+          type: string
+        mandateReference:
+          type: string
+          description: Existing mandate or eDDA authorization reference; this API does not create or verify mandates.
+        creditorName:
+          type: string
+        debtorName:
+          type: string
+        settlementAccount:
+          $ref: '#/components/schemas/AccountReference'
+        payerBankCode:
+          type: string
+          description: HK FPS payer bank or participant code for simulator context.
+        payerAlias:
+          type: string
+          description: HK FPS proxy or payer alias. Logging and diagnostics must mask or omit this value.
+        amount:
+          $ref: '#/components/schemas/Money'
+        purpose:
+          type: string
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectionEntryRequest'
+      additionalProperties: false
+      description: >
+        JSON collection request. US_ACH_DIRECT_DEBIT_BATCH uses entries and USD;
+        HK_FPS_DIRECT_DEBIT uses amount, HKD, payerBankCode, and payerAlias.
+    CollectionEntryRequest:
+      type: object
+      required:
+        - entryReference
+        - payerName
+        - payerAccount
+        - amount
+        - purpose
+      properties:
+        entryReference:
+          type: string
+        payerName:
+          type: string
+        payerAccount:
+          $ref: '#/components/schemas/AccountReference'
+        amount:
+          $ref: '#/components/schemas/Money'
+        purpose:
+          type: string
+      additionalProperties: false
+    CollectionResponse:
+      type: object
+      required:
+        - collectionId
+        - collectionProfile
+        - status
+        - entryCount
+        - totalAmount
+        - entries
+        - correlationId
+        - links
+      properties:
+        collectionId:
+          type: string
+          format: uuid
+        collectionProfile:
+          type: string
+          enum: [US_ACH_DIRECT_DEBIT_BATCH, HK_FPS_DIRECT_DEBIT]
+        status:
+          type: string
+          enum: [ACCEPTED, SETTLEMENT_PENDING, PENDING_AUTHORIZATION, COLLECTED, COMPLETED, PARTIALLY_RETURNED, REJECTED, TIMEOUT, FAILED]
+        entryCount:
+          type: integer
+        totalAmount:
+          $ref: '#/components/schemas/Money'
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectionEntryStatusResponse'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        correlationId:
+          type: string
+        reason:
+          $ref: '#/components/schemas/PaymentReason'
+        links:
+          $ref: '#/components/schemas/PaymentLinks'
+    CollectionStatusResponse:
+      allOf:
+        - $ref: '#/components/schemas/CollectionResponse'
+        - type: object
+          required:
+            - collectionReference
+            - mandateReference
+            - creditorName
+            - debtorName
+          properties:
+            collectionReference:
+              type: string
+            mandateReference:
+              type: string
+            creditorName:
+              type: string
+            debtorName:
+              type: string
+    CollectionEntryStatusResponse:
+      type: object
+      required:
+        - entryId
+        - entryReference
+        - payerName
+        - amount
+        - status
+      properties:
+        entryId:
+          type: string
+          format: uuid
+        entryReference:
+          type: string
+        payerName:
+          type: string
+        amount:
+          $ref: '#/components/schemas/Money'
+        status:
+          type: string
+          enum: [ACCEPTED, PENDING_SETTLEMENT, COLLECTED, RETURNED, REJECTED, TIMEOUT, FAILED]
+        reason:
+          $ref: '#/components/schemas/PaymentReason'
     CreateAchBatchRequest:
       type: object
       required:

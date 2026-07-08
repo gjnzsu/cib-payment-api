@@ -1,6 +1,7 @@
 package com.cib.payment.api.application.service;
 
 import com.cib.payment.api.api.dto.CreateAchBatchRequest;
+import com.cib.payment.api.api.dto.CreateCollectionRequest;
 import com.cib.payment.api.api.dto.CreateDomesticPaymentRequest;
 import com.cib.payment.api.api.dto.CreateRtgsPaymentRequest;
 import com.cib.payment.api.application.port.Camt056RecallRequestParser;
@@ -60,6 +61,17 @@ public class RequestFingerprintService {
         var payload = new TreeMap<String, Object>();
         payload.put("clientId", clientId);
         payload.put("rtgsPaymentRequestBody", requestBody);
+        payload.put("context", new TreeMap<>(behaviorallyRelevantContext));
+        return sha256Hex(canonicalJson(payload));
+    }
+
+    public String fingerprint(
+            String clientId,
+            CreateCollectionRequest requestBody,
+            Map<String, ?> behaviorallyRelevantContext) {
+        var payload = new TreeMap<String, Object>();
+        payload.put("clientId", clientId);
+        payload.put("collectionRequestBody", requestBody);
         payload.put("context", new TreeMap<>(behaviorallyRelevantContext));
         return sha256Hex(canonicalJson(payload));
     }

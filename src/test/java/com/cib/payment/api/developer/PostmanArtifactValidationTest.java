@@ -37,6 +37,8 @@ class PostmanArtifactValidationTest {
     private static final Path DOCS = Path.of("docs", "developer-support", "postman-local-testing.md");
     private static final Path CLASSIC_RAIL_DOCS =
             Path.of("docs", "developer-support", "classic-payment-rail-simulation.md");
+    private static final Path COLLECTIONS_DOCS =
+            Path.of("docs", "developer-support", "collections-simulation.md");
     private static final Path GATEWAY = Path.of("k8s", "gateway.yaml");
     private static final String ORIGINAL_FI_REFERENCE = "FI-E2E-20260528-0001";
     private static final Set<String> SUPPORTED_FI_RECALL_REASONS = Set.of("DUPL", "CUST", "AM09", "FRAD", "TECH");
@@ -318,6 +320,87 @@ class PostmanArtifactValidationTest {
                 .as("Classic rail per-scenario idempotency key values")
                 .doesNotContain("")
                 .doesNotHaveDuplicates();
+    }
+
+    @Test
+    void postmanCollectionCoversCollectionsSimulationJourney() throws Exception {
+        var collection = objectMapper.readTree(Files.readString(COLLECTION, StandardCharsets.UTF_8));
+        var serialized = collection.toString();
+
+        assertThat(folderNames(collection)).contains("Collections Simulation");
+        assertThat(requestNames(collection)).contains(
+                "Collection - US ACH Direct Debit Collected",
+                "Collection - HK FPS Direct Debit Completed",
+                "Collection - Get Status");
+        assertThat(serialized).contains(
+                "/v1/collections",
+                "/v1/collections/{{collectionId}}",
+                "Bearer {{collectionJwtToken}}",
+                "Bearer {{collectionReadOnlyJwtToken}}",
+                "{{collectionUsAchIdempotencyKey}}",
+                "{{collectionHkFpsIdempotencyKey}}",
+                "US_ACH_DIRECT_DEBIT_BATCH",
+                "HK_FPS_DIRECT_DEBIT",
+                "MANDATE-US-001",
+                "EDDA-HK-001",
+                "us_ach_debit_collected",
+                "hk_fps_collection_completed",
+                "collections:create",
+                "Idempotency-Key",
+                "Status query does not require Idempotency-Key");
+
+        var usAch = request(collection, "Collection - US ACH Direct Debit Collected");
+        assertThat(usAch.path("method").asText()).isEqualTo("POST");
+        assertThat(headerValue(usAch, "Authorization")).isEqualTo("Bearer {{collectionJwtToken}}");
+        assertThat(headerValue(usAch, "Idempotency-Key")).isEqualTo("{{collectionUsAchIdempotencyKey}}");
+        assertThat(headerValue(usAch, "X-Mock-Scenario")).isEqualTo("us_ach_debit_collected");
+        assertThat(requestDescription(collection, "Collection - US ACH Direct Debit Collected"))
+                .contains("Expected HTTP status: 202", "collections:create");
+
+        var status = request(collection, "Collection - Get Status");
+        assertThat(status.path("method").asText()).isEqualTo("GET");
+        assertThat(headerValue(status, "Authorization")).isEqualTo("Bearer {{collectionReadOnlyJwtToken}}");
+        assertThat(headerNames(status)).doesNotContain("Idempotency-Key");
+    }
+
+    @Test
+    void postmanEnvironmentProvidesCollectionsVariables() throws Exception {
+        var environment = objectMapper.readTree(Files.readString(ENVIRONMENT, StandardCharsets.UTF_8));
+
+        assertThat(environmentVariables(environment)).contains(
+                "collectionJwtToken",
+                "collectionReadOnlyJwtToken",
+                "collectionId",
+                "collectionUsAchIdempotencyKey",
+                "collectionHkFpsIdempotencyKey",
+                "collectionMockScenario");
+    }
+
+    @Test
+    void collectionsDocumentationExplainsProfilesBoundariesAndGatewayRoute() throws Exception {
+        var readme = Files.readString(README, StandardCharsets.UTF_8);
+        var guide = Files.readString(COLLECTIONS_DOCS, StandardCharsets.UTF_8);
+        var gateway = Files.readString(GATEWAY, StandardCharsets.UTF_8);
+
+        assertThat(readme).contains(
+                "Collections Simulation",
+                "/v1/collections",
+                "US_ACH_DIRECT_DEBIT_BATCH",
+                "HK_FPS_DIRECT_DEBIT",
+                "collections:create",
+                "collections:read",
+                "docs/developer-support/collections-simulation.md");
+        assertThat(guide).contains(
+                "pre-authorized pull-payment",
+                "US ACH Direct Debit",
+                "HK FPS Direct Debit",
+                "mandateReference",
+                "us_ach_debit_collected",
+                "hk_fps_collection_completed",
+                "no real ACH",
+                "no NACHA",
+                "no real HK FPS/eDDA setup");
+        assertThat(gateway).contains("value: /v1/collections");
     }
 
     @Test

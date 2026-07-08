@@ -247,6 +247,78 @@ class OpenApiContractTest {
     }
 
     @Test
+    void openApiStructurallyDefinesCollectionsOperationsSecurityScenariosAndSchemas() throws Exception {
+        var openApi = readOpenApi();
+        var createCollection = operation(openApi, "/v1/collections", "post");
+        var getCollectionStatus = operation(openApi, "/v1/collections/{collectionId}", "get");
+
+        assertBearerSecurityAndScope(createCollection, "collections:create");
+        assertParameterRefs(createCollection, "IdempotencyKey", "CorrelationId", "CollectionMockScenario");
+        assertThat(createCollection.path("requestBody").path("required").asBoolean()).isTrue();
+        assertThat(createCollection.at("/requestBody/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/CreateCollectionRequest");
+        assertThat(createCollection.at("/responses/202/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/CollectionResponse");
+        assertStandardJsonErrors(createCollection, "400", "401", "403", "409", "422", "500");
+
+        assertBearerSecurityAndScope(getCollectionStatus, "collections:read");
+        assertPathParameter(getCollectionStatus, "collectionId");
+        assertParameterRefs(getCollectionStatus, "CorrelationId");
+        assertThat(parameterRefs(getCollectionStatus)).doesNotContain("IdempotencyKey");
+        assertThat(getCollectionStatus.at("/responses/200/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/CollectionStatusResponse");
+        assertStandardJsonErrors(getCollectionStatus, "400", "401", "403", "404", "500");
+
+        var parameters = openApi.at("/components/parameters");
+        assertThat(textValues(parameters.at("/CollectionMockScenario/schema/enum"))).contains(
+                "us_ach_debit_collected",
+                "us_ach_debit_settlement_pending",
+                "us_ach_debit_partially_returned",
+                "hk_fps_collection_completed",
+                "hk_fps_collection_pending_authorization",
+                "collection_timeout",
+                "collection_internal_failure");
+
+        var components = openApi.at("/components/schemas");
+        assertRequiredFields(
+                components.path("CreateCollectionRequest"),
+                "collectionProfile",
+                "collectionReference",
+                "mandateReference",
+                "creditorName",
+                "debtorName",
+                "entries");
+        assertThat(textValues(components.at("/CreateCollectionRequest/properties/collectionProfile/enum")))
+                .containsExactly("US_ACH_DIRECT_DEBIT_BATCH", "HK_FPS_DIRECT_DEBIT");
+        assertRequiredFields(
+                components.path("CollectionResponse"),
+                "collectionId",
+                "collectionProfile",
+                "status",
+                "entryCount",
+                "totalAmount",
+                "entries",
+                "correlationId",
+                "links");
+        assertRequiredFields(
+                components.path("CollectionEntryStatusResponse"),
+                "entryId",
+                "entryReference",
+                "payerName",
+                "amount",
+                "status");
+
+        var yaml = new ClassPathResource("openapi/domestic-payment-api.yaml")
+                .getContentAsString(StandardCharsets.UTF_8);
+        assertThat(yaml).contains(
+                "US_ACH_DIRECT_DEBIT_BATCH",
+                "HK_FPS_DIRECT_DEBIT",
+                "mandateReference",
+                "no real ACH, NACHA, HK FPS, HKICL, eDDA setup",
+                "Status query does not require Idempotency-Key");
+    }
+
+    @Test
     void openApiStructurallyDefinesPaymentRailRecommendationOperationAndSchemas() throws Exception {
         var openApi = readOpenApi();
         var recommend = operation(openApi, "/v1/payment-rail-recommendations", "post");
