@@ -10,6 +10,9 @@ The suite currently exposes:
 - `GET /v1/ach-batches/{batchId}`
 - `POST /v1/rtgs-payments`
 - `GET /v1/rtgs-payments/{paymentId}`
+- `POST /v1/mandates`
+- `GET /v1/mandates/{mandateId}`
+- `POST /v1/mandates/{mandateId}/cancel`
 - `POST /v1/collections`
 - `GET /v1/collections/{collectionId}`
 - `POST /v1/fi-payments`
@@ -26,12 +29,14 @@ The implementation follows these archived OpenSpec changes:
 
 ### Collections Simulation
 
+- Adds mandate simulation through `POST /v1/mandates`, `GET /v1/mandates/{mandateId}`, and `POST /v1/mandates/{mandateId}/cancel` for pre-collection authorization setup.
 - Adds pre-authorized pull-payment collection simulation through `POST /v1/collections` and `GET /v1/collections/{collectionId}`.
+- Supports `US_ACH_DEBIT_MANDATE` and `HK_FPS_EDDA` mandate profiles with deterministic active, pending, rejected, expired, timeout, and failure outcomes.
 - Supports `US_ACH_DIRECT_DEBIT_BATCH` for ACH debit-style batch collections and `HK_FPS_DIRECT_DEBIT` for HK FPS/eDDA-style direct debit collection simulation.
-- Requires JWT scopes `collections:create` and `collections:read`; creation requires `Idempotency-Key`.
-- Requires a `mandateReference` as simulator evidence that authorization already exists, but does not create, amend, cancel, activate, expire, or verify mandates.
+- Requires JWT scopes `mandates:create`, `mandates:read`, `mandates:cancel`, `collections:create`, and `collections:read` as applicable; state-changing create/cancel operations require `Idempotency-Key`.
+- Collections require a `mandateReference`; external references remain accepted as simulator evidence, while references created by `/v1/mandates` must be `ACTIVE`.
 - Includes deterministic simulator outcomes for collected/completed, settlement or authorization pending, partial return, rejected authorization, insufficient funds, timeout, and internal failure.
-- Does not provide real ACH, NACHA, HK FPS, HKICL, eDDA setup, account validation, balance check, fraud, sanctions, clearing, settlement, recurring scheduling, webhooks, or production decisioning.
+- Does not provide real ACH, NACHA, HK FPS, HKICL, eDDA setup, payer notification, account validation, balance check, fraud, sanctions, clearing, settlement, recurring scheduling, webhooks, or production decisioning.
 
 Developer guidance is in `docs/developer-support/collections-simulation.md`.
 
@@ -114,7 +119,7 @@ postman/domestic-rtp-payment-api.postman_collection.json
 postman/domestic-rtp-payment-api.local.postman_environment.json
 ```
 
-Import both files into Postman, select the local environment, then set local JWT variables before calling secured endpoints. The collection contains domestic ISO XML scenarios, the `Classic Payment Rail Simulation` journey for RTP baseline, ACH Direct Credit, RTGS, and FI correspondent comparison, the `Payment Rail Recommendation Copilot` recommendation scenarios, FI `pacs.009` scenarios, FI `camt.056` to `camt.029` recall/investigation scenarios, deterministic simulator outcomes, replay/conflict checks, auth/scope failure checks, and status queries. Detailed local testing guidance is in `docs/developer-support/postman-local-testing.md`, `docs/developer-support/classic-payment-rail-simulation.md`, and `docs/developer-support/payment-rail-recommendation-copilot.md`.
+Import both files into Postman, select the local environment, then set local JWT variables before calling secured endpoints. The collection contains domestic ISO XML scenarios, the `Classic Payment Rail Simulation` journey for RTP baseline, ACH Direct Credit, RTGS, and FI correspondent comparison, the `Collections Simulation` mandate-to-collection journey, the `Payment Rail Recommendation Copilot` recommendation scenarios, FI `pacs.009` scenarios, FI `camt.056` to `camt.029` recall/investigation scenarios, deterministic simulator outcomes, replay/conflict checks, auth/scope failure checks, and status queries. Detailed local testing guidance is in `docs/developer-support/postman-local-testing.md`, `docs/developer-support/classic-payment-rail-simulation.md`, `docs/developer-support/collections-simulation.md`, and `docs/developer-support/payment-rail-recommendation-copilot.md`.
 
 Generate a local domestic Postman token:
 
@@ -138,7 +143,7 @@ mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructur
 Generate a local collections Postman token:
 
 ```powershell
-mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructure.security.LocalJwtTokenGenerator" "-Dexec.args=client-a collections:create,collections:read 3600"
+mvn -q -DskipTests exec:java "-Dexec.mainClass=com.cib.payment.api.infrastructure.security.LocalJwtTokenGenerator" "-Dexec.args=client-a mandates:create,mandates:read,mandates:cancel,collections:create,collections:read 3600"
 ```
 
 Generate a local payment rail recommendation Postman token:
@@ -200,6 +205,7 @@ The `HTTPRoute` forwards these path prefixes to the `domestic-rtp-payment-api` s
 /v1/domestic-payments
 /v1/ach-batches
 /v1/rtgs-payments
+/v1/mandates
 /v1/collections
 /v1/fi-payments
 /v1/payment-rail-recommendations

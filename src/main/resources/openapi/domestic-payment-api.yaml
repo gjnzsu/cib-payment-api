@@ -15,11 +15,11 @@ info:
     simulator-only: no real ACH or RTGS connectivity, no NACHA or ISO 20022
     runtime for ACH or RTGS, and no central bank ledger, liquidity, queue
     management, or settlement connectivity.
-    Collections simulation is a pre-authorized pull-payment product surface with
-    US ACH Direct Debit batch and HK FPS Direct Debit simulator profiles only.
-    It has no real ACH, NACHA, HK FPS, HKICL, eDDA setup, account validation,
-    balance check, fraud, sanctions, clearing, settlement, or production
-    decisioning connectivity.
+    Mandate and Collections simulation model a pre-authorized pull-payment
+    journey with US ACH Direct Debit and HK FPS/eDDA simulator profiles only.
+    They have no real ACH, NACHA, HK FPS, HKICL, eDDA setup, account validation,
+    balance check, fraud, sanctions, clearing, settlement, payer notification,
+    or production decisioning connectivity.
     Payment rail recommendation is deterministic simulator guidance only: no
     real AI, LLM, pricing, liquidity, sanctions, fraud, FX, compliance, or real
     rail availability decision.
@@ -294,6 +294,180 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /v1/mandates:
+    post:
+      operationId: CreateMandate
+      summary: Create a direct debit mandate simulation
+      description: >
+        Accepts one JSON mandate simulation request for US_ACH_DEBIT_MANDATE
+        or HK_FPS_EDDA. This is simulator-only authorization setup: no real ACH,
+        NACHA, HK FPS, HKICL, eDDA setup, payer notification, account validation,
+        fraud, sanctions, or production decisioning connectivity.
+      security:
+        - bearerAuth: []
+      x-required-scopes:
+        - mandates:create
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/MandateMockScenario'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMandateRequest'
+            examples:
+              usAchMandate:
+                summary: US ACH Direct Debit mandate
+                value:
+                  mandateProfile: US_ACH_DEBIT_MANDATE
+                  mandateReference: MANDATE-US-001
+                  creditorName: CIB Collection Services
+                  debtorName: Corporate Customer
+                  creditorAccount:
+                    bankCode: '021000021'
+                    accountNumber: '123456789'
+                    accountName: CIB Collections
+                  debtorAccount:
+                    bankCode: '111000025'
+                    accountNumber: '987654321'
+                    accountName: Corporate Customer
+                  maximumAmount:
+                    currency: USD
+                    value: '1000.00'
+                  frequency: VARIABLE
+                  purpose: MONTHLY_COLLECTION
+              hkFpsEdda:
+                summary: HK FPS eDDA mandate
+                value:
+                  mandateProfile: HK_FPS_EDDA
+                  mandateReference: EDDA-HK-001
+                  creditorName: Sample Merchant HK
+                  debtorName: Sample Payer HK
+                  creditorAccount:
+                    bankCode: '004'
+                    accountNumber: '123456789'
+                    accountName: Sample Merchant HK
+                  debtorAccount:
+                    bankCode: '024'
+                    accountNumber: '987654321'
+                    accountName: Sample Payer HK
+                  maximumAmount:
+                    currency: HKD
+                    value: '1000.00'
+                  frequency: VARIABLE
+                  purpose: MONTHLY_TUTORIAL_FEE
+      responses:
+        '202':
+          description: Mandate accepted by the simulator for status inspection.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MandateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/IdempotencyConflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/mandates/{mandateId}:
+    get:
+      operationId: GetMandateStatus
+      summary: Get mandate status
+      description: >
+        Returns the current mandate status for the authenticated client that
+        owns the mandate. Status query does not require Idempotency-Key.
+      security:
+        - bearerAuth: []
+      x-required-scopes:
+        - mandates:read
+      parameters:
+        - name: mandateId
+          in: path
+          required: true
+          description: Mandate ID returned by CreateMandate.
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Current mandate status response.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MandateStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/mandates/{mandateId}/cancel:
+    post:
+      operationId: CancelMandate
+      summary: Cancel a mandate simulation
+      description: >
+        Simulates cancellation of an owned active or pending mandate. This is a
+        simulator-only status transition and does not notify payer banks or
+        external schemes.
+      security:
+        - bearerAuth: []
+      x-required-scopes:
+        - mandates:cancel
+      parameters:
+        - name: mandateId
+          in: path
+          required: true
+          description: Mandate ID returned by CreateMandate.
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelMandateRequest'
+      responses:
+        '200':
+          description: Mandate cancellation response.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MandateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/IdempotencyConflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /v1/collections:
     post:
       operationId: CreateCollection
@@ -301,8 +475,9 @@ paths:
       description: >
         Accepts one JSON collection request for a supported simulator profile:
         US_ACH_DIRECT_DEBIT_BATCH or HK_FPS_DIRECT_DEBIT. A mandateReference is
-        required and treated as evidence of an existing authorization; the API
-        does not create or verify mandates. This behavior is simulator-only:
+        required. External mandate references are treated as evidence of an
+        existing authorization. References created by /v1/mandates must be
+        ACTIVE when used for collection simulation. This behavior is simulator-only:
         no real ACH, NACHA, HK FPS, HKICL, eDDA setup, account validation,
         balance check, fraud, sanctions, clearing, settlement, or production
         decisioning connectivity.
@@ -967,6 +1142,22 @@ components:
           - hk_fps_collection_rejected_insufficient_funds
           - collection_timeout
           - collection_internal_failure
+    MandateMockScenario:
+      name: X-Mock-Scenario
+      in: header
+      required: false
+      description: >
+        Optional local/test-only mandate simulator scenario selector. Not part
+        of production payment semantics. Omit for the default active outcome.
+      schema:
+        type: string
+        enum:
+          - mandate_active
+          - mandate_pending_authorization
+          - mandate_rejected_by_payer
+          - mandate_expired
+          - mandate_timeout
+          - mandate_internal_failure
     FiMockScenario:
       name: X-Mock-Scenario
       in: header
@@ -1333,6 +1524,95 @@ components:
           type: string
         status:
           type: string
+    CreateMandateRequest:
+      type: object
+      required:
+        - mandateProfile
+        - creditorName
+        - debtorName
+        - creditorAccount
+        - debtorAccount
+        - maximumAmount
+        - frequency
+        - purpose
+      properties:
+        mandateProfile:
+          type: string
+          enum: [US_ACH_DEBIT_MANDATE, HK_FPS_EDDA]
+        mandateReference:
+          type: string
+          description: Optional business mandate or eDDA authorization reference. If omitted, the simulator generates one.
+        creditorName:
+          type: string
+        debtorName:
+          type: string
+        creditorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        debtorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        maximumAmount:
+          $ref: '#/components/schemas/Money'
+        frequency:
+          type: string
+          description: Simulator frequency label such as VARIABLE or MONTHLY.
+        purpose:
+          type: string
+      additionalProperties: false
+      description: >
+        JSON mandate simulation request. US_ACH_DEBIT_MANDATE expects USD;
+        HK_FPS_EDDA expects HKD. The API does not perform real payer approval,
+        account validation, eDDA setup, or ACH authorization storage.
+    CancelMandateRequest:
+      type: object
+      properties:
+        cancellationReason:
+          type: string
+      additionalProperties: false
+    MandateResponse:
+      type: object
+      required:
+        - mandateId
+        - mandateReference
+        - mandateProfile
+        - status
+        - correlationId
+        - links
+      properties:
+        mandateId:
+          type: string
+          format: uuid
+        mandateReference:
+          type: string
+        mandateProfile:
+          type: string
+          enum: [US_ACH_DEBIT_MANDATE, HK_FPS_EDDA]
+        status:
+          type: string
+          enum: [PENDING_AUTHORIZATION, ACTIVE, REJECTED, CANCELLED, EXPIRED, TIMEOUT, FAILED]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        correlationId:
+          type: string
+        reason:
+          $ref: '#/components/schemas/PaymentReason'
+        links:
+          $ref: '#/components/schemas/PaymentLinks'
+    MandateStatusResponse:
+      allOf:
+        - $ref: '#/components/schemas/MandateResponse'
+        - type: object
+          required:
+            - creditorName
+            - debtorName
+          properties:
+            creditorName:
+              type: string
+            debtorName:
+              type: string
     CreateCollectionRequest:
       type: object
       required:

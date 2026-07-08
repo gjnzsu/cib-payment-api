@@ -329,25 +329,45 @@ class PostmanArtifactValidationTest {
 
         assertThat(folderNames(collection)).contains("Collections Simulation");
         assertThat(requestNames(collection)).contains(
+                "Mandate - Create Active",
+                "Mandate - Get Status",
+                "Mandate - Cancel",
                 "Collection - US ACH Direct Debit Collected",
                 "Collection - HK FPS Direct Debit Completed",
                 "Collection - Get Status");
         assertThat(serialized).contains(
+                "/v1/mandates",
+                "/v1/mandates/{{mandateId}}",
+                "/v1/mandates/{{mandateId}}/cancel",
                 "/v1/collections",
                 "/v1/collections/{{collectionId}}",
                 "Bearer {{collectionJwtToken}}",
+                "Bearer {{mandateReadOnlyJwtToken}}",
                 "Bearer {{collectionReadOnlyJwtToken}}",
+                "{{mandateIdempotencyKey}}",
+                "{{mandateCancelIdempotencyKey}}",
                 "{{collectionUsAchIdempotencyKey}}",
                 "{{collectionHkFpsIdempotencyKey}}",
+                "US_ACH_DEBIT_MANDATE",
                 "US_ACH_DIRECT_DEBIT_BATCH",
                 "HK_FPS_DIRECT_DEBIT",
-                "MANDATE-US-001",
+                "{{mandateReference}}",
                 "EDDA-HK-001",
+                "mandate_active",
                 "us_ach_debit_collected",
                 "hk_fps_collection_completed",
+                "mandates:create",
                 "collections:create",
                 "Idempotency-Key",
                 "Status query does not require Idempotency-Key");
+
+        var mandate = request(collection, "Mandate - Create Active");
+        assertThat(mandate.path("method").asText()).isEqualTo("POST");
+        assertThat(headerValue(mandate, "Authorization")).isEqualTo("Bearer {{collectionJwtToken}}");
+        assertThat(headerValue(mandate, "Idempotency-Key")).isEqualTo("{{mandateIdempotencyKey}}");
+        assertThat(headerValue(mandate, "X-Mock-Scenario")).isEqualTo("{{mandateMockScenario}}");
+        assertThat(requestDescription(collection, "Mandate - Create Active"))
+                .contains("Expected HTTP status: 202", "mandates:create");
 
         var usAch = request(collection, "Collection - US ACH Direct Debit Collected");
         assertThat(usAch.path("method").asText()).isEqualTo("POST");
@@ -369,6 +389,12 @@ class PostmanArtifactValidationTest {
 
         assertThat(environmentVariables(environment)).contains(
                 "collectionJwtToken",
+                "mandateReadOnlyJwtToken",
+                "mandateId",
+                "mandateReference",
+                "mandateIdempotencyKey",
+                "mandateCancelIdempotencyKey",
+                "mandateMockScenario",
                 "collectionReadOnlyJwtToken",
                 "collectionId",
                 "collectionUsAchIdempotencyKey",
@@ -384,9 +410,15 @@ class PostmanArtifactValidationTest {
 
         assertThat(readme).contains(
                 "Collections Simulation",
+                "/v1/mandates",
                 "/v1/collections",
+                "US_ACH_DEBIT_MANDATE",
+                "HK_FPS_EDDA",
                 "US_ACH_DIRECT_DEBIT_BATCH",
                 "HK_FPS_DIRECT_DEBIT",
+                "mandates:create",
+                "mandates:read",
+                "mandates:cancel",
                 "collections:create",
                 "collections:read",
                 "docs/developer-support/collections-simulation.md");
@@ -395,12 +427,13 @@ class PostmanArtifactValidationTest {
                 "US ACH Direct Debit",
                 "HK FPS Direct Debit",
                 "mandateReference",
+                "mandate_active",
                 "us_ach_debit_collected",
                 "hk_fps_collection_completed",
                 "no real ACH",
                 "no NACHA",
                 "no real HK FPS/eDDA setup");
-        assertThat(gateway).contains("value: /v1/collections");
+        assertThat(gateway).contains("value: /v1/mandates", "value: /v1/collections");
     }
 
     @Test

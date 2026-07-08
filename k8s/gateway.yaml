@@ -33,6 +33,9 @@ spec:
             value: /v1/rtgs-payments
         - path:
             type: PathPrefix
+            value: /v1/mandates
+        - path:
+            type: PathPrefix
             value: /v1/collections
         - path:
             type: PathPrefix

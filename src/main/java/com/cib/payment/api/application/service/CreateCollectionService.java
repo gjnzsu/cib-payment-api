@@ -16,6 +16,7 @@ import com.cib.payment.api.application.port.CollectionRepository;
 import com.cib.payment.api.application.port.CollectionSimulator;
 import com.cib.payment.api.application.port.CollectionSimulatorOutcome;
 import com.cib.payment.api.application.port.IdempotencyRepository;
+import com.cib.payment.api.application.port.MandateRepository;
 import com.cib.payment.api.application.port.PaymentObservability;
 import com.cib.payment.api.domain.model.AccountReference;
 import com.cib.payment.api.domain.model.AuthorizationContext;
@@ -27,6 +28,7 @@ import com.cib.payment.api.domain.model.CollectionProfile;
 import com.cib.payment.api.domain.model.CollectionRecord;
 import com.cib.payment.api.domain.model.CollectionStatus;
 import com.cib.payment.api.domain.model.IdempotencyRecord;
+import com.cib.payment.api.domain.model.MandateStatus;
 import com.cib.payment.api.domain.model.Money;
 import com.cib.payment.api.domain.model.PaymentId;
 import com.cib.payment.api.domain.model.PaymentReason;
@@ -56,6 +58,7 @@ public class CreateCollectionService {
     private final IdempotencyRepository idempotencyRepository;
     private final RequestFingerprintService fingerprintService;
     private final CollectionSimulator simulator;
+    private final MandateRepository mandateRepository;
     private final PaymentObservability observability;
     private final ObjectMapper objectMapper;
     private final Clock clock;
@@ -67,8 +70,9 @@ public class CreateCollectionService {
             IdempotencyRepository idempotencyRepository,
             RequestFingerprintService fingerprintService,
             CollectionSimulator simulator,
+            MandateRepository mandateRepository,
             PaymentObservability observability) {
-        this(collectionRepository, idempotencyRepository, fingerprintService, simulator, observability, Clock.systemUTC());
+        this(collectionRepository, idempotencyRepository, fingerprintService, simulator, mandateRepository, observability, Clock.systemUTC());
     }
 
     CreateCollectionService(
@@ -76,7 +80,7 @@ public class CreateCollectionService {
             IdempotencyRepository idempotencyRepository,
             RequestFingerprintService fingerprintService,
             CollectionSimulator simulator) {
-        this(collectionRepository, idempotencyRepository, fingerprintService, simulator, PaymentObservability.noop(), Clock.systemUTC());
+        this(collectionRepository, idempotencyRepository, fingerprintService, simulator, null, PaymentObservability.noop(), Clock.systemUTC());
     }
 
     CreateCollectionService(
@@ -85,7 +89,7 @@ public class CreateCollectionService {
             RequestFingerprintService fingerprintService,
             CollectionSimulator simulator,
             Clock clock) {
-        this(collectionRepository, idempotencyRepository, fingerprintService, simulator, PaymentObservability.noop(), clock);
+        this(collectionRepository, idempotencyRepository, fingerprintService, simulator, null, PaymentObservability.noop(), clock);
     }
 
     CreateCollectionService(
@@ -95,10 +99,22 @@ public class CreateCollectionService {
             CollectionSimulator simulator,
             PaymentObservability observability,
             Clock clock) {
+        this(collectionRepository, idempotencyRepository, fingerprintService, simulator, null, observability, clock);
+    }
+
+    CreateCollectionService(
+            CollectionRepository collectionRepository,
+            IdempotencyRepository idempotencyRepository,
+            RequestFingerprintService fingerprintService,
+            CollectionSimulator simulator,
+            MandateRepository mandateRepository,
+            PaymentObservability observability,
+            Clock clock) {
         this.collectionRepository = collectionRepository;
         this.idempotencyRepository = idempotencyRepository;
         this.fingerprintService = fingerprintService;
         this.simulator = simulator;
+        this.mandateRepository = mandateRepository;
         this.observability = observability;
         this.objectMapper = new ObjectMapper().findAndRegisterModules();
         this.clock = clock;
@@ -116,6 +132,7 @@ public class CreateCollectionService {
 
         var profile = parseProfile(request.collectionProfile());
         validateCollectionRules(request, profile);
+        validateSystemMandateReference(request, authorizationContext);
         var scenario = scenarioOrDefault(mockScenario, profile);
         var fingerprint = fingerprintService.fingerprint(
                 authorizationContext.clientId(),
@@ -172,6 +189,21 @@ public class CreateCollectionService {
             case US_ACH_DIRECT_DEBIT_BATCH -> validateUsAchDebit(request);
             case HK_FPS_DIRECT_DEBIT -> validateHkFps(request);
         }
+    }
+
+    private void validateSystemMandateReference(
+            CreateCollectionRequest request,
+            AuthorizationContext authorizationContext) {
+        if (mandateRepository == null) {
+            return;
+        }
+        mandateRepository
+                .findByClientIdAndMandateReference(authorizationContext.clientId(), request.mandateReference())
+                .ifPresent(mandate -> {
+                    if (mandate.status() != MandateStatus.ACTIVE) {
+                        throw new ValidationFailureException("System-created mandateReference is not active");
+                    }
+                });
     }
 
     private void validateUsAchDebit(CreateCollectionRequest request) {

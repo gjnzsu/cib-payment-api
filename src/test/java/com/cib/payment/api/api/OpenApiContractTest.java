@@ -319,6 +319,81 @@ class OpenApiContractTest {
     }
 
     @Test
+    void openApiStructurallyDefinesMandateOperationsSecurityScenariosAndSchemas() throws Exception {
+        var openApi = readOpenApi();
+        var createMandate = operation(openApi, "/v1/mandates", "post");
+        var getMandateStatus = operation(openApi, "/v1/mandates/{mandateId}", "get");
+        var cancelMandate = operation(openApi, "/v1/mandates/{mandateId}/cancel", "post");
+
+        assertBearerSecurityAndScope(createMandate, "mandates:create");
+        assertParameterRefs(createMandate, "IdempotencyKey", "CorrelationId", "MandateMockScenario");
+        assertThat(createMandate.path("requestBody").path("required").asBoolean()).isTrue();
+        assertThat(createMandate.at("/requestBody/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/CreateMandateRequest");
+        assertThat(createMandate.at("/responses/202/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/MandateResponse");
+        assertStandardJsonErrors(createMandate, "400", "401", "403", "409", "500");
+
+        assertBearerSecurityAndScope(getMandateStatus, "mandates:read");
+        assertPathParameter(getMandateStatus, "mandateId");
+        assertParameterRefs(getMandateStatus, "CorrelationId");
+        assertThat(parameterRefs(getMandateStatus)).doesNotContain("IdempotencyKey");
+        assertThat(getMandateStatus.at("/responses/200/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/MandateStatusResponse");
+
+        assertBearerSecurityAndScope(cancelMandate, "mandates:cancel");
+        assertPathParameter(cancelMandate, "mandateId");
+        assertParameterRefs(cancelMandate, "IdempotencyKey", "CorrelationId");
+        assertThat(cancelMandate.at("/requestBody/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/CancelMandateRequest");
+        assertThat(cancelMandate.at("/responses/200/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/MandateResponse");
+
+        var parameters = openApi.at("/components/parameters");
+        assertThat(textValues(parameters.at("/MandateMockScenario/schema/enum"))).containsExactly(
+                "mandate_active",
+                "mandate_pending_authorization",
+                "mandate_rejected_by_payer",
+                "mandate_expired",
+                "mandate_timeout",
+                "mandate_internal_failure");
+
+        var components = openApi.at("/components/schemas");
+        assertRequiredFields(
+                components.path("CreateMandateRequest"),
+                "mandateProfile",
+                "creditorName",
+                "debtorName",
+                "creditorAccount",
+                "debtorAccount",
+                "maximumAmount",
+                "frequency",
+                "purpose");
+        assertThat(textValues(components.at("/CreateMandateRequest/properties/mandateProfile/enum")))
+                .containsExactly("US_ACH_DEBIT_MANDATE", "HK_FPS_EDDA");
+        assertRequiredFields(
+                components.path("MandateResponse"),
+                "mandateId",
+                "mandateReference",
+                "mandateProfile",
+                "status",
+                "correlationId",
+                "links");
+
+        var yaml = new ClassPathResource("openapi/domestic-payment-api.yaml")
+                .getContentAsString(StandardCharsets.UTF_8);
+        assertThat(yaml).contains(
+                "/v1/mandates",
+                "mandates:create",
+                "mandates:read",
+                "mandates:cancel",
+                "US_ACH_DEBIT_MANDATE",
+                "HK_FPS_EDDA",
+                "payer notification",
+                "External mandate references");
+    }
+
+    @Test
     void openApiStructurallyDefinesPaymentRailRecommendationOperationAndSchemas() throws Exception {
         var openApi = readOpenApi();
         var recommend = operation(openApi, "/v1/payment-rail-recommendations", "post");
