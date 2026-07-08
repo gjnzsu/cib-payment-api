@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Payment Scenario Advisor</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Simulator-only MVP</p>
+        <h1>Payment Scenario Advisor</h1>
+      </div>
+      <span class="status-pill">Recommendation + validation loop</span>
+    </header>
+
+    <section class="layout">
+      <aside class="scenario-panel">
+        <div class="section-heading">
+          <span>1</span>
+          <h2>Choose scenario</h2>
+        </div>
+        <div id="scenarioList" class="scenario-list" aria-live="polite"></div>
+      </aside>
+
+      <section class="detail-panel">
+        <div class="loop">
+          <article class="loop-step">
+            <div class="section-heading">
+              <span>2</span>
+              <h2>Recommendation</h2>
+            </div>
+            <div id="recommendation" class="content-block"></div>
+          </article>
+
+          <article class="loop-step">
+            <div class="section-heading">
+              <span>3</span>
+              <h2>Simulator plan</h2>
+            </div>
+            <div id="simulationPlan" class="content-block"></div>
+          </article>
+
+          <article class="loop-step">
+            <div class="section-heading">
+              <span>4</span>
+              <h2>Feedback result</h2>
+            </div>
+            <div id="feedbackReport" class="content-block"></div>
+          </article>
+        </div>
+      </section>
+    </section>
+  </main>
+  <script src="./app.js"></script>
+</body>
+</html>

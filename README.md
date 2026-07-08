@@ -18,7 +18,10 @@ The suite currently exposes:
 - `POST /v1/fi-payments`
 - `GET /v1/fi-payments/{paymentId}`
 - `POST /v1/fi-payments/{paymentId}/recall-requests`
+- `GET /v1/payment-scenario-advisor/scenarios`
+- `GET /v1/payment-scenario-advisor/scenarios/{scenarioId}`
 - `POST /v1/payment-rail-recommendations`
+- Static UI: `/payment-scenario-advisor/`
 
 The implementation follows these archived OpenSpec changes:
 
@@ -61,6 +64,18 @@ Developer guidance is in `docs/developer-support/classic-payment-rail-simulation
 - Does not provide real AI, LLM integration, payment execution, recommendation persistence, cross-border support, FX, sanctions, fraud, pricing, liquidity, compliance decisions, or real rail availability decisions.
 
 Developer guidance is in `docs/developer-support/payment-rail-recommendation-copilot.md`.
+
+### Payment Scenario Advisor
+
+- Adds a minimal business-facing advisor loop through `/payment-scenario-advisor/`.
+- Adds read-only advisor metadata through `GET /v1/payment-scenario-advisor/scenarios` and `GET /v1/payment-scenario-advisor/scenarios/{scenarioId}`.
+- Connects four curated MVP scenarios to deterministic rail guidance and simulator plans: urgent supplier payment to RTP, vendor batch payment to ACH, high-value treasury transfer to RTGS, and FI correspondent settlement to FI correspondent arrangement.
+- Returns recommendation intent, recommendation summary, simulator endpoint guidance, required scopes, idempotency requirement, mock scenario, expected status, and feedback report framing.
+- Does not require bearer authentication or Idempotency-Key because it creates no payment, recommendation, simulation, report, or idempotency record.
+- Does not execute simulator payments on behalf of the user. Running simulator journeys remains an explicit user action through the existing banking APIs.
+- Does not provide real AI, LLM integration, autonomous payment routing, real rail availability, pricing, liquidity, sanctions, fraud, FX, compliance, settlement, or production decisioning.
+
+Developer guidance is in `docs/developer-support/payment-scenario-advisor.md`.
 
 ### Domestic ISO Payment Simulation
 

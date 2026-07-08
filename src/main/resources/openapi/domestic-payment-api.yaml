@@ -23,6 +23,9 @@ info:
     Payment rail recommendation is deterministic simulator guidance only: no
     real AI, LLM, pricing, liquidity, sanctions, fraud, FX, compliance, or real
     rail availability decision.
+    Payment Scenario Advisor adds simulator-only guidance that connects curated
+    business scenarios to recommendation and simulator validation metadata. It
+    does not create payment, recommendation, simulation, or report records.
 servers:
   - url: http://localhost:8080
     description: Local development
@@ -936,6 +939,65 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /v1/payment-scenario-advisor/scenarios:
+    get:
+      operationId: ListPaymentScenarioAdvisorScenarios
+      summary: List Payment Scenario Advisor scenarios
+      description: >
+        Returns the curated Payment Scenario Advisor catalog for simulator-only
+        guidance. The advisor is read-only and does not create payment,
+        recommendation, simulation, or report records. Idempotency-Key is not
+        required.
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Supported advisor scenarios.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvisorScenarioCatalogResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/payment-scenario-advisor/scenarios/{scenarioId}:
+    get:
+      operationId: GetPaymentScenarioAdvisorScenario
+      summary: Get Payment Scenario Advisor scenario detail
+      description: >
+        Returns scenario detail, recommendation intent, recommendation summary,
+        simulation plan, and feedback report framing for a curated advisor
+        scenario. Supported scenario IDs are urgent-supplier-payment,
+        vendor-batch-payment, high-value-treasury-transfer, and
+        fi-correspondent-settlement. The simulation plan is simulator-only
+        guidance and requires explicit user confirmation before any separate
+        simulator journey is run.
+      security: []
+      parameters:
+        - name: scenarioId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Stable advisor scenario ID.
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Advisor scenario detail.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvisorScenarioDetailResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /v1/payment-rail-recommendations:
     post:
       operationId: CreatePaymentRailRecommendation
@@ -1235,6 +1297,245 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
   schemas:
+    AdvisorScenarioCatalogResponse:
+      type: object
+      required:
+        - scenarios
+        - correlationId
+      properties:
+        scenarios:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdvisorScenarioSummary'
+        correlationId:
+          type: string
+    AdvisorScenarioSummary:
+      type: object
+      required:
+        - scenarioId
+        - businessLabel
+        - businessDescription
+        - recommendedRail
+        - recommendedArrangement
+        - simulatorOnly
+        - requiresUserConfirmation
+      properties:
+        scenarioId:
+          type: string
+          enum:
+            - urgent-supplier-payment
+            - vendor-batch-payment
+            - high-value-treasury-transfer
+            - fi-correspondent-settlement
+        businessLabel:
+          type: string
+        businessDescription:
+          type: string
+        recommendedRail:
+          type: string
+          enum: [RTP, ACH, RTGS, FI_CORRESPONDENT]
+        recommendedArrangement:
+          type: string
+          enum:
+            - DOMESTIC_REAL_TIME_CLEARING
+            - BATCH_CLEARING_NET_SETTLEMENT
+            - DOMESTIC_INTERBANK_GROSS_SETTLEMENT
+            - CORRESPONDENT_ACCOUNT_PATH
+        simulatorOnly:
+          type: boolean
+        requiresUserConfirmation:
+          type: boolean
+    AdvisorScenarioDetailResponse:
+      type: object
+      required:
+        - scenarioId
+        - businessLabel
+        - businessDescription
+        - simulatorOnly
+        - requiresUserConfirmation
+        - recommendationIntent
+        - recommendation
+        - simulationPlan
+        - feedbackReport
+        - correlationId
+      properties:
+        scenarioId:
+          type: string
+        businessLabel:
+          type: string
+        businessDescription:
+          type: string
+        simulatorOnly:
+          type: boolean
+        requiresUserConfirmation:
+          type: boolean
+        recommendationIntent:
+          $ref: '#/components/schemas/AdvisorRecommendationIntent'
+        recommendation:
+          $ref: '#/components/schemas/AdvisorRecommendationSummary'
+        simulationPlan:
+          $ref: '#/components/schemas/AdvisorSimulationPlan'
+        feedbackReport:
+          $ref: '#/components/schemas/AdvisorFeedbackReport'
+        correlationId:
+          type: string
+    AdvisorRecommendationIntent:
+      type: object
+      required:
+        - clientSegment
+        - paymentPurpose
+        - paymentCount
+        - amountSummary
+        - debtorCountry
+        - creditorCountry
+        - urgency
+        - requiresFinality
+        - batchPreferred
+        - costSensitivity
+        - fiToFi
+      properties:
+        clientSegment:
+          type: string
+          enum: [CORPORATE, FI]
+        paymentPurpose:
+          type: string
+        paymentCount:
+          type: integer
+          minimum: 1
+        amountSummary:
+          $ref: '#/components/schemas/AdvisorAmountSummary'
+        debtorCountry:
+          type: string
+        creditorCountry:
+          type: string
+        urgency:
+          type: string
+          enum: [IMMEDIATE, SAME_DAY, STANDARD]
+        creditorType:
+          type: string
+        requiresFinality:
+          type: boolean
+        batchPreferred:
+          type: boolean
+        costSensitivity:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        fiToFi:
+          type: boolean
+        arrangementPreference:
+          type: string
+    AdvisorAmountSummary:
+      type: object
+      required:
+        - currency
+        - totalAmount
+      properties:
+        currency:
+          type: string
+          enum: [USD]
+        totalAmount:
+          type: string
+        maxSingleAmount:
+          type: string
+    AdvisorRecommendationSummary:
+      type: object
+      required:
+        - rail
+        - arrangement
+        - clientSegment
+        - confidenceLevel
+        - reasonCode
+        - summary
+        - matchedFactors
+        - tradeoffs
+      properties:
+        rail:
+          type: string
+          enum: [RTP, ACH, RTGS, FI_CORRESPONDENT]
+        arrangement:
+          type: string
+          enum:
+            - DOMESTIC_REAL_TIME_CLEARING
+            - BATCH_CLEARING_NET_SETTLEMENT
+            - DOMESTIC_INTERBANK_GROSS_SETTLEMENT
+            - CORRESPONDENT_ACCOUNT_PATH
+        clientSegment:
+          type: string
+          enum: [CORPORATE, FI]
+        confidenceLevel:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        reasonCode:
+          type: string
+        summary:
+          type: string
+        matchedFactors:
+          type: array
+          items:
+            type: string
+        tradeoffs:
+          type: array
+          items:
+            type: string
+    AdvisorSimulationPlan:
+      type: object
+      required:
+        - method
+        - endpoint
+        - requiredScopes
+        - requiredHeaders
+        - idempotencyRequired
+        - payloadFormat
+        - mockScenario
+        - statusEndpointTemplate
+        - expectedStatus
+        - simulatorOnly
+        - requiresUserConfirmation
+      properties:
+        method:
+          type: string
+          enum: [POST]
+        endpoint:
+          type: string
+        requiredScopes:
+          type: array
+          items:
+            type: string
+        requiredHeaders:
+          type: array
+          items:
+            type: string
+        idempotencyRequired:
+          type: boolean
+        payloadFormat:
+          type: string
+        mockScenario:
+          type: string
+          description: Local simulator selector scoped to simulator guidance only.
+        statusEndpointTemplate:
+          type: string
+        expectedStatus:
+          type: string
+        simulatorOnly:
+          type: boolean
+        requiresUserConfirmation:
+          type: boolean
+    AdvisorFeedbackReport:
+      type: object
+      required:
+        - validationStatus
+        - expectedOutcome
+        - businessConclusion
+        - nextStep
+      properties:
+        validationStatus:
+          type: string
+        expectedOutcome:
+          type: string
+        businessConclusion:
+          type: string
+        nextStep:
+          type: string
     CreatePaymentRailRecommendationRequest:
       type: object
       required:

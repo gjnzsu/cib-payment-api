@@ -30,7 +30,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/actuator/health/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/openapi/**")
+                        .requestMatchers("/actuator/health/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/openapi/**", "/payment-scenario-advisor/**")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/v1/payment-scenario-advisor/**")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/v1/domestic-payments")
                         .hasAuthority("SCOPE_payments:create")

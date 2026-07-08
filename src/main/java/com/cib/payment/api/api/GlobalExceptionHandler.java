@@ -2,6 +2,7 @@ package com.cib.payment.api.api;
 
 import com.cib.payment.api.api.dto.ErrorResponse;
 import com.cib.payment.api.api.dto.ValidationErrorDetailResponse;
+import com.cib.payment.api.application.exception.AdvisorScenarioNotFoundException;
 import com.cib.payment.api.application.exception.AuthorizationScopeException;
 import com.cib.payment.api.application.exception.DetailedValidationFailureException;
 import com.cib.payment.api.application.exception.DownstreamProcessingException;
@@ -66,6 +67,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PaymentNotFoundException.class)
     ResponseEntity<ErrorResponse> handleNotFound(HttpServletRequest request) {
         return error(HttpStatus.NOT_FOUND, "PAYMENT_NOT_FOUND", "Payment was not found", request, List.of());
+    }
+
+    @ExceptionHandler(AdvisorScenarioNotFoundException.class)
+    ResponseEntity<ErrorResponse> handleAdvisorScenarioNotFound(HttpServletRequest request) {
+        return error(HttpStatus.NOT_FOUND, "ADVISOR_SCENARIO_NOT_FOUND", "Advisor scenario was not found", request, List.of());
     }
 
     @ExceptionHandler(IdempotencyConflictException.class)

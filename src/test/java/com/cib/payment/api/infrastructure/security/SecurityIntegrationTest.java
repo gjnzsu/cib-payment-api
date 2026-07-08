@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.cib.payment.api.testsupport.JwtTestSupport;
@@ -40,6 +41,19 @@ class SecurityIntegrationTest {
                 .andExpect(jsonPath("$.message").value("Authentication is required or invalid"))
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.correlationId").value("security-corr-401"));
+    }
+
+    @Test
+    void advisorUiIsPublicWhilePaymentApisRemainSecured() throws Exception {
+        mockMvc.perform(get("/payment-scenario-advisor/")
+                        .accept(MediaType.TEXT_HTML))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Payment Scenario Advisor")));
+
+        mockMvc.perform(post("/v1/domestic-payments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

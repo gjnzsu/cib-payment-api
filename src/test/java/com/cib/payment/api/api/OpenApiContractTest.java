@@ -466,6 +466,77 @@ class OpenApiContractTest {
                 "Idempotency-Key is not required");
     }
 
+    @Test
+    void openApiStructurallyDefinesPaymentScenarioAdvisorOperationsAndSchemas() throws Exception {
+        var openApi = readOpenApi();
+        var listScenarios = operation(openApi, "/v1/payment-scenario-advisor/scenarios", "get");
+        var getScenario = operation(openApi, "/v1/payment-scenario-advisor/scenarios/{scenarioId}", "get");
+
+        assertParameterRefs(listScenarios, "CorrelationId");
+        assertThat(parameterRefs(listScenarios)).doesNotContain("IdempotencyKey");
+        assertThat(listScenarios.path("security")).isEmpty();
+        assertThat(listScenarios.at("/responses/200/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/AdvisorScenarioCatalogResponse");
+
+        assertPathParameter(getScenario, "scenarioId");
+        assertParameterRefs(getScenario, "CorrelationId");
+        assertThat(parameterRefs(getScenario)).doesNotContain("IdempotencyKey");
+        assertThat(getScenario.path("security")).isEmpty();
+        assertThat(getScenario.at("/responses/200/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/AdvisorScenarioDetailResponse");
+        assertStandardJsonErrors(getScenario, "404", "500");
+
+        var components = openApi.at("/components/schemas");
+        assertRequiredFields(components.path("AdvisorScenarioCatalogResponse"), "scenarios", "correlationId");
+        assertRequiredFields(
+                components.path("AdvisorScenarioSummary"),
+                "scenarioId",
+                "businessLabel",
+                "businessDescription",
+                "recommendedRail",
+                "recommendedArrangement",
+                "simulatorOnly",
+                "requiresUserConfirmation");
+        assertRequiredFields(
+                components.path("AdvisorScenarioDetailResponse"),
+                "scenarioId",
+                "businessLabel",
+                "businessDescription",
+                "simulatorOnly",
+                "requiresUserConfirmation",
+                "recommendationIntent",
+                "recommendation",
+                "simulationPlan",
+                "feedbackReport",
+                "correlationId");
+        assertRequiredFields(
+                components.path("AdvisorSimulationPlan"),
+                "method",
+                "endpoint",
+                "requiredScopes",
+                "requiredHeaders",
+                "idempotencyRequired",
+                "payloadFormat",
+                "mockScenario",
+                "statusEndpointTemplate",
+                "expectedStatus",
+                "simulatorOnly",
+                "requiresUserConfirmation");
+        assertThat(textValues(components.at("/AdvisorScenarioSummary/properties/recommendedRail/enum")))
+                .containsExactly("RTP", "ACH", "RTGS", "FI_CORRESPONDENT");
+
+        var yaml = new ClassPathResource("openapi/domestic-payment-api.yaml")
+                .getContentAsString(StandardCharsets.UTF_8);
+        assertThat(yaml).contains(
+                "Payment Scenario Advisor",
+                "urgent-supplier-payment",
+                "vendor-batch-payment",
+                "high-value-treasury-transfer",
+                "fi-correspondent-settlement",
+                "simulator-only guidance",
+                "does not create payment, recommendation, simulation, or report records");
+    }
+
     private JsonNode readOpenApi() throws Exception {
         var resource = new ClassPathResource("openapi/domestic-payment-api.yaml");
         return yamlMapper.readTree(resource.getInputStream());
